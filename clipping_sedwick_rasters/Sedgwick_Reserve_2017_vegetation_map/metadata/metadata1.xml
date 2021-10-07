@@ -1,0 +1,87 @@
+<?xml version="1.0" ?>
+<metadata>
+	<idinfo>
+		<ptcontac>
+			<cntinfo>
+				<cntperp>
+					<cntper>Frank W. Davis</cntper>
+					<cntorg>Universit of California, Santa Barbara</cntorg>
+				</cntperp>
+				<cntpos>Professor</cntpos>
+			</cntinfo>
+		</ptcontac>
+		<useconst>This work is licensed under a  Creative Commons Attribution 3.0 License .</useconst>
+		<descript>
+			<abstract>Land cover of Sedgwick Reserve and immediate surrounding area was mapped using 7.5m resolution AVIRIS imagery acquired in June 2017. Ten land cover classes were mapped based on dominant canopy composition using a random forest classifier with training samples acquired at the reserve during 2017 and 2018.</abstract>
+			<purpose>General vegetation cover of  Sedgwick Reserve, June 2017, intended to support reserve management and research planning.</purpose>
+		</descript>
+		<datacred>Gabriel Daldegan, UCSB Department of Geography</datacred>
+		<keywords>
+			<theme>
+				<themekey>santa barbara county,ucsb,sedgwick reserve</themekey>
+			</theme>
+		</keywords>
+		<spdom>
+			<bounding>
+				<southbc>4120071.2232</southbc>
+				<northbc>4129453.1825</northbc>
+				<eastbc>-13359019.0706</eastbc>
+				<westbc>-13366801.9467</westbc>
+			</bounding>
+		</spdom>
+		<citation>
+			<citeinfo>
+				<onlink>https://databasin.org/datasets/6693af651946425c8633551df0457526</onlink>
+				<title>Sedgwick Reserve 2017 vegetation map</title>
+				<origin>Gabriel Daldegan</origin>
+				<origin>Department of Geography University of California</origin>
+				<origin>Santa Barbara</origin>
+				<othercit>Sedgwick Reserve Vegetation, June 2017. La Kretz Center for Research at Sedgwick Reserve.</othercit>
+			</citeinfo>
+		</citation>
+	</idinfo>
+	<distinfo>
+		<distliab>No warranty is made by Data Basin for use of this dataset.  No warranty is made by Data Basin regarding the accuracy, reliability, or completeness of this dataset. In no event shall Data Basin have any liability whatsoever for payment of any consequential, incidental, indirect, special, or tort damages of any kind, including, but not limited to, any loss of profits arising out of the use or reliance on the geographic or attribute data contained within this dataset or arising out of the delivery, installation, operation, or support by Data Basin.</distliab>
+		<techpreq>Desktop GIS software.</techpreq>
+		<stdorder>
+			<digform>
+				<digtopt>
+					<onlinopt>
+						<accinstr>Download from https://databasin.org</accinstr>
+						<computer>
+							<networka>
+								<networkr>https://databasin.org/datasets/6693af651946425c8633551df0457526</networkr>
+							</networka>
+						</computer>
+					</onlinopt>
+				</digtopt>
+				<digtinfo>
+					<filedec>No compression applied</filedec>
+					<formvern>ArcGIS 10</formvern>
+					<formspec>Raster Layer</formspec>
+					<formname>Raster Layer</formname>
+				</digtinfo>
+			</digform>
+			<ordering>Download from https://databasin.org</ordering>
+			<fees>None</fees>
+		</stdorder>
+		<distrib>
+			<cntinfo>
+				<cntemail>databasin_admin@consbio.org</cntemail>
+				<cntperp>
+					<cntorg>Data Basin</cntorg>
+					<cntper>Data Basin Administrator</cntper>
+				</cntperp>
+				<cntvoice>541-757-0687</cntvoice>
+				<cntaddr>
+					<country>USA</country>
+					<city>Corvallis</city>
+					<postal>97333</postal>
+					<address>136 SW Washington Ave, Suite 202</address>
+					<addrtype>physical address</addrtype>
+					<state>OR</state>
+				</cntaddr>
+			</cntinfo>
+		</distrib>
+	</distinfo>
+</metadata>

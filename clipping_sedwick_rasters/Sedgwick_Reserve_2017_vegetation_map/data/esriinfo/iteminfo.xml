@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ESRI_ItemInformation Culture='en-US'>
+<name>6693af651946425c8633551df0457526</name>
+<guid>FB3D93A2-E998-4304-83AC-B65CF341B587</guid>
+<catalogpath></catalogpath>
+<snippet></snippet>
+<description>&lt;div&gt;&lt;div&gt;&lt;div&gt;&lt;p&gt; Land cover of Sedgwick Reserve and immediate surrounding area was mapped using 7.5m resolution AVIRIS imagery acquired in June 2017. Ten land cover classes were mapped based on dominant canopy composition using a random forest classifier with training samples acquired at the reserve during 2017 and 2018. &lt;/p&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;
+
+This dataset was uploaded to Data Basin and is available with additional information at: /datasets/6693af651946425c8633551df0457526</description>
+<summary></summary>
+<title>6693af651946425c8633551df0457526</title>
+<tags></tags>
+<type>Layer Package</type>
+<typekeywords>
+<typekeyword>Raster Dataset</typekeyword>
+<typekeyword>Layer Package</typekeyword>
+<typekeyword>Data</typekeyword>
+<typekeyword>ArcMap</typekeyword>
+<typekeyword>ArcGlobe</typekeyword>
+<typekeyword>ArcGIS Explorer</typekeyword>
+<typekeyword>lpk</typekeyword>
+</typekeywords>
+<thumbnail>thumbnail/thumbnail.png</thumbnail>
+<documentation></documentation>
+<url></url>
+<datalastmodifiedtime></datalastmodifiedtime>
+<extent>
+<xmin>-120.076037430831</xmin>
+<ymin>34.676992361334</ymin>
+<xmax>-120.00612264836</xmax>
+<ymax>34.7462725756106</ymax>
+</extent>
+<spatialreference>NAD83_California_Albers</spatialreference>
+<accessinformation>&lt;div&gt;Gabriel Daldegan, Department of Geography&lt;br/&gt;&lt;/div&gt;&lt;div&gt;University of California, Santa Barbara&lt;/div&gt;</accessinformation>
+<licenseinfo></licenseinfo>
+</ESRI_ItemInformation>
