@@ -1,0 +1,54 @@
+
+# Sedgwick Reserve 2017 vegetation map
+
+
+## URL
+https://databasin.org/datasets/6693af651946425c8633551df0457526/
+
+
+## Dataset Type
+ArcGIS
+
+
+## Credits
+Gabriel Daldegan, Department of Geography
+   
+
+ University of California, Santa Barbara
+
+
+## Uploaded By
+[Frank W. Davis](https://databasin.org/people/fwdavis2011/)
+
+
+## Description
+Land cover of Sedgwick Reserve and immediate surrounding area was mapped using 7.5m resolution AVIRIS imagery acquired in June 2017. Ten land cover classes were mapped based on dominant canopy composition using a random forest classifier with training samples acquired at the reserve during 2017 and 2018.
+
+
+## Use Constraints
+This work is licensed under a  Creative Commons Attribution 3.0 License .
+
+
+### Original Metadata
+metadata/metadata1_original.xml
+
+
+### Data Basin Metadata
+metadata/metadata1.xml
+
+
+### Data Files
+data/commondata/raster_data/sedgveg17_CA.tfw
+data/commondata/raster_data/sedgveg17_CA.tif
+data/commondata/raster_data/sedgveg17_CA.tif.aux.xml
+data/commondata/raster_data/sedgveg17_CA.tif.vat.dbf
+data/commondata/raster_data/sedgveg17_CA.tif.xml
+data/esriinfo/item.pkinfo
+data/esriinfo/iteminfo.xml
+data/esriinfo/thumbnail/thumbnail.png
+data/v10/0000Sedgwick Reserve 2017 vegetation map.lyr
+data/v101/0000Sedgwick Reserve 2017 vegetation map.lyr
+
+
+
+
