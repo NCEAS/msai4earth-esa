@@ -30,39 +30,12 @@ sb_shp <- st_read(here("sb-county-boundary",
                        "county_boundaries",
                        "SB_only.shp")) 
 
-#plot(sb_ecos)
-```
-```{r}
+plot(sb_ecos)
 
+# --- coordinates info 
 
-oak_savanna <- sb_ecos == 65
-plot(oak_savanna)
-
-crs(oak_savanna)@projargs
-crs(sb_shp)@projargs
-
-proj_oak_savanna <- projectRaster(oak_savanna,crs=crs(sb_shp))
-crs(proj_oak_savanna)@projargs
-
-area2020 <- getArea(proj_oak_savanna)
-```
-
-```{r}
-df_oak_savanna <- as.data.frame(oak_savanna, xy = TRUE)
-
-df_oak_savanna %>% 
-  group_by(layer) %>%
-  summarise(num_pixels = length(layer))
-
-
-df_proj_oak_savanna <- as.data.frame(proj_oak_savanna, xy = TRUE)
-head(df_proj_oak_savanna)
-
-unique(df_proj_oak_savanna$layer)
-
-df_proj_oak_savanna %>% 
-  group_by(layer) %>%
-  summarise(num_pixels = length(layer))
+#crs(sb_ecos)@projargs
+#crs(sb_shp)@projargs
 ```
 
 
@@ -71,42 +44,35 @@ df_proj_oak_savanna %>%
 # --- make sub-raster with selected ecosystem 
 # ex: 65 = Southern California Oak Woodland and Savanna
 
-# select_ecosytem <- function(n_ecosystem, make_binary=FALSE){
-#   # assumes ecosystem code exists
-#   eco_raster <- sb_ecos == n_ecosystem 
-#   if(make_binary == TRUE){
-#     values(eco_raster)[values(eco_raster) != 1] <- NA
-#     return(eco_raster)
-#   }
-#   return(eco_raster)
-# }
-# --------------------------------------------------------
+select_ecosytem <- function(all_ecos_raster, n_ecosystem){
+  # assumes ecosystem code exists in raster
+  eco_raster <- all_ecos_raster == n_ecosystem
+  values(eco_raster)[values(eco_raster) != TRUE] <- NA
+  values(eco_raster)[values(eco_raster) == TRUE] <- 1
+  
+  # reproject into non-LonLat crs if necessary
+  if(isLonLat(eco_raster) == TRUE){  
+    eco_raster <- projectRaster(eco_raster,crs=crs(sb_shp), method = "ngb" )
+    return(eco_raster)
+  }
+  return(eco_raster)
+}
+```
 
-# oak_savanna <- select_ecosytem(65,TRUE)
-# plot(oak_savanna)
 
+```{r}
+oak_savanna <- select_ecosytem(sb_ecos,65)
+plot(oak_savanna)
+unique(oak_savanna)
 
-# --- reproject if necessary 
-# redlistr needs rasters to be in projected crs, not in LonLat
-# projected_crs <- function(raster_inst,has_projected){
-#   if(isLonLat(raster_inst) == TRUE){
-#     return(projectRaster(raster_inst,crs=crs(has_projected)))
-#   }
-#   return(raster_inst)
-# }
-# # --------------------------------------------------------
-# 
-# 
-# crs(sb_shp)@projargs
-# if(isLonLat(sb_shp) == FALSE){
-#   oak_savanna <- projected_crs(oak_savanna,sb_shp)
-# }
-# 
-# isLonLat(oak_savanna)
+ecos_area <- getArea(oak_savanna)
 
 ```
+
 ```{r}
-area_2020 <- getArea(oak_savanna)
-area_2020
+EOO_polygon <- makeEOO(oak_savanna)
+plot(EOO_polygon)
+plot(oak_savanna, add = T, col = "green", legend = FALSE)
+EOO_area <- getAreaEOO(EOO_polygon)
 ```
 
