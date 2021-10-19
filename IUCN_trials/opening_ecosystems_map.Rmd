@@ -1,0 +1,62 @@
+---
+title: "Opening ecosytems"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(raster) ### NOTE: attach this BEFORE tidyverse
+library(tidyverse)
+library(here)
+library(sf) # simple features package (for shapefiles)
+
+ecosystems <- raster(here('labeled_ecosystems_30m',
+                      'final_labeled_prod4_mmu9pxl_30m_dd83_w_subsec.img')) 
+ca_shp <- st_read(here("ca-state-boundary","CA_State_TIGER2016.shp")) 
+```
+
+```{r}
+# --- plot using ggplot
+plot(ecosystems)
+
+```
+
+
+
+```{r}
+
+#st_crs(ca_shp) # WGS 84 / Pseudo-Mercator 
+#st_crs(ecosystems) # User input: NAD83 
+
+
+# match CRS
+ca_shp <-st_transform(ca_shp,crs=crs(ecosystems))
+crs(ca_shp)
+```
+
+```{r}
+#ca_mask <- fasterize::fasterize(ca_shp, ecosystems)
+
+ca_ecos <- crop(ecosystems, ca_shp)
+plot(ca_ecos)
+writeRaster(ca_ecos, "ca_ecos.tif")
+```
+
+```{r}
+#plot(ca_ecos,axes=FALSE, box=FALSE)
+#writeRaster(sedg_mask, "sedg_mask.tif")
+
+ca_ecos2 <- mask(ca_ecos,
+                 fasterize::fasterize(ca_shp, ca_ecos))
+
+writeRaster(ca_ecos, "ca_ecos2.tif")
+
+```
+
+```{r}
+
+plot(ca_ecos2, max.plot=650)
+
+```
+
+

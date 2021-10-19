@@ -1,0 +1,187 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+knitr::opts_chunk$set(echo = TRUE)
+library(raster) ### NOTE: attach this BEFORE tidyverse
+library(tidyverse)
+library(here)
+library(sf) # simple features package (for shapefiles)
+library(janitor)
+```
+
+
+```{r}
+
+# --- open US ecosystem raster and SB shapefile
+
+ecosystems <- raster(here('labeled_ecosystems_30m',
+                      'final_labeled_prod4_mmu9pxl_30m_dd83_w_subsec.img')) 
+sb_shp <- st_read(here("sb-county-boundary",
+                       "data",
+                       "commondata",
+                       "county_boundaries",
+                       "SB_only.shp")) 
+
+```
+
+
+Raster from
+
+https://www.sciencedirect.com/science/article/pii/S2351989419307231#sec3
+
+https://rmgsc.cr.usgs.gov/outgoing/ecosystems/USdata/
+
+#Check how to change shapefile into raster doing this: Once these files are imported, they can then be converted into raster format via the raster::raster or raster::rasterFromXYZ functions. Try to remove intermediate masking
+
+```{r}
+# ---- GET SB ECOSYTEM RASTER ----
+
+# checking CRS matches (both NAD83, but still need to match metadata)
+crs(ecosystems)
+crs(sb_shp)
+
+# match CRS
+sb_shp <-st_transform(sb_shp,crs=crs(ecosystems))
+
+# because ecosystems is too big, we need to make an intermediate cropping
+
+sb_ecos_box <- crop(x = ecosystems, y = st_bbox(sb_shp))
+#plot(sb_ecos_box)
+
+sb_ecos <- mask(sb_ecos_box,
+                 fasterize::fasterize(sb_shp, sb_ecos_box))
+rm(ecosystems)
+rm(sb_ecos_box)
+#rm(sb_shp)
+
+#writeRaster(sb_ecos, "sb_ecosystems.tif")
+
+
+
+# --- raster statistics ---
+#print(summary(sb_ecos))
+#print(maxValue(sb_ecos))
+#print(minValue(sb_ecos))
+
+
+plot(sb_ecos)
+```
+
+```{r}
+# ---- RASTER INTO DATAFRAME ----
+
+sb_ecos_df <- as.data.frame(sb_ecos, xy = TRUE)
+# str(sb_ecos_df)
+
+colnames(sb_ecos_df) <- c("x",
+                          "y",
+                          "count",
+                          "red",
+                          "green",
+                          "blue",
+                          "opacity",
+                          "ecosystem",
+                          "usgsID")
+
+head(sb_ecos_df)
+
+```
+
+
+```{r}
+# ---- OBTAINING ECOSYSTEM NAMES ----
+
+#sb_ecos_df$count %>% unique()
+#sb_ecos_df$usgsID_sys_name %>%  unique()
+#sb_ecos_df$ecosystem %>% unique()
+
+
+labels_sb_ecos <- sb_ecos_df %>% 
+  group_by(usgsID) %>%
+  summarise(no_pixels = length(usgsID))
+
+View(labels_sb_ecos)
+
+```
+
+
+```{r}
+
+select_ecosytem <- function(n_ecosystem, make_binary=FALSE){
+  # assumes ecosystem code exists
+  eco_raster <- sb_ecos == n_ecosystem 
+  if(make_binary == TRUE){
+    values(eco_raster)[values(eco_raster) != 1] <- NA
+    return(eco_raster)
+  }
+  return(eco_raster)
+}
+
+trial_raster<-select_ecosytem(65)
+plot(trial_raster)
+```
+
+
+
+```{r}
+# ---SELECTING OAK SAVANNA (ecosystem code = 65) ----
+oak_savana <- sb_ecos == 65
+# Convert 0s to NAs to get rid of warning about non-bonary raster
+#values(oak_savana)[values(oak_savana) != 1] <- NA
+plot(oak_savana)
+```
+## IUCN Red List of Ecosystems Analysis --- inspection
+
+https://cran.r-project.org/web/packages/redlistr/vignettes/redlistr-vignette.html
+
+```{r}
+library(rgeos)
+library(rgdal)
+library(redlistr)
+```
+
+```{r}
+isLonLat(oak_savana)
+crs(oak_savana)@projargs
+
+isLonLat(sb_shp)
+crs(sb_shp)@projargs
+
+# Input raster has a longitude/latitude CRS. Please reproject to a projected coordinate system
+```
+
+```{r}
+proj_oak_savanna <- projectRaster(oak_savana,crs=crs(sb_shp))
+crs(proj_oak_savanna)@projargs
+isLonLat(proj_oak_savanna)
+#plot(proj_oak_savanna)
+
+area_2020 <- getArea(proj_oak_savanna)
+area_2020
+```
+
+
+GBIF.org (18 October 2021) GBIF Occurrence Download https://doi.org/10.15468/dl.6qqgmy
+
+```{r}
+gbif <- read_delim(here("gbif_santa_barbara.csv"))
+#head(gbif)
+```
+
+
+```{r}
+gbif <- gbif %>% select(occurrenceID,
+                kingdom,phylum,class,order,family,genus,species,
+                #scientificName,
+                decimalLatitude,decimalLatitude,coordinateUncertaintyInMeters,
+                eventDate,day,month, year, 
+                basisOfRecord) %>% 
+  clean_names()
+
+mammals_sb <- gbif %>% 
+  filter(class == "Mammalia", year == 2020 ) 
+```
+
