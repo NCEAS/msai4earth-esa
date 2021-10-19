@@ -1,0 +1,104 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Summary: you need to input a raster that only has one class of non-NA values, otherwise everything that is NA will be counted in getArea. 
+Also, when interpolating you need to use method="ngb" because you are interpolating categorical variables (not continuous). See:
+
+https://stackoverflow.com/questions/15634882/why-the-values-of-my-raster-map-change-when-i-project-it-to-a-new-crs-projectra
+
+```{r}
+knitr::opts_chunk$set(echo = TRUE, message= FALSE)
+library(raster) ### NOTE: attach this BEFORE tidyverse
+library(tidyverse)
+library(here)
+library(sf) # simple features package (for shapefiles)
+library(janitor)
+
+# IUCN Red List of Ecosystems Analysis
+# https://cran.r-project.org/web/packages/redlistr/vignettes/redlistr-vignette.html
+library(rgeos)
+library(rgdal)
+library(redlistr)
+```
+
+
+
+```{r}
+
+# --- open SB ecosystems raster and SB shapefile
+
+sb_ecos <- raster(here("sb_ecosystems.tif")) 
+sb_shp <- st_read(here("sb-county-boundary",
+                       "data",
+                       "commondata",
+                       "county_boundaries",
+                       "SB_only.shp")) 
+
+#plot(sb_ecos)
+
+# --- coordinates info 
+
+crs(sb_ecos)@projargs
+crs(sb_shp)@projargs
+```
+
+
+```{r}
+# ---- three different rasters
+oak_savanna <- sb_ecos == 65
+
+oak_savanna_NA <- oak_savanna
+values(oak_savanna_NA)[values(oak_savanna_NA) != TRUE] <- NA
+
+oak_savanna_1 <- oak_savanna_NA
+values(oak_savanna_1)[values(oak_savanna_1) == TRUE] <- 1
+
+
+
+print('oak_savanna: ') 
+unique(oak_savanna)
+print('oak_savanna_NA: ')
+unique(oak_savanna_NA)
+print('oak_savanna_1: ') 
+unique(oak_savanna_1)
+
+#count(values(oak_savanna) != NA)
+```
+
+```{r}
+
+proj_oak_savanna <- projectRaster(oak_savanna,crs=crs(sb_shp), method = "ngb" )
+unique(proj_oak_savanna)
+area <- getArea(proj_oak_savanna)
+
+proj_oak_savanna_NA <- projectRaster(oak_savanna_NA,crs=crs(sb_shp), method = "ngb" )
+unique(proj_oak_savanna_NA)
+area_NA <- getArea(proj_oak_savanna_NA)
+
+proj_oak_savanna_1 <- projectRaster(oak_savanna_1,crs=crs(sb_shp), method = "ngb" )
+unique(proj_oak_savanna_1)
+area_1 <- getArea(proj_oak_savanna_1)
+
+
+```
+
+```{r}
+df_oak_savanna <- as.data.frame(oak_savanna, xy = TRUE)
+
+df_oak_savanna %>% 
+  group_by(layer) %>%
+  summarise(num_pixels = length(layer))
+
+
+df_proj_oak_savanna <- as.data.frame(proj_oak_savanna, xy = TRUE)
+head(df_proj_oak_savanna)
+
+unique(df_proj_oak_savanna$layer)
+
+df_proj_oak_savanna %>% 
+  group_by(layer) %>%
+  summarise(num_pixels = length(layer))
+```
+
