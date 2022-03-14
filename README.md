@@ -1,2 +1,3 @@
 # msai4earth-esa
-MSAI4Earth Ecosystem assessment 
+
+This repository gather codes for the joint project between NCEAS and Microsift to develop a new approach Ecosystem assessment.
