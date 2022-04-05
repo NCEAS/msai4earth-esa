@@ -4,11 +4,15 @@ This repository gather codes for the joint project between NCEAS and Microsoft t
 
 **IUCN_trials**
 R notebooks exploring the spatial metrics from [IUCN Red List Assessments package](https://cran.r-project.org/web/packages/redlistr/vignettes/redlistr-vignette.html). 
+
 -----
+
 **examples**
 
 Examples of accessing and masking Landsat, GBIF and othe raster data.
+
 -----
+
 **ecosystem_change**
 
 - **aridity_layer**
@@ -30,6 +34,7 @@ Examples of accessing and masking Landsat, GBIF and othe raster data.
   Workflow to generate and compare 30-year average temperature normals and temperature regions maps. Based on [Dayment Annual dataset](https://planetarycomputer.microsoft.com/dataset/daymet-annual-na)
   - regions_FUNCTIONS.ipynb
   Functions to extract polygons from single-valued rasters and export them as shapefiles.
+
 -----
   
 **shapefiles_n_raster**
