@@ -2,7 +2,10 @@
 
 This repository gather codes for the joint project between NCEAS and Microsoft to develop a new approach Ecosystem assessment.
 
+----
+
 **IUCN_trials**
+
 R notebooks exploring the spatial metrics from [IUCN Red List Assessments package](https://cran.r-project.org/web/packages/redlistr/vignettes/redlistr-vignette.html). 
 
 -----
