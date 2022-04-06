@@ -1,0 +1,27 @@
+**** CSV FILES ****
+c_edulis_observations.csv : 
+   GBIF observations of c.edulis ice plant
+   entire temporal range
+   CA
+   
+obs2016.csv:
+   GBIF observations of c.edulis ice plant
+   only 2016
+   CA
+   
+
+observations-220884.csv:
+   iNaturalist observations (downloaded from website)
+   only 2018
+   only sb county
+   
+   
+*** SHAPEFILES ***
+geo_obs2016.shp:
+   GBIF observations of c.edulis ice plant
+   only 2016
+   CA
+   
+polygons_2016.shp:
+   trial polygons generated with GQGIS over NAIP 2016 image of campus point
+   
