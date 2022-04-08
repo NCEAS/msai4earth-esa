@@ -3,12 +3,6 @@ c_edulis_observations.csv :
    GBIF observations of c.edulis ice plant
    entire temporal range
    CA
-   
-obs2016.csv:
-   GBIF observations of c.edulis ice plant
-   only 2016
-   CA
-   
 
 observations-220884.csv:
    iNaturalist observations (downloaded from website)
@@ -17,13 +11,12 @@ observations-220884.csv:
    
    
 **************************************** SHAPEFILES ****************************************
-geo_obs2016.shp:
-   GBIF observations of c.edulis ice plant in CA
-   only 2016
    
 polygons_2016.shp:
    trial polygons generated with QGIS over NAIP 2016 image of campus point
+   do not represent iceplant locations!! 
    
+naip16_campuspoint
 naip16_obs.shp:
    GBIF observations of c.edulis ice plant inside NAIP image around campus point
    only 2016
