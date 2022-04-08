@@ -22,7 +22,7 @@ geo_obs2016.shp:
    only 2016
    
 polygons_2016.shp:
-   trial polygons generated with GQGIS over NAIP 2016 image of campus point
+   trial polygons generated with QGIS over NAIP 2016 image of campus point
    
 naip16_obs.shp:
    GBIF observations of c.edulis ice plant inside NAIP image around campus point
