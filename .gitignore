@@ -135,3 +135,5 @@ ecosystem_change_detection/top_layer/climate_layer/clim_rasters/*
 ecosystem_change_detection/top_layer/outlining_regions/*
 ecosystem_change_detection/top_layer/layers_polygons/*
 iceplant_detection/training_set/aux_data/*
+examples/naip_example/data/*
+examples/naip_example/requirements.txt
