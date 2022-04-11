@@ -9,6 +9,10 @@ observations-220884.csv:
    only 2018
    only sb county
    
+trainset.csv
+   rgb and nir values extracted and random points from polys in campuspoint2018polys
+   iceplant 0/1 indicates if the point is iceplant or not
+   
    
 **************************************** SHAPEFILES ****************************************
    
