@@ -12,18 +12,23 @@ R notebooks exploring the spatial metrics from [IUCN Red List Assessments packag
 **iceplant_detection**
 
 - TRIALS_ice_plant_training_set.ipynb
+ 
 Trials for accessing NAIP scenes and sampling them using GBIF data.
 
 - extracting_pts_from_polygons.ipynb
+
 Sampling random points from polygons marked as iceplant/no iceplant and using these to extract bands from NAIP scene.
 
 - finding_naip_images.ipynb
-- Given points (from GBIF in this case) looks for the NAIP scene that contains each point and finds the NAIP scene that contains the most observations. 
+
+Given points (from GBIF in this case) looks for the NAIP scene that contains each point and finds the NAIP scene that contains the most observations. 
 
 - random_forest.ipynb
+
 Random forest per-pixel classifier trial. 
 
 - selecting_gbif_data.ipynb
+
 Downloading all California c.edulis observations from the latest GBIF datset in the Planetary Computer.
 
 -----
