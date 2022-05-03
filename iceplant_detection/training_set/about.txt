@@ -22,6 +22,6 @@ naip16_obs.shp:
    only 2016
  
 campuspoint2018polys
-     polygons extrscted from the campus point NAIP image using QGIS
+     polygons extracted from the campus point NAIP image using QGIS
      some represent iceplant patches (id: 0 -9) and some non-iceplant (id: 10 - 19)
   
