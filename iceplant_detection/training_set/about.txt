@@ -3,30 +3,33 @@ c_edulis_observations.csv :
    GBIF observations of c.edulis ice plant
    entire temporal range
    CA
+   
+iceplant_ndvi_geq02.csv:
+    /////////
 
 observations-220884.csv:
    iNaturalist observations (downloaded from website)
    only 2018
    only sb county
-   
-trainset.csv
-   rgb and nir values extracted and random points from polys in campuspoint2018polys.shp
-   iceplant 0/1 indicates if the point is iceplant or not
-   
+
 trainset_BIG.csv
    like trainset.csv byt with more points
  
 trainset_non_iceplant_vegetation.csv
    rgb and nir values extracted and random points from polys in non_iceplant_vegetation.shp
    see non_iceplant_vegetation_train_points.ipynb
+
+   
+trainset.csv
+   rgb and nir values extracted and random points from polys in campuspoint2018polys.shp
+   iceplant 0/1 indicates if the point is iceplant or not
+   
+tree_naip_values.csv
+    ///////
+ 
    
 **************************************** SHAPEFILES ****************************************
-   
-naip16_campuspoint
-naip16_obs.shp:
-   GBIF observations of c.edulis ice plant inside NAIP image around campus point
-   only 2016
- 
+
 campuspoint2018polys
      polygons extracted from the campus point NAIP image using QGIS
      some represent iceplant patches (id: 0 -9) and some non-iceplant (id: 10 - 19)
@@ -36,10 +39,20 @@ flights
     
 flights_coast
     polygons of flights by date over sb_coast_polygon outlining SB coast
-    
+
+most_points2016:
+    /////////
+   
+naip16_campuspoint
+naip16_obs.shp:
+   GBIF observations of c.edulis ice plant inside NAIP image around campus point
+   only 2016
+ 
+
+non_iceplant_vegetation
+    polygons covering regions of non-iceplant vegetation. found using the LIDAR 3m layer to     find regions of vegetation taller than 2m
+
 sb_coast_polygon
     polygon outlining the coast of SB county
     
-non_iceplant_vegetation
-    polygons covering regions of non-iceplant vegetation. found using the LIDAR 3m layer to     find regions of vegetation taller than 2m
 
