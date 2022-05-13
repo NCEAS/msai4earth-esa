@@ -1,3 +1,21 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+import rasterio
+import geopandas as gpd
+
+from sklearn.metrics import RocCurveDisplay
+from sklearn.metrics import confusion_matrix
+from sklearn.model_selection import train_test_split
+
+import pystac_client 
+import planetary_computer as pc
+
+
+# **********************************************************************************************************
+# **********************************************************************************************************
+
 def iceplant_counts(df):
     return df.filter(items=['iceplant']).groupby(['iceplant']).size().reset_index(name='count')
 
@@ -7,8 +25,6 @@ def test_train_from_df(df,test_size=0.3):
     #Convert to numpy array
     features = np.array(df.drop('iceplant', axis = 1))
     return train_test_split(features, labels, test_size = test_size, random_state = 42)
-import numpy as np
-from sklearn.model_selection import train_test_split
 
 # --- check proportions of ice plant vs no ice plant in train/test sets
 def test_train_proportions(train_labels, test_labels):
