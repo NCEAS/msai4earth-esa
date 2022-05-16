@@ -190,12 +190,22 @@ def select_ndvi_df(image,thresh=0.2):
     return vegetation
 
 
-# ---------------------------------
+# **********************************************************************************************************
 
 def select_ndvi_image(itemid, reduce_box):
     subset = open_window_in_scene(itemid, reduce_box)
     df = select_ndvi_df(subset)
     reconstruct = np.zeros((subset.shape[1],subset.shape[2]))
+    for n in df.index:
+        i = int((n)/reconstruct.shape[1])
+        j = (n) % reconstruct.shape[1]
+        reconstruct[i][j] = 1
+    return reconstruct
+
+# ---------------------------------
+
+def ndvi_df_backto_image(image, df):
+    reconstruct = np.zeros((image.shape[1],image.shape[2]))
     for n in df.index:
         i = int((n)/reconstruct.shape[1])
         j = (n) % reconstruct.shape[1]
