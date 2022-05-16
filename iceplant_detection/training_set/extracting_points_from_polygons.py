@@ -43,12 +43,12 @@ def get_raster_from_item(item):
 def num_random_points(polys, naip, proportion=0.2):
     pixel_size = naip.res[0]*naip.res[1]
     
-
     # calculating how many pixels are there in the polygon (approx), by dividing the area of poly by area of a single pixel
     return polys.geometry.apply(lambda p: int((p.area/pixel_size)*proportion))
 
 # ---------------------------------------------
 
+# extracts at most number of random points within polygon
 def random_pts_poly(number, polygon):
     points = []
     min_x, min_y, max_x, max_y = polygon.bounds
@@ -61,6 +61,7 @@ def random_pts_poly(number, polygon):
     return points  
 
 # ---------------------------------------------
+# polys needs to have at least geometry and iceplant columns 
 
 def sample_naip(polys, num_random_pts, naip, item):
     samples = []
@@ -105,7 +106,7 @@ def sample_naip_from_polys(polys_raw, itemid, proportion=0.2):
     naip = get_raster_from_item(item)
     
     polys = polys_raw.to_crs(naip.crs)
-    num_random_pts = num_random_points(polys,naip)
+    num_random_pts = num_random_points(polys,naip,proportion)
     return sample_naip(polys, num_random_pts, naip, item)
 
 
