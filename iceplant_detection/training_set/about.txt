@@ -5,7 +5,8 @@ c_edulis_observations.csv :
    CA
    
 iceplant_ndvi_geq02.csv:
-    /////////
+    subset of trainset_BIG.csv comprised of iceplant observations with ndvi>0.2
+    separated with separate_train_points.ipynb
 
 observations-220884.csv:
    iNaturalist observations (downloaded from website)
@@ -30,29 +31,31 @@ tree_naip_values.csv
    
 **************************************** SHAPEFILES ****************************************
 
-campuspoint2018polys
-     polygons extracted from the campus point NAIP image using QGIS
-     some represent iceplant patches (id: 0 -9) and some non-iceplant (id: 10 - 19)
+
 
 flights
     polygons of flights by date over line outlining SB coast
     
 flights_coast
     polygons of flights by date over sb_coast_polygon outlining SB coast
-
-most_points2016:
-    /////////
    
 naip16_campuspoint
 naip16_obs.shp:
    GBIF observations of c.edulis ice plant inside NAIP image around campus point
    only 2016
  
+polygons_from_naip_images
+    - campuspoint2018polys
+         polygons extracted from the campus point NAIP image using QGIS
+         some represent iceplant patches (id: 0 -9) and some non-iceplant (id: 10 - 19)
+     
+    - non_iceplant_vegetation
+        polygons covering regions of non-iceplant vegetation. 
+        found using the LIDAR 3m layer to     find regions of vegetation taller than 2m
+        
+    - trees
+        polygons outlining trees in the campus lagoon, extracted from Campus Point NAIP 2018 image
 
-non_iceplant_vegetation
-    polygons covering regions of non-iceplant vegetation. found using the LIDAR 3m layer to     find regions of vegetation taller than 2m
 
-sb_coast_polygon
-    polygon outlining the coast of SB county
     
 
