@@ -7,6 +7,7 @@ import geopandas as gpd
 
 from sklearn.metrics import RocCurveDisplay
 from sklearn.metrics import confusion_matrix
+from sklearn.metrics import matthews_corrcoef
 from sklearn.model_selection import train_test_split
 
 import pystac_client 
@@ -31,6 +32,15 @@ def test_train_from_df(df,test_size=0.3):
     features = np.array(df.drop('iceplant', axis = 1))
     return train_test_split(features, labels, test_size = test_size, random_state = 42)
 
+# --- print shapes of train/test features/labels
+def  train_test_shapes(train_features, train_labels, test_features, test_labels):
+    print('Training Features Shape:', train_features.shape) 
+    print('Training Labels Shape:', train_labels.shape) 
+    print('Testing Features Shape:', test_features.shape) 
+    print('Testing Labels Shape:', test_labels.shape)
+    print()
+    return
+
 # --- print proportions of ice plant (1) vs no iceplant (0) in an array with only 0 and 1
 def iceplant_proportions(labels):
     unique, counts = np.unique(labels, return_counts=True)
@@ -53,23 +63,15 @@ def test_train_proportions(train_labels, test_labels):
 
     return
 
-# --- print shapes of train/test features/labels
-def  train_test_shapes(train_features, train_labels, test_features, test_labels):
-    print('Training Features Shape:', train_features.shape) 
-    print('Training Labels Shape:', train_labels.shape) 
-    print('Testing Features Shape:', test_features.shape) 
-    print('Testing Labels Shape:', test_labels.shape)
-    print()
-    return
 
 # **********************************************************************************************************
 # **********************************************************************************************************
 
+# https://stackoverflow.com/questions/61466961/what-do-the-normalize-parameters-mean-in-sklearns-confusion-matrix
 
 def print_accuracy_info(test_labels,predictions_class):
     N = test_labels.shape[0]
     
-    results = confusion_matrix(test_labels,predictions_class, normalize = 'true')
     confmtx = confusion_matrix(test_labels,predictions_class)
     
     print('true negatives:', confmtx[0,0], 
@@ -78,11 +80,18 @@ def print_accuracy_info(test_labels,predictions_class):
           '    true positives:', confmtx[1,1])
     print()
     unique, counts = np.unique(test_labels,return_counts=True)
-
-    print('true negative %:', np.round(confmtx[0,0]/counts[0]*100,2) , '%')
-    print('true positive %:', np.round(confmtx[1,1]/counts[1]*100,2) , '%')
+    
+    sens =  confmtx[1,1]/counts[1]
+    spec =  confmtx[0,0]/counts[0]
+    print('sensitivity (TP rate):', np.round(sens*100,2), '%')  #TP/P
+    print('specificity (TN rate):', np.round(spec*100,2), '%')  #TN/N
+    print('G-mean: ', round(np.sqrt(sens*spec),2))
     print()
-    print('accuracy %:', np.round( (confmtx[1,1] + confmtx[0,0])/test_labels.shape[0]*100,2))
+    
+    print('MCC: ', matthews_corrcoef(test_labels,predictions_class))
+    print()
+        
+    print('accuracy:', np.round( (confmtx[1,1] + confmtx[0,0])/test_labels.shape[0]*100,2),'%') # (TP + TN)/(P + N)
     return
 
 def plot_roc(rfc, test_features, test_labels):
