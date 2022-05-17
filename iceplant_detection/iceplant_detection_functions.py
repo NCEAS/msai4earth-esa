@@ -8,6 +8,8 @@ import geopandas as gpd
 from sklearn.metrics import RocCurveDisplay
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import matthews_corrcoef
+from sklearn.metrics import fbeta_score
+
 from sklearn.model_selection import train_test_split
 
 import pystac_client 
@@ -68,18 +70,19 @@ def test_train_proportions(train_labels, test_labels):
 # **********************************************************************************************************
 
 # https://stackoverflow.com/questions/61466961/what-do-the-normalize-parameters-mean-in-sklearns-confusion-matrix
+# *** change to y_true / y_pred
 
-def print_accuracy_info(test_labels,predictions_class):
-    N = test_labels.shape[0]
+def print_accuracy_info(y_true,y_pred):
+    N = y_true.shape[0]
     
-    confmtx = confusion_matrix(test_labels,predictions_class)
+    confmtx = confusion_matrix(y_true,y_pred)
     
     print('true negatives:', confmtx[0,0], 
           '    false positives:', confmtx[0,1])
     print('false negatives:', confmtx[1,0], 
           '    true positives:', confmtx[1,1])
     print()
-    unique, counts = np.unique(test_labels,return_counts=True)
+    unique, counts = np.unique(y_true,return_counts=True)
     
     sens =  confmtx[1,1]/counts[1]
     spec =  confmtx[0,0]/counts[0]
@@ -88,27 +91,35 @@ def print_accuracy_info(test_labels,predictions_class):
     print('G-mean: ', round(np.sqrt(sens*spec),2))
     print()
     
-    print('MCC: ', matthews_corrcoef(test_labels,predictions_class))
+    print('MCC: ', matthews_corrcoef(y_true,y_pred))
+    print()
+    
+    print('F1-measure: ',  round(fbeta_score(y_true, y_pred, beta=1.0),5))
+    print('F0.5-measure (min false positives): ',  round(fbeta_score(y_true, y_pred, beta=0.5),5))
+    print('F2-measure (min false negatives)  : ',  round(fbeta_score(y_true, y_pred, beta=2.0),5))
     print()
         
-    print('accuracy:', np.round( (confmtx[1,1] + confmtx[0,0])/test_labels.shape[0]*100,2),'%') # (TP + TN)/(P + N)
+    print('accuracy:', np.round( (confmtx[1,1] + confmtx[0,0])/y_true.shape[0]*100,2),'%') # (TP + TN)/(P + N)
     return
 
+# ---------------------------------
 def plot_roc(rfc, test_features, test_labels):
     ax = plt.gca()
     rf_disp = RocCurveDisplay.from_estimator(rfc, test_features, test_labels, ax=ax)
     return
 
+# ---------------------------------
 def print_abs_errors(predictions_class, test_labels):# Calculate the absolute errors
     errors_class = abs(predictions_class - test_labels)
     # Print out the mean absolute error (mae)
     print('Mean Absolute Error:', round(np.mean(errors_class), 2))
     return
 
+# ---------------------------------
 def print_rfc_evaluation(rfc, test_features, test_labels, predictions):
     print()
     print_accuracy_info(test_labels,predictions)
-    plot_roc(rfc, test_features, test_labels)
+    #plot_roc(rfc, test_features, test_labels)
     print()
     return
 
