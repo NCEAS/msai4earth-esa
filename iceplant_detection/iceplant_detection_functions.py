@@ -32,7 +32,9 @@ def test_train_from_df(df,test_size=0.3):
     labels = np.array(df['iceplant'])
     #Convert to numpy array
     features = np.array(df.drop('iceplant', axis = 1))
-    return train_test_split(features, labels, test_size = test_size, random_state = 42)
+    return train_test_split(features, labels, 
+                            test_size = test_size, 
+                            random_state = 42)
 
 # --- print shapes of train/test features/labels
 def  train_test_shapes(train_features, train_labels, test_features, test_labels):
