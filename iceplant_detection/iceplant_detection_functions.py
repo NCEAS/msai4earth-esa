@@ -16,8 +16,13 @@ import planetary_computer as pc
 # **********************************************************************************************************
 # **********************************************************************************************************
 
-def iceplant_counts(df):
-    return df.filter(items=['iceplant']).groupby(['iceplant']).size().reset_index(name='count')
+# def iceplant_counts(df):
+#     return df.filter(items=['iceplant']).groupby(['iceplant']).size().reset_index(name='count')
+
+
+# **********************************************************************************************************
+# **********************************************************************************************************
+
 
 def test_train_from_df(df,test_size=0.3):
     # Labels are the values we want to predict
@@ -26,19 +31,29 @@ def test_train_from_df(df,test_size=0.3):
     features = np.array(df.drop('iceplant', axis = 1))
     return train_test_split(features, labels, test_size = test_size, random_state = 42)
 
-# --- check proportions of ice plant vs no ice plant in train/test sets
-def test_train_proportions(train_labels, test_labels):
-    print('TRAIN SET: Iceplant / no iceplant counts')
-    unique, counts = np.unique(train_labels,return_counts=True)
-    print(np.column_stack((unique,counts)), '\n')
-
-    print('TEST SET: Iceplant / no iceplant counts')
-    unique, counts = np.unique(test_labels,return_counts=True)
-    print(np.column_stack((unique,counts)))
+# --- print proportions of ice plant (1) vs no iceplant (0) in an array with only 0 and 1
+def iceplant_proportions(labels):
+    unique, counts = np.unique(labels, return_counts=True)
+    print('no-iceplant:iceplant ratio    ',round(counts[0]/counts[1],1),':1')
+    n = labels.shape[0]
+    perc = [round(counts[0]/n*100,2), round(counts[1]/n*100,2)]
+    df = pd.DataFrame({'iceplant':unique,
+             'counts':counts,
+             'percentage':perc}).set_index('iceplant')
+    print(df)
     print()
+
+# --- print proportions of ice plant vs no ice plant in train/test sets
+def test_train_proportions(train_labels, test_labels):
+    print('TRAIN SET COUNTS:')
+    iceplant_proportions(train_labels)
+
+    print('TEST SET COUNTS:')
+    iceplant_proportions(test_labels)
+
     return
 
-# --- check shapes of train/test features/labels
+# --- print shapes of train/test features/labels
 def  train_test_shapes(train_features, train_labels, test_features, test_labels):
     print('Training Features Shape:', train_features.shape) 
     print('Training Labels Shape:', train_labels.shape) 
@@ -48,12 +63,15 @@ def  train_test_shapes(train_features, train_labels, test_features, test_labels)
     return
 
 # **********************************************************************************************************
+# **********************************************************************************************************
+
 
 def print_accuracy_info(test_labels,predictions_class):
     N = test_labels.shape[0]
-    results = confusion_matrix(test_labels,predictions_class, normalize = 'true')
     
+    results = confusion_matrix(test_labels,predictions_class, normalize = 'true')
     confmtx = confusion_matrix(test_labels,predictions_class)
+    
     print('true negatives:', confmtx[0,0], 
           '    false positives:', confmtx[0,1])
     print('false negatives:', confmtx[1,0], 
@@ -61,8 +79,8 @@ def print_accuracy_info(test_labels,predictions_class):
     print()
     unique, counts = np.unique(test_labels,return_counts=True)
 
-    print('true negative %:', np.round(confmtx[0,0]/counts[0]*100,2))
-    print('true positive rate %:', np.round(confmtx[1,1]/counts[1]*100,2))
+    print('true negative %:', np.round(confmtx[0,0]/counts[0]*100,2) , '%')
+    print('true positive %:', np.round(confmtx[1,1]/counts[1]*100,2) , '%')
     print()
     print('accuracy %:', np.round( (confmtx[1,1] + confmtx[0,0])/test_labels.shape[0]*100,2))
     return
@@ -79,12 +97,15 @@ def print_abs_errors(predictions_class, test_labels):# Calculate the absolute er
     return
 
 def print_rfc_evaluation(rfc, test_features, test_labels, predictions):
-    print_abs_errors(predictions, test_labels)
     print()
     print_accuracy_info(test_labels,predictions)
     plot_roc(rfc, test_features, test_labels)
     print()
     return
+
+# **********************************************************************************************************
+# **********************************************************************************************************
+
 
 def open_window_in_scene(itemid, reduce_box):
     # accesing Azure storage using pystac client
@@ -119,6 +140,7 @@ def predict_over_subset(itemid, reduce_box,rfc):
     return predictions_class.reshape([subset.shape[1],-1])
 
 # **********************************************************************************************************
+
 # image is a (4,m,n) np array in which bands are r,g,b,nir
 
 def select_ndvi_df(image,thresh=0.2):
@@ -152,7 +174,7 @@ def mask_ndvi_and_predict(itemid, reduce_box, rfc):
     
     return df_backto_image(image,predictions_df)
 
-# **********************************************************************************************************
+
 def plot_window_in_scene(itemid, reduce_box):
     # accesing Azure storage using pystac client
     URL = "https://planetarycomputer.microsoft.com/api/stac/v1"
@@ -178,6 +200,10 @@ def plot_window_in_scene(itemid, reduce_box):
     
     return
 
+
+# # **********************************************************************************************************
+# **********************************************************************************************************
+
 # image is a (4,m,n) np array in which bands are r,g,b,nir
 
 def select_ndvi_df(image,thresh=0.2):
@@ -189,8 +215,6 @@ def select_ndvi_df(image,thresh=0.2):
     vegetation.drop(labels=['ndvi'],axis=1, inplace=True)
     return vegetation
 
-
-# **********************************************************************************************************
 
 def select_ndvi_image(itemid, reduce_box):
     subset = open_window_in_scene(itemid, reduce_box)
