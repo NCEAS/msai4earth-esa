@@ -130,15 +130,6 @@ def print_threshold_metrics(test_labels, predictions):
     return
 
 
-# ---------------------------------
-def print_rfc_evaluation(rfc, test_features, test_labels, predictions):
-    print()
-    print_accuracy_info(test_labels,predictions)
-    #plot_roc(rfc, test_features, test_labels)
-    print()
-    return
-
-
 # **********************************************************************************************************
 # **********************************************************************************************************
 
@@ -166,6 +157,34 @@ def open_window_in_scene(itemid, reduce_box):
     subset = rasterio.open(href).read([1,2,3,4], window=win)
     return subset
 
+# ---------------------------------
+def plot_window_in_scene(itemid, reduce_box):
+    # accesing Azure storage using pystac client
+    URL = "https://planetarycomputer.microsoft.com/api/stac/v1"
+    catalog = pystac_client.Client.open(URL)
+
+    itemid = itemid,
+    search = catalog.search(
+        collections=["naip"],
+        ids = itemid
+    )
+    item = list(search.get_items())[0]
+    # sign and open item
+    href = pc.sign(item.assets["image"].href)
+    ds = rasterio.open(href)
+    
+    reduce = gpd.GeoDataFrame({'geometry':[reduce_box]}, crs="EPSG:4326")
+    reduce = reduce.to_crs(ds.crs)
+    win = ds.window(*reduce.total_bounds)
+    
+    fig, ax = plt.subplots(figsize=(20, 20))
+    ax.imshow(np.moveaxis(rasterio.open(href).read([1,2,3], window=win),0,-1))
+    plt.show()
+    
+    return
+# **********************************************************************************************************
+# **********************************************************************************************************
+
 
 def predict_over_subset(itemid, reduce_box,rfc):
     subset = open_window_in_scene(itemid, reduce_box)
@@ -176,6 +195,8 @@ def predict_over_subset(itemid, reduce_box,rfc):
     return predictions_class.reshape([subset.shape[1],-1])
 
 # **********************************************************************************************************
+# **********************************************************************************************************
+
 
 # image is a (4,m,n) np array in which bands are r,g,b,nir
 
@@ -211,45 +232,8 @@ def mask_ndvi_and_predict(itemid, reduce_box, rfc):
     return df_backto_image(image,predictions_df)
 
 
-def plot_window_in_scene(itemid, reduce_box):
-    # accesing Azure storage using pystac client
-    URL = "https://planetarycomputer.microsoft.com/api/stac/v1"
-    catalog = pystac_client.Client.open(URL)
-
-    itemid = itemid,
-    search = catalog.search(
-        collections=["naip"],
-        ids = itemid
-    )
-    item = list(search.get_items())[0]
-    # sign and open item
-    href = pc.sign(item.assets["image"].href)
-    ds = rasterio.open(href)
-    
-    reduce = gpd.GeoDataFrame({'geometry':[reduce_box]}, crs="EPSG:4326")
-    reduce = reduce.to_crs(ds.crs)
-    win = ds.window(*reduce.total_bounds)
-    
-    fig, ax = plt.subplots(figsize=(20, 20))
-    ax.imshow(np.moveaxis(rasterio.open(href).read([1,2,3], window=win),0,-1))
-    plt.show()
-    
-    return
-
-
 # # **********************************************************************************************************
 # **********************************************************************************************************
-
-# image is a (4,m,n) np array in which bands are r,g,b,nir
-
-def select_ndvi_df(image,thresh=0.2):
-    # reshape image into a np.array where each row is a pixel and the columns are the bands
-    pixels = image.reshape([4,-1]).T
-    df = pd.DataFrame(pixels, columns=['r','g','b','nir'])
-    df['ndvi']=(df.nir.astype('int16') - df.r.astype('int16'))/(df.nir.astype('int16') + df.r.astype('int16'))
-    vegetation = df[df.ndvi>thresh]
-    vegetation.drop(labels=['ndvi'],axis=1, inplace=True)
-    return vegetation
 
 
 def select_ndvi_image(itemid, reduce_box):
