@@ -88,9 +88,13 @@ def print_accuracy_info(y_true,y_pred):
     
     sens =  confmtx[1,1]/counts[1]
     spec =  confmtx[0,0]/counts[0]
-    print('sensitivity (TP rate):', np.round(sens*100,2), '%')  #TP/P
-    print('specificity (TN rate):', np.round(spec*100,2), '%')  #TN/N
+    print('sensitivity (TP/P):', np.round(sens*100,2), '%')  
+    print('specificity (TN/N):', np.round(spec*100,2), '%')  
     print('G-mean: ', round(np.sqrt(sens*spec),2))
+    print()
+    
+    prec = confmtx[1,1]/(confmtx[1,1]+confmtx[0,1])
+    print('precision (TP/(TP+FP)': np.round(prec,2),'%' )
     print()
     
     print('MCC: ', matthews_corrcoef(y_true,y_pred))
