@@ -122,12 +122,22 @@ def print_abs_errors(predictions_class, test_labels):# Calculate the absolute er
     return
 
 # ---------------------------------
+def print_threshold_metrics(test_labels, predictions):
+    print()
+    print_accuracy_info(test_labels,predictions)
+    #plot_roc(rfc, test_features, test_labels)
+    print()
+    return
+
+
+# ---------------------------------
 def print_rfc_evaluation(rfc, test_features, test_labels, predictions):
     print()
     print_accuracy_info(test_labels,predictions)
     #plot_roc(rfc, test_features, test_labels)
     print()
     return
+
 
 # **********************************************************************************************************
 # **********************************************************************************************************
