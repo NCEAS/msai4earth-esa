@@ -94,7 +94,7 @@ def print_accuracy_info(y_true,y_pred):
     print()
     
     prec = confmtx[1,1]/(confmtx[1,1]+confmtx[0,1])
-    print('precision (TP/(TP+FP)': np.round(prec,2),'%' )
+    print('precision (TP/(TP+FP)):', np.round(prec*100,2),'%' )
     print()
     
     print('MCC: ', matthews_corrcoef(y_true,y_pred))
@@ -158,7 +158,7 @@ def open_window_in_scene(itemid, reduce_box):
     return subset
 
 # ---------------------------------
-def plot_window_in_scene(itemid, reduce_box):
+def plot_window_in_scene(itemid, reduce_box,figsize=15):
     # accesing Azure storage using pystac client
     URL = "https://planetarycomputer.microsoft.com/api/stac/v1"
     catalog = pystac_client.Client.open(URL)
@@ -177,7 +177,7 @@ def plot_window_in_scene(itemid, reduce_box):
     reduce = reduce.to_crs(ds.crs)
     win = ds.window(*reduce.total_bounds)
     
-    fig, ax = plt.subplots(figsize=(20, 20))
+    fig, ax = plt.subplots(figsize=(figsize, figsize))
     ax.imshow(np.moveaxis(rasterio.open(href).read([1,2,3], window=win),0,-1))
     plt.show()
     
