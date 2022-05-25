@@ -199,7 +199,7 @@ def predict_over_subset(itemid, reduce_box,rfc):
 
 # image is a (4,m,n) np array in which bands are r,g,b,nir
 
-def select_ndvi_df(image, thresh=0.2):
+def select_ndvi_df(image, thresh=0.05):
     # reshape image into a np.array where each row is a pixel and the columns are the bands
     pixels = image.reshape([4,-1]).T
     df = pd.DataFrame(pixels, columns=['r','g','b','nir'])
@@ -219,7 +219,7 @@ def predictions_backto_image(image, df):
     return reconstruct
 
 # ---------------------------------
-def mask_ndvi_and_predict(itemid, reduce_box, rfc, thresh=0.2):
+def mask_ndvi_and_predict(itemid, reduce_box, rfc, thresh=0.05):
     image = open_window_in_scene(itemid, reduce_box)
     veg = select_ndvi_df(image, thresh)
     index = veg.index
@@ -235,7 +235,7 @@ def mask_ndvi_and_predict(itemid, reduce_box, rfc, thresh=0.2):
 # **********************************************************************************************************
 
 
-def select_ndvi_image(itemid, reduce_box, thresh=0.2):
+def select_ndvi_image(itemid, reduce_box, thresh=0.05):
     subset = open_window_in_scene(itemid, reduce_box)
     df = select_ndvi_df(subset, thresh)
     reconstruct = np.zeros((subset.shape[1],subset.shape[2]))
