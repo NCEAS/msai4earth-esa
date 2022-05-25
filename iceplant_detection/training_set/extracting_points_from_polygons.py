@@ -12,6 +12,8 @@ import planetary_computer as pc
 import random
 random.seed(10)
 
+import warnings
+
 # *********************************************************************
 # *********************************************************************
 
@@ -109,4 +111,10 @@ def sample_naip_from_polys(polys_raw, itemid, proportion=0.2):
     num_random_pts = num_random_points(polys,naip,proportion)
     return sample_naip(polys, num_random_pts, naip, item)
 
+# *********************************************************************
 
+def naip_sample_no_warnings(polys,itemid,proportion=0.2):
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        df = pp.sample_naip_from_polys(polys,itemid,proportion)
+    return df
