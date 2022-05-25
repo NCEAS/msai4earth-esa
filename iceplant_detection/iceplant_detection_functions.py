@@ -132,9 +132,7 @@ def print_threshold_metrics(test_labels, predictions):
 
 # **********************************************************************************************************
 # **********************************************************************************************************
-
-def open_window_in_scene(itemid, reduce_box):
-    # accesing Azure storage using pystac client
+def href_and_window(itemid, reduce_box):
     URL = "https://planetarycomputer.microsoft.com/api/stac/v1"
     catalog = pystac_client.Client.open(URL)
 
@@ -151,37 +149,82 @@ def open_window_in_scene(itemid, reduce_box):
 
     reduce = gpd.GeoDataFrame({'geometry':[reduce_box]}, crs="EPSG:4326")
     reduce = reduce.to_crs(ds.crs)
-
     win = ds.window(*reduce.total_bounds)
-    subset = rasterio.open(href).read([1,2,3,4], window=win)
-    return subset
+    return href, win
+
+# ---------------------------------
+
+def open_window_in_scene(itemid, reduce_box):
+    href, win = href_and_window(itemid, reduce_box)
+    return rasterio.open(href).read([1,2,3,4], window=win)
+
+# ---------------------------------
+
+def rgb_window_in_scene(itemid, reduce_box):
+    href, win = href_and_window(itemid, reduce_box)   
+    return rasterio.open(href).read([1,2,3], window=win)
 
 # ---------------------------------
 
 def plot_window_in_scene(itemid, reduce_box, figsize=15):
-    # accesing Azure storage using pystac client
-    URL = "https://planetarycomputer.microsoft.com/api/stac/v1"
-    catalog = pystac_client.Client.open(URL)
-
-    itemid = itemid,
-    search = catalog.search(
-        collections=["naip"],
-        ids = itemid
-    )
-    item = list(search.get_items())[0]
-    # sign and open item
-    href = pc.sign(item.assets["image"].href)
-    ds = rasterio.open(href)
-    
-    reduce = gpd.GeoDataFrame({'geometry':[reduce_box]}, crs="EPSG:4326")
-    reduce = reduce.to_crs(ds.crs)
-    win = ds.window(*reduce.total_bounds)
     
     fig, ax = plt.subplots(figsize=(figsize, figsize))
-    ax.imshow(np.moveaxis(rasterio.open(href).read([1,2,3], window=win),0,-1))
+    ax.imshow(np.moveaxis(rgb_window_in_scene(itemid, reduce_box),0,-1))
     plt.show()
-    
     return
+
+
+# def open_window_in_scene(itemid, reduce_box):
+#     # accesing Azure storage using pystac client
+#     URL = "https://planetarycomputer.microsoft.com/api/stac/v1"
+#     catalog = pystac_client.Client.open(URL)
+
+#     itemid = itemid,
+#     search = catalog.search(
+#         collections=["naip"],
+#         ids = itemid
+#     )
+#     item = list(search.get_items())[0]
+#     # sign and open item
+#     href = pc.sign(item.assets["image"].href)
+#     ds = rasterio.open(href)
+
+
+#     reduce = gpd.GeoDataFrame({'geometry':[reduce_box]}, crs="EPSG:4326")
+#     reduce = reduce.to_crs(ds.crs)
+#     win = ds.window(*reduce.total_bounds)
+    
+#     subset = rasterio.open(href).read([1,2,3,4], window=win)
+#     return subset
+
+
+# ---------------------------------
+
+# def plot_window_in_scene(itemid, reduce_box, figsize=15):
+#     # accesing Azure storage using pystac client
+#     URL = "https://planetarycomputer.microsoft.com/api/stac/v1"
+#     catalog = pystac_client.Client.open(URL)
+
+#     itemid = itemid,
+#     search = catalog.search(
+#         collections=["naip"],
+#         ids = itemid
+#     )
+#     item = list(search.get_items())[0]
+#     # sign and open item
+#     href = pc.sign(item.assets["image"].href)
+#     ds = rasterio.open(href)
+    
+#     reduce = gpd.GeoDataFrame({'geometry':[reduce_box]}, crs="EPSG:4326")
+#     reduce = reduce.to_crs(ds.crs)
+#     win = ds.window(*reduce.total_bounds)
+    
+#     fig, ax = plt.subplots(figsize=(figsize, figsize))
+#     ax.imshow(np.moveaxis(rasterio.open(href).read([1,2,3], window=win),0,-1))
+#     plt.show()
+    
+#     return
+
 # **********************************************************************************************************
 # **********************************************************************************************************
 
