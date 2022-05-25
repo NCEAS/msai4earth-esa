@@ -116,5 +116,5 @@ def sample_naip_from_polys(polys_raw, itemid, proportion=0.2):
 def naip_sample_no_warnings(polys,itemid,proportion=0.2):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        df = pp.sample_naip_from_polys(polys,itemid,proportion)
+        df = sample_naip_from_polys(polys,itemid,proportion)
     return df
