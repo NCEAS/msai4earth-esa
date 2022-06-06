@@ -49,17 +49,7 @@ def get_raster_from_item(item):
     naip = rasterio.open(href)
     return naip
 
-# *********************************************************************
 
-# naip = rasterio reader of naip image
-# polys and naip have to be in same crs, do polys.to_crs(naip.crs,inplace=True) before
-def num_pts_area_proportion(polys, naip, proportion):
-    
-    pixel_size = naip.res[0]*naip.res[1]
-    
-    # calculating how many pixels are there in the polygon (approx)
-    # by dividing the area of poly by area of a single pixel
-    return polys.geometry.apply(lambda p: int((p.area/pixel_size)*proportion))
 
 # *********************************************************************
 
@@ -117,6 +107,18 @@ def sample_naip(polys, num_random_pts, naip, item):
 
 # *********************************************************************
 
+# naip = rasterio reader of naip image
+# polys and naip have to be in same crs, do polys.to_crs(naip.crs,inplace=True) before
+def num_pts_area_proportion(polys, naip, proportion):
+    
+    pixel_size = naip.res[0]*naip.res[1]
+    
+    # calculating how many pixels are there in the polygon (approx)
+    # by dividing the area of poly by area of a single pixel
+    return polys.geometry.apply(lambda p: int((p.area/pixel_size)*proportion))
+
+# ---------------------------------------------
+
 def sample_naip_from_polys_proportion(polys_raw, itemid, proportion):
     item = get_item_from_id(itemid)
     naip = get_raster_from_item(item)
@@ -133,6 +135,8 @@ def naip_sample_proportion_no_warnings(polys, itemid, proportion):
         warnings.simplefilter("ignore")
         df = sample_naip_from_polys_proportion(polys, itemid, proportion)
     return df
+
+
 
 # *********************************************************************
 
@@ -151,6 +155,46 @@ def naip_sample_n_no_warnings(polys, itemid, n):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         df = sample_naip_from_polys_fixedn(polys, itemid, n)
+    return df
+
+# *********************************************************************
+# alpha = proportion of pixels in the smallest polygon to be sampled
+# diff = difference between #pixels sampled from smallest polygon and #pixels sampled from biggest polygon
+
+def num_pts_sliding_proportion(polys, alpha, diff):
+    
+    n1 = polys.pixels[polys.shape[0]-1]
+    nN = polys.pixels[0]
+    beta = (diff + alpha*n1)/nN
+    step = (alpha - beta)/pixels.shape[0]
+    
+    proportions = np.arange(beta,alpha,step)       
+    num_random_pts = proportions * polys.pixels.to_numpy()
+    num_random_pts = num_random_pts.astype('int16')
+    
+    return num_random_pts
+
+# ---------------------------------------------
+
+def sample_naip_from_polys_sliding(polys, itemid, alpha, diff):
+    item = get_item_from_id(itemid)
+    naip = get_raster_from_item(item)
+    
+    polys = polys_raw.to_crs(naip.crs)
+    
+    pixel_size = naip.res[0]*naip.res[1]
+    polys['pixels'] = polys.geometry.apply(lambda p: int((p.area/pixel_size)))
+    polys = polys.sort_values(by=['pixels'], ascending=False).reset_index(drop=True)
+    
+    num_random_pts = num_pts_sliding_proportion(polys, alpha, diff)
+    return sample_naip(polys, num_random_pts, naip, item)
+
+# ---------------------------------------------
+
+def naip_sample_sliding_no_warnings(polys, itemid, alpha, diff):
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        df = sample_naip_from_polys_sliding(polys, itemid, alpha, diff)
     return df
 
 # *********************************************************************
