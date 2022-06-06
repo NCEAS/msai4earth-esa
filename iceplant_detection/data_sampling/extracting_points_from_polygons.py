@@ -1,3 +1,5 @@
+import os
+
 import pandas as pd
 import numpy as np
 import rasterio
@@ -15,6 +17,16 @@ random.seed(10)
 import warnings
 
 # *********************************************************************
+
+def path_to_polygons(aoi,year):
+    # root for all polygons collected on naip scenes
+    root = '/home/jovyan/msai4earth-esa/iceplant_detection/data_sampling/polygons_from_naip_images'
+    fp = os.path.join(root, 
+                      aoi+'_polygons', 
+                      aoi+'_polygons_'+str(year), 
+                      aoi+'_polygons_'+str(year)+'.shp')
+    return fp
+
 # *********************************************************************
 
 def get_item_from_id(itemid):
@@ -37,18 +49,19 @@ def get_raster_from_item(item):
     naip = rasterio.open(href)
     return naip
 
-# ---------------------------------------------
+# *********************************************************************
 
 # naip = rasterio reader of naip image
 # polys and naip have to be in same crs, do polys.to_crs(naip.crs,inplace=True) before
-def num_random_points(polys, naip, proportion=0.2):
+def num_pts_area_proportion(polys, naip, proportion):
+    
     pixel_size = naip.res[0]*naip.res[1]
     
     # calculating how many pixels are there in the polygon (approx)
     # by dividing the area of poly by area of a single pixel
     return polys.geometry.apply(lambda p: int((p.area/pixel_size)*proportion))
 
-# ---------------------------------------------
+# *********************************************************************
 
 # extracts at most number of random points within polygon
 def random_pts_poly(number, polygon):
@@ -102,20 +115,42 @@ def sample_naip(polys, num_random_pts, naip, item):
     df = df[['geometry','x','y','iceplant','r','g','b','nir','year','month','day','naip_id','polygon_id']]
     return df
 
-# ---------------------------------------------
+# *********************************************************************
 
-def sample_naip_from_polys(polys_raw, itemid, proportion=0.2):
+def sample_naip_from_polys_proportion(polys_raw, itemid, proportion):
     item = get_item_from_id(itemid)
     naip = get_raster_from_item(item)
     
     polys = polys_raw.to_crs(naip.crs)
-    num_random_pts = num_random_points(polys,naip,proportion)
+    
+    num_random_pts = num_pts_area_proportion(polys, naip, proportion)
     return sample_naip(polys, num_random_pts, naip, item)
+
+# ---------------------------------------------
+
+def naip_sample_proportion_no_warnings(polys, itemid, proportion):
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        df = sample_naip_from_polys_proportion(polys, itemid, proportion)
+    return df
 
 # *********************************************************************
 
-def naip_sample_no_warnings(polys,itemid,proportion=0.2):
+def sample_naip_from_polys_fixedn(polys_raw, itemid, n):
+    item = get_item_from_id(itemid)
+    naip = get_raster_from_item(item)
+    
+    polys = polys_raw.to_crs(naip.crs)
+    
+    num_random_pts = np.full(polys_raw.shape[0],n)
+    return sample_naip(polys, num_random_pts, naip, item)
+
+# ---------------------------------------------
+
+def naip_sample_n_no_warnings(polys, itemid, n):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        df = sample_naip_from_polys(polys,itemid,proportion)
+        df = sample_naip_from_polys_fixedn(polys, itemid, n)
     return df
+
+# *********************************************************************
