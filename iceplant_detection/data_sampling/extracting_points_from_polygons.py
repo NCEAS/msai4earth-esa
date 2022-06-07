@@ -27,6 +27,14 @@ def path_to_polygons(aoi,year):
                       aoi+'_polygons_'+str(year)+'.shp')
     return fp
 
+def path_points_csv(aoi,year):
+    # root for all polygons collected on naip scenes
+    root = '/home/jovyan/msai4earth-esa/iceplant_detection/data_sampling/points_from_naip_images'
+    fp = os.path.join(root, 
+                      aoi+'_points', 
+                      aoi+'_points_'+str(year)+'.csv')
+    return fp
+
 # *********************************************************************
 
 def get_item_from_id(itemid):
@@ -225,16 +233,27 @@ def sample_naip_from_polys_sliding(polys_raw, itemid, alpha, m):
     pixel_size = naip.res[0]*naip.res[1]
     polys['pixels'] = polys.geometry.apply(lambda p: int((p.area/pixel_size)))
     polys = polys.sort_values(by=['pixels'], ascending=False).reset_index(drop=True)
-    
-    print(polys.pixels)
-    
+        
     num_random_pts = num_pts_sliding(polys, alpha, m)
     return sample_naip(polys, num_random_pts, naip, item)
 
 # ---------------------------------------------
 
-def naip_sample_sliding_no_warnings(polys, itemid, alpha, diff):
+def naip_sample_sliding_no_warnings(polys, itemid, alpha, m):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        df = sample_naip_from_polys_sliding(polys, itemid, alpha, diff)
+        df = sample_naip_from_polys_sliding(polys, itemid, alpha, m)
     return df
+
+# *********************************************************************
+# --- print proportions of ice plant (1) vs no iceplant (0) in an array with only 0 and 1
+def iceplant_proportions(labels):
+    unique, counts = np.unique(labels, return_counts=True)
+    print('no-iceplant:iceplant ratio    ',round(counts[0]/counts[1],1),':1')
+    n = labels.shape[0]
+    perc = [round(counts[0]/n*100,2), round(counts[1]/n*100,2)]
+    df = pd.DataFrame({'iceplant':unique,
+             'counts':counts,
+             'percentage':perc}).set_index('iceplant')
+    print(df)
+    print()
