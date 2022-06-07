@@ -166,17 +166,57 @@ def num_pts_sliding_proportion(polys, alpha, diff):
     n1 = polys.pixels[polys.shape[0]-1]
     nN = polys.pixels[0]
     beta = (diff + alpha*n1)/nN
-    step = (alpha - beta)/pixels.shape[0]
+    step = (alpha - beta)/polys.shape[0]
     
     proportions = np.arange(beta,alpha,step)       
+    #print(proportions)
     num_random_pts = proportions * polys.pixels.to_numpy()
+    #print(num_random_pts)
     num_random_pts = num_random_pts.astype('int16')
+    #print(num_random_pts)
+    
+    return num_random_pts
+
+# # ---------------------------------------------
+
+# def sample_naip_from_polys_sliding(polys_raw, itemid, alpha, diff):
+#     item = get_item_from_id(itemid)
+#     naip = get_raster_from_item(item)
+    
+#     polys = polys_raw.to_crs(naip.crs)
+    
+#     pixel_size = naip.res[0]*naip.res[1]
+#     polys['pixels'] = polys.geometry.apply(lambda p: int((p.area/pixel_size)))
+#     polys = polys.sort_values(by=['pixels'], ascending=False).reset_index(drop=True)
+    
+#     print(polys.pixels)
+    
+#     num_random_pts = num_pts_sliding_proportion(polys, alpha, diff)
+#     return sample_naip(polys, num_random_pts, naip, item)
+
+# # ---------------------------------------------
+
+# def naip_sample_sliding_no_warnings(polys, itemid, alpha, diff):
+#     with warnings.catch_warnings():
+#         warnings.simplefilter("ignore")
+#         df = sample_naip_from_polys_sliding(polys, itemid, alpha, diff)
+#     return df
+
+# *********************************************************************
+# alpha = proportion to sample from "small"polygons
+# m = max number of pixels to sample from any polygon
+
+def num_pts_sliding(polys, alpha, m):
+    
+    num_random_pts = alpha * polys.pixels.to_numpy()
+    num_random_pts = num_random_pts.astype('int32')
+    num_random_pts[num_random_pts>m] = m
     
     return num_random_pts
 
 # ---------------------------------------------
 
-def sample_naip_from_polys_sliding(polys, itemid, alpha, diff):
+def sample_naip_from_polys_sliding(polys_raw, itemid, alpha, m):
     item = get_item_from_id(itemid)
     naip = get_raster_from_item(item)
     
@@ -186,7 +226,9 @@ def sample_naip_from_polys_sliding(polys, itemid, alpha, diff):
     polys['pixels'] = polys.geometry.apply(lambda p: int((p.area/pixel_size)))
     polys = polys.sort_values(by=['pixels'], ascending=False).reset_index(drop=True)
     
-    num_random_pts = num_pts_sliding_proportion(polys, alpha, diff)
+    print(polys.pixels)
+    
+    num_random_pts = num_pts_sliding(polys, alpha, m)
     return sample_naip(polys, num_random_pts, naip, item)
 
 # ---------------------------------------------
@@ -196,5 +238,3 @@ def naip_sample_sliding_no_warnings(polys, itemid, alpha, diff):
         warnings.simplefilter("ignore")
         df = sample_naip_from_polys_sliding(polys, itemid, alpha, diff)
     return df
-
-# *********************************************************************
