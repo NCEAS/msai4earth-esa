@@ -152,7 +152,8 @@ def get_raster_from_item(item):
 def href_and_window(itemid, reduce_box):
     item = get_item_from_id(itemid)
     # sign and open item
-    ds = get_raster_from_item(item)
+    href = pc.sign(item.assets["image"].href)
+    ds = rasterio.open(href)
 
     reduce = gpd.GeoDataFrame({'geometry':[reduce_box]}, crs="EPSG:4326")
     reduce = reduce.to_crs(ds.crs)
