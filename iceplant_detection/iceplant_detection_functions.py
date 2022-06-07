@@ -125,20 +125,34 @@ def print_threshold_metrics(test_labels, predictions):
 
 # **********************************************************************************************************
 # **********************************************************************************************************
-def href_and_window(itemid, reduce_box):
+
+# SAME AS IN POINTS FORM POLYGONS 
+def get_item_from_id(itemid):
+    # accesing Azure storage using pystac client
     URL = "https://planetarycomputer.microsoft.com/api/stac/v1"
     catalog = pystac_client.Client.open(URL)
 
-    itemid = itemid,
     search = catalog.search(
         collections=["naip"],
-        ids = itemid
-    )
+        ids = itemid)
+    
     item = list(search.get_items())[0]
     # sign and open item
+    return item
+
+# ---------------------------------------------
+
+def get_raster_from_item(item):
     href = pc.sign(item.assets["image"].href)
     ds = rasterio.open(href)
+    return ds
 
+# *********************************************************************
+
+def href_and_window(itemid, reduce_box):
+    item = get_item_from_id(itemid)
+    # sign and open item
+    ds = get_raster_from_item(item)
 
     reduce = gpd.GeoDataFrame({'geometry':[reduce_box]}, crs="EPSG:4326")
     reduce = reduce.to_crs(ds.crs)
