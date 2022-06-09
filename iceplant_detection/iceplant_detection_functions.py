@@ -185,10 +185,10 @@ def plot_window_in_scene(itemid, reduce_box, figsize=15):
 # **********************************************************************************************************
 # **********************************************************************************************************
 
-def predict_over_subset(itemid, reduce_box,rfc):
-    subset = open_window_in_scene(itemid, reduce_box)
+def predict_over_subset(itemid, reduce_box, rfc):
+    image = open_window_in_scene(itemid, reduce_box)
     # reshape image into a np.array where each row is a pixel and the columns are the bands
-    pixels = subset.reshape([4,-1]).T
+    pixels = image.reshape([4,-1]).T
     predictions_class = rfc.predict(pixels)
     # turn back into original raster dimensions
     return predictions_class.reshape([subset.shape[1],-1])
@@ -208,6 +208,9 @@ def ndvi_thresh(image, thresh=0.05):
     x[~low_ndvi] = 1
     return x
 
+def select_ndvi_image(itemid, reduce_box, thresh=0.05):
+    image = open_window_in_scene(itemid, reduce_box)
+    return ndvi_thresh(image,thresh)
 
 # **********************************************************************************************************
 # **********************************************************************************************************
@@ -216,11 +219,22 @@ def ndvi_thresh(image, thresh=0.05):
 
 # image is a (4,m,n) np array in which bands are r,g,b,nir
 
+# def select_ndvi_df(image, thresh=0.05):
+#     # reshape image into a np.array where each row is a pixel and the columns are the bands
+#     pixels = image.reshape([4,-1]).T
+#     df = pd.DataFrame(pixels, columns=['r','g','b','nir'])
+#     df['ndvi'] = (df.nir.astype('int16') - df.r.astype('int16'))/(df.nir.astype('int16') + df.r.astype('int16'))
+#     vegetation = df[df.ndvi>thresh]
+#     vegetation.drop(labels=['ndvi'], axis=1, inplace=True)
+#     return vegetation
+# ---------------------------------
+
 def select_ndvi_df(image, thresh=0.05):
-    # reshape image into a np.array where each row is a pixel and the columns are the bands
     pixels = image.reshape([4,-1]).T
     df = pd.DataFrame(pixels, columns=['r','g','b','nir'])
-    df['ndvi'] = (df.nir.astype('int16') - df.r.astype('int16'))/(df.nir.astype('int16') + df.r.astype('int16'))
+    
+    df['ndvi'] = ndvi(image).reshape([1,-1]).T
+    
     vegetation = df[df.ndvi>thresh]
     vegetation.drop(labels=['ndvi'], axis=1, inplace=True)
     return vegetation
@@ -238,12 +252,39 @@ def select_ndvi_df(image, thresh=0.05):
 #     return reconstruct
 
 
-def predictions_backto_image(nrows, ncols, df):
+# def predictions_backto_image(nrows, ncols, df):
     
-    index = df[df.prediction == 1].index.to_numpy()
+#     index = df[df.prediction == 1].index.to_numpy()
+#     i = index / ncols
+#     i = i.astype(int)
+#     j = index % ncols
+#     reconstruct = np.zeros((nrows,ncols))
+#     reconstruct[i,j] = 1
+#     return reconstruct
+
+# # ---------------------------------
+# def mask_ndvi_and_predict(itemid, reduce_box, rfc, thresh=0.05):
+#     image = open_window_in_scene(itemid, reduce_box)
+#     veg = select_ndvi_df(image, thresh)
+#     index = veg.index
+#     features = np.array(veg)
+#     predictions_class = rfc.predict(features)
+#     c = {'prediction':predictions_class}
+#     predictions_df = pd.DataFrame(c, index = index)
+    
+#     nrows = image.shape[1]
+#     ncols = image.shape[2]
+    
+#     return predictions_backto_image(nrows, ncols, predictions_df)
+
+
+def indices_backto_image(nrows, ncols, indices):
+    # transform indices to coordinates
     i = index / ncols
     i = i.astype(int)
     j = index % ncols
+    
+    # fill in array with 1 on index's coordinates 0 elsewhere
     reconstruct = np.zeros((nrows,ncols))
     reconstruct[i,j] = 1
     return reconstruct
@@ -254,36 +295,42 @@ def mask_ndvi_and_predict(itemid, reduce_box, rfc, thresh=0.05):
     veg = select_ndvi_df(image, thresh)
     index = veg.index
     features = np.array(veg)
+    
+    # get predictions from model and make them into a df
     predictions_class = rfc.predict(features)
     c = {'prediction':predictions_class}
-    predictions_df = pd.DataFrame(c, index = index)
+    df = pd.DataFrame(c, index = index)
     
+    # transform predictions df back into binary image 
     nrows = image.shape[1]
     ncols = image.shape[2]
+    index = df[df.prediction == 1].index.to_numpy()
     
-    return predictions_backto_image(nrows, ncols, predictions_df)
+    return indices_backto_image(nrows, ncols, index)
 
 
 # # **********************************************************************************************************
 # **********************************************************************************************************
 
 
-def select_ndvi_image(itemid, reduce_box, thresh=0.05):
-    subset = open_window_in_scene(itemid, reduce_box)
-    df = select_ndvi_df(subset, thresh)
-    reconstruct = np.zeros((subset.shape[1],subset.shape[2]))
-    for n in df.index:
-        i = int((n)/reconstruct.shape[1])
-        j = (n) % reconstruct.shape[1]
-        reconstruct[i][j] = 1
-    return reconstruct
+# def select_ndvi_image(itemid, reduce_box, thresh=0.05):
+#     subset = open_window_in_scene(itemid, reduce_box)
+#     df = select_ndvi_df(subset, thresh)
+#     reconstruct = np.zeros((subset.shape[1],subset.shape[2]))
+#     for n in df.index:
+#         i = int((n)/reconstruct.shape[1])
+#         j = (n) % reconstruct.shape[1]
+#         reconstruct[i][j] = 1
+#     return reconstruct
+
+
 
 # ---------------------------------
 
-def ndvi_df_backto_image(image, df):
-    reconstruct = np.zeros((image.shape[1],image.shape[2]))
-    for n in df.index:
-        i = int((n)/reconstruct.shape[1])
-        j = (n) % reconstruct.shape[1]
-        reconstruct[i][j] = 1
-    return reconstruct
+# def ndvi_df_backto_image(image, df):
+#     reconstruct = np.zeros((image.shape[1],image.shape[2]))
+#     for n in df.index:
+#         i = int((n)/reconstruct.shape[1])
+#         j = (n) % reconstruct.shape[1]
+#         reconstruct[i][j] = 1
+#     return reconstruct
