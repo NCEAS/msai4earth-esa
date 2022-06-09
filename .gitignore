@@ -129,6 +129,8 @@ dmypy.json
 .pyre/
 .ipynb_checkpoints/
 
+#OSX
+.DS_Store
 # FOLDERS
 ecosystem_change_detection/top_layer/aridity_layer/arid_rasters/*
 ecosystem_change_detection/top_layer/climate_layer/clim_rasters/*
