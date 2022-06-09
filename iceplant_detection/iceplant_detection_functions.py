@@ -196,6 +196,23 @@ def predict_over_subset(itemid, reduce_box,rfc):
 # **********************************************************************************************************
 # **********************************************************************************************************
 
+# image is a (4,m,n) np array in which bands are r,g,b,nir
+def ndvi(image):
+    x = image.astype('int16')
+    return (x[3,...] - x[0,...])/(x[3,...] + x[0,...])
+
+def ndvi_thresh(image, thresh=0.05):
+    x = ndvi(image)
+    low_ndvi = x<thresh
+    x[low_ndvi] = 0
+    x[~low_ndvi] = 1
+    return x
+
+
+# **********************************************************************************************************
+# **********************************************************************************************************
+
+
 
 # image is a (4,m,n) np array in which bands are r,g,b,nir
 
@@ -203,19 +220,32 @@ def select_ndvi_df(image, thresh=0.05):
     # reshape image into a np.array where each row is a pixel and the columns are the bands
     pixels = image.reshape([4,-1]).T
     df = pd.DataFrame(pixels, columns=['r','g','b','nir'])
-    df['ndvi']=(df.nir.astype('int16') - df.r.astype('int16'))/(df.nir.astype('int16') + df.r.astype('int16'))
+    df['ndvi'] = (df.nir.astype('int16') - df.r.astype('int16'))/(df.nir.astype('int16') + df.r.astype('int16'))
     vegetation = df[df.ndvi>thresh]
-    vegetation.drop(labels=['ndvi'],axis=1, inplace=True)
+    vegetation.drop(labels=['ndvi'], axis=1, inplace=True)
     return vegetation
 
 # ---------------------------------
-def predictions_backto_image(image, df):
-    reconstruct = np.zeros((image.shape[1],image.shape[2]))
-    for n in df.index:
-        if df.prediction[n]==1:
-            i = int((n)/reconstruct.shape[1])
-            j = (n) % reconstruct.shape[1]
-            reconstruct[i][j] = 1
+
+# OLD FUNCTION: SLOOOOOOW!
+# def predictions_backto_image(image, df):
+#     reconstruct = np.zeros((image.shape[1],image.shape[2]))
+#     for n in df.index:
+#         if df.prediction[n]==1:
+#             i = int((n)/reconstruct.shape[1])
+#             j = (n) % reconstruct.shape[1]
+#             reconstruct[i][j] = 1
+#     return reconstruct
+
+
+def predictions_backto_image(nrows, ncols, df):
+    
+    index = df[df.prediction == 1].index.to_numpy()
+    i = index / ncols
+    i = i.astype(int)
+    j = index % ncols
+    reconstruct = np.zeros((nrows,ncols))
+    reconstruct[i,j] = 1
     return reconstruct
 
 # ---------------------------------
@@ -228,7 +258,10 @@ def mask_ndvi_and_predict(itemid, reduce_box, rfc, thresh=0.05):
     c = {'prediction':predictions_class}
     predictions_df = pd.DataFrame(c, index = index)
     
-    return predictions_backto_image(image, predictions_df)
+    nrows = image.shape[1]
+    ncols = image.shape[2]
+    
+    return predictions_backto_image(nrows, ncols, predictions_df)
 
 
 # # **********************************************************************************************************
