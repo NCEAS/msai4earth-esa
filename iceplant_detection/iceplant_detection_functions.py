@@ -191,7 +191,7 @@ def predict_over_subset(itemid, reduce_box, rfc):
     pixels = image.reshape([4,-1]).T
     predictions_class = rfc.predict(pixels)
     # turn back into original raster dimensions
-    return predictions_class.reshape([subset.shape[1],-1])
+    return predictions_class.reshape([image.shape[1],-1])
 
 # **********************************************************************************************************
 # **********************************************************************************************************
@@ -233,7 +233,8 @@ def select_ndvi_df(image, thresh=0.05):
     pixels = image.reshape([4,-1]).T
     df = pd.DataFrame(pixels, columns=['r','g','b','nir'])
     
-    df['ndvi'] = ndvi(image).reshape([1,-1]).T
+    x = ndvi(image)
+    df['ndvi'] = x.reshape(x.shape[0]*x.shape[1])
     
     vegetation = df[df.ndvi>thresh]
     vegetation.drop(labels=['ndvi'], axis=1, inplace=True)
@@ -278,7 +279,7 @@ def select_ndvi_df(image, thresh=0.05):
 #     return predictions_backto_image(nrows, ncols, predictions_df)
 
 
-def indices_backto_image(nrows, ncols, indices):
+def indices_backto_image(nrows, ncols, index):
     # transform indices to coordinates
     i = index / ncols
     i = i.astype(int)
