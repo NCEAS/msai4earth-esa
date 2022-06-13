@@ -89,7 +89,7 @@ def plot_window_in_scene(itemid, reduce_box, figsize=15):
 
 def plot_preds_vs_original(predictions, itemid, aoi, year, figsize=(30,40)):
     
-    original = np.moveaxis(ipf.rgb_window_in_scene(itemid, aoi),0,-1)
+    original = np.moveaxis(rgb_window_in_scene(itemid, aoi),0,-1)
     fig, ax = plt.subplots(1,2,figsize=figsize)
 
     ax[0].imshow(predictions)
