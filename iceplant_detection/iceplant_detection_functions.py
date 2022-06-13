@@ -197,3 +197,23 @@ def mask_ndvi_and_predict(itemid, reduce_box, rfc, thresh=0.05):
 #     veg = veg[['r','g','b','nir','ndvi','year','month','day_in_year']] # order features
 #     return df
 
+# **********************************************************************************************************
+# FROM naip_flights.ipynb
+
+def query_geom(geom, year):
+
+    date_range = str(year)+'-01-01/'+str(year)+'-12-31'
+
+    catalog = pystac_client.Client.open(
+        "https://planetarycomputer.microsoft.com/api/stac/v1")
+
+    search = catalog.search(
+        collections=["naip"], 
+        intersects=geom, 
+        datetime=date_range)
+    
+    items =list(search.get_items()) 
+    if len(items)==0:
+        return None
+    return items
+
