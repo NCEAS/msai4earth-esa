@@ -61,8 +61,7 @@ def small_raster(href, reduce_box):
     rgb_small = rgb.rio.clip_box(*reduce.total_bounds)
     return rgb_small
 
-# **********************************************************************************************************
-# **********************************************************************************************************
+# *******************************************************************************************************
 
 
 # ---------------------------------
@@ -86,6 +85,21 @@ def plot_window_in_scene(itemid, reduce_box, figsize=15):
     plt.show()
     return
 
+# ---------------------------------
+
+def plot_preds_vs_original(predictions, itemid, aoi, year, figsize=(30,40)):
+    
+    original = np.moveaxis(ipf.rgb_window_in_scene(itemid, aoi),0,-1)
+    fig, ax = plt.subplots(1,2,figsize=figsize)
+
+    ax[0].imshow(predictions)
+    ax[0].set_title("PREDICTIONS "+str(year)+" : standard rfc model")
+
+    ax[1].imshow(original)
+    ax[1].set_title(str(year)+" original image")
+
+    plt.show()
+    return
 
 # **********************************************************************************************************
 
@@ -172,15 +186,15 @@ def mask_ndvi_and_predict(itemid, reduce_box, rfc, thresh=0.05):
 
 
 # # **********************************************************************************************************
-# def day_in_year(day,month,year):
-#     days_in_month = [31,28,31,30,31,30,31,31,30,31,30,31]
-#     n = 0
-#     for i in range(0,month-1):
-#         n = n+days_in_month[i]
-#     n = n+day
-#     if calendar.isleap(year) and month>2:
-#         n = n+1
-#     return n
+def day_in_year(day,month,year):
+    days_in_month = [31,28,31,30,31,30,31,31,30,31,30,31]
+    n = 0
+    for i in range(0,month-1):
+        n = n+days_in_month[i]
+    n = n+day
+    if calendar.isleap(year) and month>2:
+        n = n+1
+    return n
 
 # # ---------------------------------
 
