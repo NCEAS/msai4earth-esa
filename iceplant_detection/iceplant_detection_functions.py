@@ -87,13 +87,13 @@ def plot_window_in_scene(itemid, reduce_box, figsize=15):
 
 # ---------------------------------
 
-def plot_preds_vs_original(predictions, itemid, aoi, year, figsize=(30,40)):
+def plot_preds_vs_original(predictions, itemid, aoi, year, model_name = '-',figsize=(30,40)):
     
     original = np.moveaxis(rgb_window_in_scene(itemid, aoi),0,-1)
     fig, ax = plt.subplots(1,2,figsize=figsize)
 
     ax[0].imshow(predictions)
-    ax[0].set_title("PREDICTIONS "+str(year)+" : standard rfc model")
+    ax[0].set_title("PREDICTIONS "+str(year)+ model_name)
 
     ax[1].imshow(original)
     ax[1].set_title(str(year)+" original image")
@@ -155,25 +155,25 @@ def indices_backto_image(nrows, ncols, index):
 
 # **********************************************************************************************************
 
-def predict_over_subset(itemid, reduce_box, rfc):
+def predict_over_subset(itemid, reduce_box, model):
     image = open_window_in_scene(itemid, reduce_box)
     # reshape image into a np.array where each row is a pixel and the columns are the bands
     pixels = image.reshape([4,-1]).T
-    predictions_class = rfc.predict(pixels)
+    predictions_class = model.predict(pixels)
     # turn back into original raster dimensions
     return predictions_class.reshape([image.shape[1],-1])
 
 # ---------------------------------
 
-# rfc must only take r, g, b, nir as featuers (IN THAT ORDER)
-def mask_ndvi_and_predict(itemid, reduce_box, rfc, thresh=0.05):
+# modelmust only take r, g, b, nir as featuers (IN THAT ORDER)
+def mask_ndvi_and_predict(itemid, reduce_box, model, thresh=0.05):
     image = open_window_in_scene(itemid, reduce_box)
     veg = select_ndvi_df(image, thresh)
     index = veg.index
     features = np.array(veg)
     
     # get predictions from model and make them into a df
-    predictions_class = rfc.predict(features)
+    predictions_class = model.predict(features)
     c = {'prediction':predictions_class}
     df = pd.DataFrame(c, index = index)
     
@@ -185,7 +185,7 @@ def mask_ndvi_and_predict(itemid, reduce_box, rfc, thresh=0.05):
     return indices_backto_image(nrows, ncols, index)
 
 
-# # **********************************************************************************************************
+# **********************************************************************************************************
 def day_in_year(day,month,year):
     days_in_month = [31,28,31,30,31,30,31,31,30,31,30,31]
     n = 0
@@ -211,23 +211,23 @@ def day_in_year(day,month,year):
 #     veg = veg[['r','g','b','nir','ndvi','year','month','day_in_year']] # order features
 #     return df
 
-# **********************************************************************************************************
-# FROM naip_flights.ipynb
+# # **********************************************************************************************************
+# # FROM naip_flights.ipynb
 
-def query_geom(geom, year):
+# def query_geom(geom, year):
 
-    date_range = str(year)+'-01-01/'+str(year)+'-12-31'
+#     date_range = str(year)+'-01-01/'+str(year)+'-12-31'
 
-    catalog = pystac_client.Client.open(
-        "https://planetarycomputer.microsoft.com/api/stac/v1")
+#     catalog = pystac_client.Client.open(
+#         "https://planetarycomputer.microsoft.com/api/stac/v1")
 
-    search = catalog.search(
-        collections=["naip"], 
-        intersects=geom, 
-        datetime=date_range)
+#     search = catalog.search(
+#         collections=["naip"], 
+#         intersects=geom, 
+#         datetime=date_range)
     
-    items =list(search.get_items()) 
-    if len(items)==0:
-        return None
-    return items
+#     items =list(search.get_items()) 
+#     if len(items)==0:
+#         return None
+#     return items
 
