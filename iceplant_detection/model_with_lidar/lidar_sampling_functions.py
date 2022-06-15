@@ -1,9 +1,11 @@
 import os
+import rasterio
+import numpy as np
 import pandas as pd
 import geopandas as gpd
 from shapely.geometry import Point
 
-
+# https://stackoverflow.com/questions/43966350/getting-the-maximum-in-each-rolling-window-of-a-2d-numpy-array
 from scipy.ndimage import maximum_filter as maxf2D
 from scipy.ndimage import minimum_filter as minf2D
 from scipy.ndimage import convolve as conf2D
@@ -62,6 +64,9 @@ def save_avg_rasters(rast_reader, folder_path):
              mode='constant')
     avgs = avgs/9
     
+    negative_avg = avgs<0
+    avgs[negative_avg] = 0
+    
     # save averages
     fp = os.path.join(folder_path, 'lidar_avgs.tif')
     save_raster(avgs, 
@@ -94,34 +99,16 @@ def geodataframe_from_csv(fp, crs):
     return pts
 
 # ------------------------------------------------------------------------------
-# lidar = lidar raster, opened via rasterio.open(fp)
-def sample_from_lidar(pts_raw, lidar):
-    pts = pts_raw.to_crs(lidar.crs)
-    pts['xy'] = pts.geometry.apply(lambda p :(p.x, p.y)) #this is the format needed to sample 
-    
-    sample = lidar.sample(pts.xy.to_list())
-    # *** SIMPLIFY ***
+
+def pts_for_lidar_sampling(pts, crs):
+    pts_xy = pts.to_crs(crs).geometry.apply(lambda p :(p.x, p.y)).to_list()
+    return pts_xy
+
+# ------------------------------------------------------------------------------
+
+def sample_raster(pts_xy, raster_reader):
+    sample = raster_reader.sample(pts_xy)
     samples = []
     for x in sample:
         samples.append(x[0])
-
-    return samples 
-# ------------------------------------------------------------------------------
-
-def min_max_samples_from_lidar(pts_raw, lidar):
-    pts = pts_raw.to_crs(lidar.crs)
-
-    rast = lidar.to_np #****
-    
-    win_size = (3,3)
-    min_lidar = minf2D(rast, size=win_size)
-    max_lidar = maxf2D(rast, size=win_size)
-    diff = max_lidar - max_lidar
-
-    
-    w = np.ones(9).reshape(3,3)
-    w
-    avg = conf2D(a, 
-             weights=w,
-             mode='constant')
-    avg/9
+    return samples
