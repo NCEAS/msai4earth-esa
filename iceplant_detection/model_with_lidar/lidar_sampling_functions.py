@@ -12,8 +12,13 @@ from scipy.ndimage import convolve as conf2D
 
 # **********************************************************************************
 
-
+# raster = numpy aray
+# bands = array or 1
 def save_raster(raster, fp, shape, bands_n, crs, transform, dtype):
+    bands_array=1
+    if bands_n>1:
+        bands_array = np.arange(1,bands_n+1)
+        
     with rasterio.open(
         fp,  # file path
         'w',           # w = write
@@ -25,9 +30,10 @@ def save_raster(raster, fp, shape, bands_n, crs, transform, dtype):
         crs = crs,
         transform = transform,
     ) as dst:
-        dst.write(raster.astype(dtype), bands_n)
+        dst.write(raster.astype(dtype), bands_array)
     return 
     
+
 # ------------------------------------------------------------------------------
 
 # folder_path = path to folder to save rasters
