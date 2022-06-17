@@ -37,7 +37,7 @@ def save_raster(raster, fp, shape, bands_n, crs, transform, dtype):
 # ------------------------------------------------------------------------------
 
 # folder_path = path to folder to save rasters
-def save_min_max_diff_rasters(rast_reader, folder_path):    
+def save_min_max_diff_rasters(rast_reader, folder_path,aoi,year):    
     rast = rast_reader.read([1]).squeeze() # read raster
 
     maxs = maxf2D(rast, size=(3,3)) # calculate min max and difference
@@ -46,9 +46,9 @@ def save_min_max_diff_rasters(rast_reader, folder_path):
     
     # save rasters
     m = [maxs, mins, diffs]
-    m_labels = ['maxs', 'mins', 'diffs']
+    m_labels = ['maxs_', 'mins_', 'diffs_']
     for i in range(0,3):
-        fp = os.path.join(folder_path, 'lidar_'+m_labels[i]+'.tif')
+        fp = os.path.join(folder_path, aoi+'_lidar_'+m_labels[i]+ str(year)'.tif')
         save_raster(m[i], 
                     fp, 
                     rast.shape,
