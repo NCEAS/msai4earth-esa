@@ -13,12 +13,46 @@ from sklearn.metrics import fbeta_score
 # **********************************************************************************************************
 
 
+
+def test_train_aois_scenes(samples, test_size=0.3):
+    all_train = []
+    all_test = []
+
+    X_labels = samples.columns.drop('iceplant')
+
+    aois = samples.aoi.unique()
+
+    for aoi in aois:
+        in_aoi = samples[samples.aoi == aoi]    
+        scenes = in_aoi.naip_id.unique()
+        for scene in scenes:
+            in_scene = in_aoi[in_aoi.naip_id == scene]
+
+            X = np.array(in_scene.drop('iceplant', axis = 1))
+            y = np.array(in_scene['iceplant'])
+            X_train, X_test, y_train, y_test = train_test_split(X, y, 
+                                                                test_size = test_size, 
+                                                                random_state = 42)
+            train = pd.DataFrame(X_train, columns = X_labels)
+            train['iceplant'] = y_train
+
+            test = pd.DataFrame(X_test, columns = X_labels)
+            test['iceplant'] = y_test
+
+            all_train.append(train)
+            all_test.append(test)
+
+    train = pd.concat(all_train, ignore_index=True)
+    test = pd.concat(all_test, ignore_index=True)
+    return train, test
+
+
 def test_train_from_df(df,test_size=0.3):
-    # Labels are the values we want to predict
-    labels = np.array(df['iceplant'])
-    #Convert to numpy array
-    features = np.array(df.drop('iceplant', axis = 1))
-    return train_test_split(features, labels, 
+    # y = values we want to predict
+    y = np.array(df['iceplant'])
+    # X = features
+    X = np.array(df.drop('iceplant', axis = 1))
+    return train_test_split(X, y, 
                             test_size = test_size, 
                             random_state = 42)
 
