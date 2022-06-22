@@ -42,11 +42,12 @@ def test_train_aois_scenes(samples, test_size=0.3):
             all_train.append(train)
             all_test.append(test)
 
-    train = pd.concat(all_train, ignore_index=True)
-    test = pd.concat(all_test, ignore_index=True)
+    ignore = False
+    train = pd.concat(all_train, ignore_index=ignore)
+    test = pd.concat(all_test, ignore_index=ignore)
     return train, test
 
-
+# ---------------------------------
 def test_train_from_df(df,test_size=0.3):
     # y = values we want to predict
     y = np.array(df['iceplant'])
@@ -56,6 +57,7 @@ def test_train_from_df(df,test_size=0.3):
                             test_size = test_size, 
                             random_state = 42)
 
+# ---------------------------------
 # --- print shapes of train/test features/labels
 def  train_test_shapes(train_features, train_labels, test_features, test_labels):
     print('Training Features Shape:', train_features.shape) 
