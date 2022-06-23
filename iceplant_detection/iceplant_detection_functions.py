@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 import rasterio
+import rioxarray as rioxr
 import geopandas as gpd
 
 import pystac_client 
@@ -50,7 +51,6 @@ def href_and_window(itemid, reduce_box):
 # **********************************************************************************************************
 # **********************************************************************************************************
 
-import rioxarray as rioxr
 
 def small_raster(href, reduce_box):
     item = get_item_from_id(itemid)
@@ -128,6 +128,38 @@ def select_ndvi_image(itemid, reduce_box, thresh=0.05):
 # **********************************************************************************************************
 
 # image is a (4,m,n) np array in which bands are r,g,b,nir
+def spectral_df(image):
+    pixels = image.reshape([4,-1]).T
+    df = pd.DataFrame(pixels, columns=['r','g','b','nir'])
+    
+    x = ndvi(image)
+    df['ndvi'] = x.reshape(x.shape[0]*x.shape[1])
+    return df
+# ---------------------------------
+
+def add_date_features(df, item):
+        df['year'] = item.datetime.year
+        df['month'] = item.datetime.month
+        df['day_in_year'] = day_in_year(item.datetime.day, item.datetime.month, item.datetime.year)
+        return df
+    
+# ---------------------------------
+    
+def features_over_aoi(item, image, thresh=0.05):
+
+    veg = select_ndvi_df(image, thresh)
+    
+#    veg['ndvi']=(veg.nir.astype('int16') - veg.r.astype('int16'))/(veg.nir.astype('int16') + veg.r.astype('int16'))
+
+    veg['year'] = item.datetime.year
+    veg['month'] = item.datetime.month
+    veg['day_in_year'] = day_in_year(item.datetime.day, item.datetime.month, item.datetime.year)
+
+    # order features
+    veg = veg[['r','g','b','nir','ndvi','year','month','day_in_year']] 
+    return veg
+
+# ---------------------------------
 
 def select_ndvi_df(image, thresh=0.05):
     pixels = image.reshape([4,-1]).T
@@ -137,7 +169,7 @@ def select_ndvi_df(image, thresh=0.05):
     df['ndvi'] = x.reshape(x.shape[0]*x.shape[1])
     
     vegetation = df[df.ndvi>thresh]
-    vegetation.drop(labels=['ndvi'], axis=1, inplace=True)
+    #vegetation.drop(labels=['ndvi'], axis=1, inplace=True)
     return vegetation
 
 # ---------------------------------
