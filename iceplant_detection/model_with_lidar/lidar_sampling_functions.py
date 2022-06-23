@@ -10,6 +10,8 @@ from scipy.ndimage import maximum_filter as maxf2D
 from scipy.ndimage import minimum_filter as minf2D
 from scipy.ndimage import convolve as conf2D
 
+import pystac_client
+
 # **********************************************************************************
 
 # raster = numpy aray
@@ -37,17 +39,16 @@ def save_raster(raster, fp, shape, bands_n, crs, transform, dtype):
 # ------------------------------------------------------------------------------
 
 # folder_path = path to folder to save rasters
-def save_min_max_diff_rasters(rast_reader, folder_path, aoi, year):    
+def save_min_max_rasters(rast_reader, folder_path, aoi, year):    
     rast = rast_reader.read([1]).squeeze() # read raster
 
     maxs = maxf2D(rast, size=(3,3)) # calculate min max and difference
     mins = minf2D(rast, size=(3,3))   
-    diffs = maxs - mins
     
     # save rasters
-    m = [maxs, mins, diffs]
-    m_labels = ['maxs_', 'mins_', 'diffs_']
-    for i in range(0,3):
+    m = [maxs, mins]
+    m_labels = ['maxs_', 'mins_']
+    for i in range(0,2):
         fp = os.path.join(folder_path, aoi+'_lidar_'+m_labels[i]+ str(year)+'.tif')
         save_raster(m[i], 
                     fp, 
@@ -118,3 +119,20 @@ def sample_raster(pts_xy, raster_reader):
     for x in sample:
         samples.append(x[0])
     return samples
+
+# ------------------------------------------------------------------------------
+
+from rasterio.crs import CRS
+
+def crs_from_itemid(itemid):
+    # accesing Azure storage using pystac client
+    catalog = pystac_client.Client.open("https://planetarycomputer.microsoft.com/api/stac/v1")
+
+    # search for naip scene where the pts were sampled from
+    search = catalog.search(
+        collections=["naip"],
+        ids = itemid
+    )
+    item = list(search.get_items())[0]
+    epsg_code = item.properties['proj:epsg']
+    return  CRS.from_epsg(epsg_code)
