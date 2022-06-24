@@ -39,7 +39,7 @@ def save_raster(raster, fp, shape, bands_n, crs, transform, dtype):
 # ------------------------------------------------------------------------------
 
 # folder_path = path to folder to save rasters
-def save_min_max_rasters(rast_reader, folder_path, aoi, year):    
+def save_min_max_rasters(rast_reader, folder_path, year):    
     rast = rast_reader.read([1]).squeeze() # read raster
 
     maxs = maxf2D(rast, size=(3,3)) # calculate min max and difference
@@ -49,7 +49,7 @@ def save_min_max_rasters(rast_reader, folder_path, aoi, year):
     m = [maxs, mins]
     m_labels = ['maxs_', 'mins_']
     for i in range(0,2):
-        fp = os.path.join(folder_path, aoi+'_lidar_'+m_labels[i]+ str(year)+'.tif')
+        fp = os.path.join(folder_path, 'lidar_'+m_labels[i]+ str(year)+'.tif')
         save_raster(m[i], 
                     fp, 
                     rast.shape,
@@ -61,7 +61,7 @@ def save_min_max_rasters(rast_reader, folder_path, aoi, year):
 
 # ------------------------------------------------------------------------------
 
-def save_avg_rasters(rast_reader, folder_path, aoi, year):
+def save_avg_rasters(rast_reader, folder_path, year):
     rast = rast_reader.read([1]).squeeze() # read raster
     
     # calculate averages
@@ -75,7 +75,7 @@ def save_avg_rasters(rast_reader, folder_path, aoi, year):
     avgs[negative_avg] = 0
     
     # save averages
-    fp = os.path.join(folder_path, aoi+'_lidar_avgs_'+ str(year)+'.tif')
+    fp = os.path.join(folder_path, 'lidar_avgs_'+ str(year)+'.tif')
     save_raster(avgs, 
                 fp, 
                 rast.shape, 
