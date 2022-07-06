@@ -27,6 +27,8 @@ def path_to_polygons(aoi,year):
                       aoi+'_polygons_'+str(year)+'.shp')
     return fp
 
+# *********************************************************************
+
 def path_points_csv(aoi,year):
     # root for all polygons collected on naip scenes
     root = '/home/jovyan/msai4earth-esa/iceplant_detection/data_sampling/points_from_naip_images'
@@ -258,3 +260,4 @@ def iceplant_proportions(labels):
              'percentage':perc}).set_index('iceplant')
     print(df)
     print()
+    
