@@ -20,7 +20,7 @@ import warnings
 
 def path_to_polygons(aoi,year):
     # root for all polygons collected on naip scenes
-    root = '/home/jovyan/msai4earth-esa/iceplant_detection/data_sampling/polygons_from_naip_images'
+    root = '/home/jovyan/msai4earth-esa/iceplant_detection/create_train_test_sets/polygons_from_naip_images'
     fp = os.path.join(root, 
                       aoi+'_polygons', 
                       aoi+'_polygons_'+str(year), 
@@ -29,13 +29,14 @@ def path_to_polygons(aoi,year):
 
 # *********************************************************************
 
-def path_points_csv(aoi,year):
-    # root for all polygons collected on naip scenes
-    root = '/home/jovyan/msai4earth-esa/iceplant_detection/data_sampling/points_from_naip_images'
-    fp = os.path.join(root, 
-                      aoi+'_points', 
-                      aoi+'_points_'+str(year)+'.csv')
-    return fp
+# def path_to_points_csv(aoi,year):
+#     # root for all polygons collected on naip scenes
+#     root = '/home/jovyan/msai4earth-esa/iceplant_detection/data_sampling/points_from_naip_images'
+#     fp = os.path.join(root, 
+#                       aoi+'_points', 
+#                       aoi+'_points_'+str(year)+'.csv')
+#     return fp
+
 
 # *********************************************************************
 
