@@ -14,7 +14,21 @@ import planetary_computer as pc
 import random
 random.seed(10)
 
+
+import calendar
 import warnings
+
+# *********************************************************************
+
+def day_in_year(day,month,year):
+    days_in_month = [31,28,31,30,31,30,31,31,30,31,30,31]
+    n = 0
+    for i in range(0,month-1):
+        n = n+days_in_month[i]
+    n = n+day
+    if calendar.isleap(year) and month>2:
+        n = n+1
+    return n
 
 # *********************************************************************
 
@@ -111,7 +125,7 @@ def sample_naip(polys, num_random_pts, naip, item):
     
     df['year'] = item.datetime.year   # add date to samples
     df['month'] = item.datetime.month
-    df['day'] = item.datetime.day 
+    df['day_in_year'] = day_in_year(item.datetime.day, item.datetime.month, item.datetime.year )
     df['naip_id'] = item.id           # add naip item id to samples
 
     df[['geometry','x','y','iceplant','r','g','b','nir','year','month','day','naip_id','polygon_id']]
@@ -262,3 +276,4 @@ def iceplant_proportions(labels):
     print(df)
     print()
     
+
