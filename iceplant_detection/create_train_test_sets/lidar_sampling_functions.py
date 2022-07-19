@@ -17,7 +17,6 @@ import pystac_client
 # *********************************************************************
 
 def path_to_lidar(year):
-msai4earth-esa/iceplant_detection
     # root for all Santa Barbara County canopy height rasters
     root = '/home/jovyan/msai4earth-esa/iceplant_detection/create_train_test_sets/SantaBarbaraCounty_lidar/'
     fp = os.path.join(root, 
@@ -26,7 +25,7 @@ msai4earth-esa/iceplant_detection
 
 # **********************************************************************************
 
-# raster = numpy aray
+# raster = numpy array
 # bands = array or 1
 def save_raster(raster, fp, shape, bands_n, crs, transform, dtype):
     bands_array = 1
