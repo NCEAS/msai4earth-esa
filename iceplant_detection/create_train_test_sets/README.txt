@@ -14,31 +14,46 @@ All code was developed and tested in Microsoft's Planetary Computer coding envir
 2. Data Access
 --------------
 
-NAIP images are part of Microsoft's Planetary Computer's data catalog and can be directly accessed through their API. (See https://planetarycomputer.microsoft.com/dataset/naip#Example-Notebook)
+NAIP images are part of Microsoft's Planetary Computer's data catalog and can be directly accessed through their API. See https://planetarycomputer.microsoft.com/dataset/naip#Example-Notebook
 
-The California Forest Observatory canopy height dataset can be downloaded through CFO's API [*] after you create a CFO account. (See https://github.com/forestobservatory/cfo-api)
+The California Forest Observatory canopy height dataset can be downloaded through CFO's API [*] after you create a CFO account. See https://github.com/forestobservatory/cfo-api
 
-The starting point for the data sampling is a set of polygons that outline confirmed iceplant and non-iceplant locations. These are available in the polygons_from_naip_images_folder. To create these polygons, JB and CGG outlined the confirmed iceplant and non-iceplant locations on all available NAIP images over four regions regularly spaced along the Santa Barbara County coast: Carpinteria State Beach, the University of California Santa Barbara campus, Gaviota State Park, and Point Conception. The ice plant locations were based on field observations and digitized records of ice plant locations from GBIF and Calflora. To create the polygons, the NAIP images were loaded from the Planetary Computer's data repository on QGIS using the Open STAC API Browser plugin.
+The starting point for the data sampling is a set of polygons that outline confirmed iceplant and non-iceplant locations. These are available in the polygons_from_naip_images_folder. To create these polygons, JB and CGG outlined the confirmed iceplant and non-iceplant locations on all available NAIP images over four regions regularly spaced along the Santa Barbara County coast: Carpinteria State Beach, the University of California Santa Barbara campus, Gaviota State Park, and Point Conception. The ice plant locations were based on field observations and digitized records of ice plant locations from GBIF and Calflora. To create the polygons, the NAIP images were loaded from the Planetary Computer's data repository on QGIS using the Open STAC API Browser plugin (see https://planetarycomputer.microsoft.com/docs/overview/qgis-plugin/).
 
 
 3. Notebook Workflow
 --------------------
+The notebooks are numbered in the order they should be run. 
 
+* 1_sample_pts_from_polygons
+Creates an initial dataset of random points extracted from polygons in the 'polygons_form_naip_images' folder together with the corresponding spectral and date features from NAIP images.
+
+* 2_download_CFO_canopy_height_raster
+Creates a canopy height raster layer for Santa Barbara County from the CFO canopy height data for the state of California. These rasters are not deleted in any of the next notebooks.
+
+* 3_add_canopy_height_features
+Adds canopy height features to the points sampled in the first notebook.
+
+* 4_make_single_csv
+Assembles all the csvs produced by the previous notebook into a single dataframe and saves it as a csv. It also includes statistics of the combined dataset. At this point the dataset is complete.
+
+* 5_create_train_test_set
+Divides the dataset created in the previous notebook into train and tests sets by sampling the same specified percentage of points per scene to go into the training set. This is an effort to keep the training and test sets unbiased towards scenes that have more points sampled from them. 
 
 
 4. Features in Final Dataset
 ----------------------------
- 
+
 Each point in the final dataset has the following associated features:
 
-    - geometry: coordinates of point p (in the CRS of the NAIP with itemid naip_id)
-    - naip_id: itemid of the NAIP from which p was sampled from
-    - year, month, day_in_year: year, month and day of the year when the NAIP image was collected
-    - polygon_id: id of the polygon from which p was sampled from
-    - iceplant: whether point p corresponds to a confirmed iceplant location or a confirmed non-iceplant location (0 = non-iceplant, 1 = iceplant)
-    - r, g, b, nir: Red, Green, Blue and NIR bands values of NAIP scene with naip_id at at cooridnates of point p
-    - ndvi: computed for each point using the Red and NIR bands
-    - aoi: name of the area of interest where the points were sampled from
+    1. geometry: coordinates of point p (in the CRS of the NAIP with itemid naip_id)
+    2. naip_id: itemid of the NAIP from which p was sampled from
+    3,4,5,6. year, month, day_in_year: year, month and day of the year when the NAIP image was collected
+    7. polygon_id: id of the polygon from which p was sampled from
+    8. iceplant: whether point p corresponds to a confirmed iceplant location or a confirmed non-iceplant location (0 = non-iceplant, 1 = iceplant)
+    9,10,11,12. r, g, b, nir: Red, Green, Blue and NIR bands values of NAIP scene with naip_id at at cooridnates of point p
+    13. ndvi: computed for each point using the Red and NIR bands
+    14. aoi: name of the area of interest where the points were sampled from
     
 
 
@@ -46,13 +61,3 @@ Each point in the final dataset has the following associated features:
 -------------------------------
 
 
-
-
-
-
-what, why, and the how of the project.
-
-
-What your application does,
-Why you used the technologies you used,
-Some of the challenges you faced and features you hope to implement in the future.
