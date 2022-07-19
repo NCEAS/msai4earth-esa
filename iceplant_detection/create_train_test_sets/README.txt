@@ -51,13 +51,21 @@ Each point in the final dataset has the following associated features:
     3,4,5,6. year, month, day_in_year: year, month and day of the year when the NAIP image was collected
     7. polygon_id: id of the polygon from which p was sampled from
     8. iceplant: whether point p corresponds to a confirmed iceplant location or a confirmed non-iceplant location (0 = non-iceplant, 1 = iceplant)
-    9,10,11,12. r, g, b, nir: Red, Green, Blue and NIR bands values of NAIP scene with naip_id at at cooridnates of point p
+    9,10,11,12. r, g, b, nir: Red, Green, Blue and NIR bands values of NAIP scene with naip_id at cooridnates of point p
     13. ndvi: computed for each point using the Red and NIR bands
     14. aoi: name of the area of interest where the points were sampled from
+    15. lidar: canopy height at point p on year of point collection 
+    16,17. max_lidar, min_lidar: max/min canopy height in a 3x3 window centered at point p
+    18. max_min_lidar: difference between max_lidar and min_lidar features
+    19. avg_lidar: avg canopy height in a 3x3 window centered at point p
+    
+Features 1-14 are generated in the first notebook 1_sample_pts_from_polygons. Features 15-19 are added in the third notebook 3_add_canopy_height_features. 
     
 
+5. Custom Libraries
+-------------------
 
-5. Creating Train and Test Sets
--------------------------------
+
+
 
 
