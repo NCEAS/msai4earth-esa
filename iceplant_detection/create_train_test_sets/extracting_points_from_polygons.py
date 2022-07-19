@@ -128,7 +128,11 @@ def sample_naip(polys, num_random_pts, naip, item):
     df['day_in_year'] = day_in_year(item.datetime.day, item.datetime.month, item.datetime.year )
     df['naip_id'] = item.id           # add naip item id to samples
 
-    df[['geometry','x','y','iceplant','r','g','b','nir','year','month','day','naip_id','polygon_id']]
+    df[['geometry','x','y',
+        'iceplant',
+        'r','g','b','nir',
+        'year','month','day_in_year',
+        'naip_id','polygon_id']]
     return df
 
 # *********************************************************************
