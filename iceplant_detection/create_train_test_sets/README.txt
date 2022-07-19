@@ -64,8 +64,20 @@ Features 1-14 are generated in the first notebook 1_sample_pts_from_polygons. Fe
 
 5. Custom Libraries
 -------------------
+There are two custom libraries implemented for the data sampling:
 
+* extracting_points_from_polygons.py
+Custom functions to:
+    - access NAIP data in the Planetary Computer repository using pystac_client and planetary_computer libraries
+    - sample random points inside a shapely polygon
+    - define a number of points to sample from each polygon based on the number of pixels it covers
+    - extract spectral and calendar values from NAIP iamges at specific coordinates
 
+* lidar_sampling_functions.py:
+Custom functions to:
+    - create and save auxiliary rasters to sample avg_lidar, max_lidar and min_lidar features using methods from scipy.ndimage 
+    - convert points in csv to geodataframe
+    - sample raster values at a list of points
 
 
 
