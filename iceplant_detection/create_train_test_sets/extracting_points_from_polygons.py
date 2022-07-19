@@ -18,17 +18,7 @@ random.seed(10)
 import calendar
 import warnings
 
-# *********************************************************************
 
-def day_in_year(day,month,year):
-    days_in_month = [31,28,31,30,31,30,31,31,30,31,30,31]
-    n = 0
-    for i in range(0,month-1):
-        n = n+days_in_month[i]
-    n = n+day
-    if calendar.isleap(year) and month>2:
-        n = n+1
-    return n
 
 # *********************************************************************
 
@@ -40,16 +30,6 @@ def path_to_polygons(aoi,year):
                       aoi+'_polygons_'+str(year), 
                       aoi+'_polygons_'+str(year)+'.shp')
     return fp
-
-# *********************************************************************
-
-# def path_to_points_csv(aoi,year):
-#     # root for all polygons collected on naip scenes
-#     root = '/home/jovyan/msai4earth-esa/iceplant_detection/data_sampling/points_from_naip_images'
-#     fp = os.path.join(root, 
-#                       aoi+'_points', 
-#                       aoi+'_points_'+str(year)+'.csv')
-#     return fp
 
 
 # *********************************************************************
@@ -207,34 +187,7 @@ def num_pts_sliding_proportion(polys, alpha, diff):
     
     return num_random_pts
 
-# # ---------------------------------------------
-
-# def sample_naip_from_polys_sliding(polys_raw, itemid, alpha, diff):
-#     item = get_item_from_id(itemid)
-#     naip = get_raster_from_item(item)
-    
-#     polys = polys_raw.to_crs(naip.crs)
-    
-#     pixel_size = naip.res[0]*naip.res[1]
-#     polys['pixels'] = polys.geometry.apply(lambda p: int((p.area/pixel_size)))
-#     polys = polys.sort_values(by=['pixels'], ascending=False).reset_index(drop=True)
-    
-#     print(polys.pixels)
-    
-#     num_random_pts = num_pts_sliding_proportion(polys, alpha, diff)
-#     return sample_naip(polys, num_random_pts, naip, item)
-
-# # ---------------------------------------------
-
-# def naip_sample_sliding_no_warnings(polys, itemid, alpha, diff):
-#     with warnings.catch_warnings():
-#         warnings.simplefilter("ignore")
-#         df = sample_naip_from_polys_sliding(polys, itemid, alpha, diff)
-#     return df
-
-# *********************************************************************
-# alpha = proportion to sample from "small"polygons
-# m = max number of pixels to sample from any polygon
+# ---------------------------------------------
 
 def num_pts_sliding(polys, alpha, m):
     
@@ -267,6 +220,7 @@ def naip_sample_sliding_no_warnings(polys, itemid, alpha, m):
         df = sample_naip_from_polys_sliding(polys, itemid, alpha, m)
     return df
 
+
 # *********************************************************************
 # --- print proportions of ice plant (1) vs no iceplant (0) in an array with only 0 and 1
 def iceplant_proportions(labels):
@@ -281,3 +235,14 @@ def iceplant_proportions(labels):
     print()
     
 
+# *********************************************************************
+
+def day_in_year(day,month,year):
+    days_in_month = [31,28,31,30,31,30,31,31,30,31,30,31]
+    n = 0
+    for i in range(0,month-1):
+        n = n+days_in_month[i]
+    n = n+day
+    if calendar.isleap(year) and month>2:
+        n = n+1
+    return n
