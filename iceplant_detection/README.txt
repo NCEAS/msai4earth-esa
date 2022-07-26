@@ -51,3 +51,9 @@ Custom functions to:
     - create and save auxiliary rasters to sample avg_lidar, max_lidar and min_lidar features using methods from scipy.ndimage 
     - convert points in csv to geodataframe
     - sample raster values at a list of points
+    
+* iceplant_detection_functions.py
+
+* model_prep_and_evals.py
+
+* saving_prediction_rasters.py
