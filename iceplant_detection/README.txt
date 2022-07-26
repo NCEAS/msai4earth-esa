@@ -12,9 +12,9 @@ All code is being developed and tested in Microsoft's Planetary Computer coding 
 
 2. TRIALS 
 ---------
-All folders starting with TRIALS_ include notebooks with trial code that is no longer in use or has been integrated to the custom libraries (.py files).
+All folders starting with TRIALS_ include notebooks with trial code that is no longer in use.
 
-Notebooks in this folder starting with TRIALS_# are workflows on which we are currently working on:
+Notebooks in the current folder starting with TRIALS_# are workflows on which we are working on at the moment:
 
 * TRIALS_8: classify pixels in a NAIP scene into iceplant, non-iceplant and low-ndvi using a random forest classification model trained on the spectral features of the training set generated in data_sampling_workflow
 
@@ -26,13 +26,19 @@ Notebooks in this folder starting with TRIALS_# are workflows on which we are cu
 
 
 
-3. Workflows
-------------
+3. Stable code
+--------------
 
-* data_sampling_workflow
+These are folders containing stable code:
 
-* separating_naip_flights
+* data_sampling_workflow:
+This folder contains a series of five notebooks that create a dataset of georeferenced points of known iceplant and non-iceplant locations across time on the Santa Barbara County coast. Each point in the final dataset has information about its location, collection date, and spectral and canopy height features at that point (and time of collection). The resulting dataset (or a subset of it) is used to train machine learning models to identify iceplant locations on NAIP images.  
 
+
+* separating_naip_flights:
+This folder contains a notebook that, given a shapefile (not too complex) returns:
+ 1) a list of the NAIP scenes that cover the shapefile
+ 2) a shapefile with the NAIP scenes bounding boxes aggregated by date of collection
     
 
 5. Custom Libraries
