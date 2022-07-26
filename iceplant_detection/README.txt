@@ -39,7 +39,8 @@ This folder contains a series of five notebooks that create a dataset of georefe
 This folder contains a notebook that, given a shapefile (not too complex) returns:
  1) a list of the NAIP scenes that cover the shapefile
  2) a shapefile with the NAIP scenes bounding boxes aggregated by date of collection
-    
+The coastal_buffer folder contains a shapefile of a rough outline of the Santa Barbara County coast that can be used to run the notebook. 
+
 
 5. Custom Libraries
 -------------------
