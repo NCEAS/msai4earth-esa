@@ -9,6 +9,7 @@ This is a working repository for an NCEAS project that uses machine learning tec
 All code is being developed and tested in Microsoft's Planetary Computer coding environment. The Planetary Computer is a cloud-based analysis platform with an expansive catalog of environmental data and a development environment based on open-source tools (see https://planetarycomputer.microsoft.com).
 
 
+
 2. TRIALS 
 ---------
 All folders starting with TRIALS_ include notebooks with trial code that is no longer in use.
@@ -32,16 +33,19 @@ These are folders containing stable code:
 * data_sampling_workflow:
 This folder contains a series of five notebooks that create a dataset of georeferenced points of known iceplant and non-iceplant locations across time on the Santa Barbara County coast. Each point in the final dataset has information about its location, collection date, and spectral and canopy height features at that point (and time of collection). The resulting dataset (or a subset of it) is used to train machine learning models to identify iceplant locations on NAIP images.  
 
-
 * separating_naip_flights:
 This folder contains a notebook that, given a shapefile (not too complex) returns:
  1) a list of the NAIP scenes that cover the shapefile
  2) a shapefile with the NAIP scenes bounding boxes aggregated by date of collection
 The coastal_buffer folder contains a shapefile of a rough outline of the Santa Barbara County coast that can be used to run the notebook. 
 
+
+
 4. areas of interest
 --------------------
 This folder contains a shapefile with a list of aeras of interest and the following corresponding attributes: name of aoi, region (Dangermond, Goleta, Santa Barbara), item ids for the NAIP images where the aoi is located, include all years since 2012.  
+
+
 
 5. Custom Libraries
 -------------------
