@@ -3,7 +3,6 @@ ICE PLANT DETECTION MODEL
 
 1. About
 --------
-
 This is a working repository for an NCEAS project that uses machine learning techniques to look for areas with ice plant (Carpobrotus edulis) along the Santa Barbara County coast. In this project we analyse aerial images collected by the National Agriculture Imagery Program (NAIP) from 2012 to 2020. 
 
 
@@ -46,16 +45,28 @@ This folder contains a shapefile with a list of aeras of interest and the follow
 
 5. Custom Libraries
 -------------------
-There are four custom libraries implemented for the data sampling:
+There are four custom libraries implemented to run the TRIALS_# notebooks:
 
-* lidar_sampling_functions.py:
+* lidar_sampling_functions.py
 Custom functions to:
     - create and save auxiliary rasters to sample avg_lidar, max_lidar and min_lidar features using methods from scipy.ndimage 
     - convert points in csv to geodataframe
     - sample raster values at a list of points
     
 * iceplant_detection_functions.py
+Custom functions to:
+    - get a subset of a NAIP scene via the Planetary Computer's APO
+    - calculate NDVI and of a given raster with bands r,g,b,nir
+    - create a dataframe with spectral and date features for each pixel in a NAIP scene or subset of one
+    - apply a classification model to each pixel of a NAIP scene
+    - convert model binary predictions back to image
+    
 
 * model_prep_and_evals.py
+Custom functions to:
+    - Divide a dataset into train/test sets with equal proportion of points from each NAIP scene
+    - Nicely print statistics about the proportion of iceplant in training/test sets
+    - Nicely print threshold metrics for predictions (accuracy, sensitivity, specificity, precsion, etc)
 
 * saving_prediction_rasters.py
+    - this is work in progress and will probably be merged with one of the other libraries
