@@ -28,7 +28,6 @@ Notebooks in the current folder starting with TRIALS_# are workflows on which we
 
 3. Stable code
 --------------
-
 These are folders containing stable code:
 
 * data_sampling_workflow:
@@ -41,10 +40,13 @@ This folder contains a notebook that, given a shapefile (not too complex) return
  2) a shapefile with the NAIP scenes bounding boxes aggregated by date of collection
 The coastal_buffer folder contains a shapefile of a rough outline of the Santa Barbara County coast that can be used to run the notebook. 
 
+4. areas of interest
+--------------------
+This folder contains a shapefile with a list of aeras of interest and the following corresponding attributes: name of aoi, region (Dangermond, Goleta, Santa Barbara), item ids for the NAIP images where the aoi is located, include all years since 2012.  
 
 5. Custom Libraries
 -------------------
-There are two custom libraries implemented for the data sampling:
+There are four custom libraries implemented for the data sampling:
 
 * lidar_sampling_functions.py:
 Custom functions to:
