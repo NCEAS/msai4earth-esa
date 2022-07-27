@@ -5,7 +5,6 @@ ICE PLANT DETECTION MODEL
 --------
 This is a working repository for an NCEAS project that uses machine learning techniques to look for areas with ice plant (Carpobrotus edulis) along the Santa Barbara County coast. In this project we analyse aerial images collected by the National Agriculture Imagery Program (NAIP) from 2012 to 2020. 
 
-
 All code is being developed and tested in Microsoft's Planetary Computer coding environment. The Planetary Computer is a cloud-based analysis platform with an expansive catalog of environmental data and a development environment based on open-source tools (see https://planetarycomputer.microsoft.com).
 
 
@@ -64,7 +63,6 @@ Custom functions to:
     - create a dataframe with spectral and date features for each pixel in a NAIP scene or subset of one
     - apply a classification model to each pixel of a NAIP scene
     - convert model binary predictions back to image
-    
 
 * model_prep_and_evals.py
 Custom functions to:
