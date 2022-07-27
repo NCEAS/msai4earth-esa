@@ -2,76 +2,54 @@
 
 This repository gathers code for the joint project between NCEAS and Microsoft to develop a new approach Ecosystem assessment.
 
-----
+-----
+-----
+
+# Active projects:
+**iceplant_detection**
+
+This is a working repository for an NCEAS project that uses machine learning techniques to identify areas with ice plant (Carpobrotus edulis) along the Santa Barbara County coast. In this project we analyse aerial images collected by the National Agriculture Imagery Program (NAIP) from 2012 to 2020.
+
+C. edulis is a succulent shrub native to coastal areas of South Africa, a region with a climate similar to that of coastal areas in California, where this plant has become an invasive species. At locations outside its native range  C. edulis competes directly with several native, threatened or endangered plant species for nutrients, water, light, and space [[1]](http://issg.org/database/species/impact_info.asp?si=1010&fr=1&sts=&lang=EN). 
+
+-----
+
+**examples**
+
+Examples of accessing and handling Landsat, GBIF, NAIP and other data through the Planetary Computer.
+
+-----
+-----
+
+# Archived:
+
+**ecosystem_change**
+
+Developed climate data layers to detect potential zones of change or stress in the environment at the CA State level. 
+
+-----
 
 **IUCN_trials**
 
 R notebooks exploring the spatial metrics from [IUCN Red List Assessments package](https://cran.r-project.org/web/packages/redlistr/vignettes/redlistr-vignette.html). 
 
 -----
-**iceplant_detection**
-
-- TRIALS_ice_plant_training_set.ipynb
-
-    Trials for accessing NAIP scenes and sampling them using GBIF data.
-
-- extracting_pts_from_polygons.ipynb
-
-    Sampling random points from polygons marked as iceplant/no iceplant and using these to extract bands from NAIP scene.
-
-- finding_naip_images.ipynb
-
-    Given points (from GBIF in this case) looks for the NAIP scene that contains each point and finds the NAIP scene that contains the most observations. 
-
-- random_forest.ipynb
-    
-    Random forest per-pixel classifier trial. 
-
-- selecting_gbif_data.ipynb
-    
-    Downloading all California c.edulis observations from the latest GBIF datset in the Planetary Computer.
-
 -----
 
-**examples**
-
-Examples of accessing and handling Landsat, GBIF, NAIP and othe raster data.
-
------
-
-**ecosystem_change**
-
-- **aridity_layer**
-  - ca_aridity_TRIALS.ipynb
-  Different examples of how to manipulate data from the [Gridmet dataset](https://planetarycomputer.microsoft.com/dataset/gridmet).
- 
-  - ca_aridity_FUNCTIONS.ipynb
-  Workflow to generate and compare CA aridity index and moisture domains maps. Based on [Gridmet dataset](https://planetarycomputer.microsoft.com/dataset/gridmet).
- 
- 
-- **climate_layer**
-  - tmax_TRIALS.ipynb
-  Different examples of how to manipulate maximum average temperature data from the [Dayment Annual dataset](https://planetarycomputer.microsoft.com/dataset/daymet-annual-na)
-  - clim_regions_TRIALS.ipynb
-  Trial of grouping pixels into regions by thickening them usimg opencv and exporting them as geodataframe.
-  - clim_outliers_TRIALS.ipynb
-  Identifying some pixels with possible outlier values.
-  - clim_avg_FUNCTIONS.ipynb
-  Workflow to generate and compare 30-year average temperature normals and temperature regions maps. Based on [Dayment Annual dataset](https://planetarycomputer.microsoft.com/dataset/daymet-annual-na)
-  - regions_FUNCTIONS.ipynb
-  Functions to extract polygons from single-valued rasters and export them as shapefiles.
-
------
+# Data:
   
 **shapefiles_n_rasters**
 Folder with various shapefiles and rasters used throughout.
 - CA_geometry
-  California, US shapefile. [Source](https://data.ca.gov/dataset/ca-geographic-boundaries)
+  California, US boundary shapefile. [Source](https://data.ca.gov/dataset/ca-geographic-boundaries)
 - Santa Barbara, CA shapefile. 
+  Shapefile of Santa Barbara County's boundary
 - sedgwick_reserve
   - sedgwick_geometry
   Shapefile of the University of California's Sedgwick Reserve. [Source](https://www.dropbox.com/sh/kwt1dvdsloe5fep/AAA-HJPYdnPEOoSdD6dJKKMma/Sedgwick%20Reserve%20(32)?dl=0&preview=Sedgwick.zip&subfolder_nav_tracking=1)
   - Raster file of different vegetation types at Sedgwick Reserve 2017. [Source](https://databasin.org/datasets/6693af651946425c8633551df0457526/)
+- calflora
+   
 
 
   
