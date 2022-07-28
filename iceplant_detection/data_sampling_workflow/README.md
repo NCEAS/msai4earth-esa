@@ -11,8 +11,6 @@ Each point in the final dataset has information about its location, collection d
 All code was developed and tested in [Microsoft's Planetary Computer](https://planetarycomputer.microsoft.com) coding environment. The Planetary Computer is a cloud-based analysis platform with an expansive catalog of environmental data and a development environment based on open-source tools.
 
 
---------------
-
 ## Data Access
 
 
@@ -22,7 +20,7 @@ The California Forest Observatory canopy height dataset can be downloaded throug
 
 The starting point for the data sampling is a set of polygons that outline confirmed iceplant and non-iceplant locations. These are available in the polygons_from_naip_images_folder. To create these polygons, JB and CGG outlined the confirmed iceplant and non-iceplant locations on all available NAIP images over four regions regularly spaced along the Santa Barbara County coast: Carpinteria State Beach, the University of California Santa Barbara campus, Gaviota State Park, and Point Conception. The ice plant locations were based on field observations and digitized records of ice plant locations from GBIF and Calflora. To create the polygons, the NAIP images were loaded from the Planetary Computer's data repository on QGIS using the [Open STAC API Browser plugin](https://planetarycomputer.microsoft.com/docs/overview/qgis-plugin/).
 
------------------
+
 
 ## Notebook Workflow
 
@@ -43,7 +41,7 @@ Assembles all the csvs produced by the previous notebook into a single dataframe
 * 5_create_train_test_set
 Divides the dataset created in the previous notebook into train and tests sets by sampling the same specified percentage of points per scene to go into the training set. This is an effort to keep the training and test sets unbiased towards scenes that have more points sampled from them. 
 
-----------------------------
+
 ## Features in Final Dataset
 
 
@@ -64,7 +62,7 @@ Each point in the final dataset has the following associated features:
     
 Features 1-14 are generated in the first notebook 1_sample_pts_from_polygons. Features 15-19 are added in the third notebook 3_add_canopy_height_features. 
     
-----------------
+
 
 ## Custom Libraries
 
