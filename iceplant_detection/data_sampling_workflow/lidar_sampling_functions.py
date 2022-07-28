@@ -1,3 +1,5 @@
+### FILE AT DATA SAMPLING
+
 import os
 import numpy as np
 import pandas as pd
@@ -18,7 +20,7 @@ import pystac_client
 
 def path_to_lidar(year):
     # root for all Santa Barbara County canopy height rasters
-    root = '/home/jovyan/msai4earth-esa/iceplant_detection/create_train_test_sets/SantaBarbaraCounty_lidar/'
+    root = '/home/jovyan/msai4earth-esa/iceplant_detection/data_sampling_workflow/SantaBarbaraCounty_lidar/'
     fp = os.path.join(root, 
                       'SantaBarbaraCounty_lidar_'+str(year)+'.tif')
     return fp
