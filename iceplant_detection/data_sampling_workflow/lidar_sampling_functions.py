@@ -7,6 +7,7 @@ import geopandas as gpd
 from shapely.geometry import Point
 
 import rasterio
+import rioxarray as rioxr
 from rasterio.crs import CRS
 
 # https://stackoverflow.com/questions/43966350/getting-the-maximum-in-each-rolling-window-of-a-2d-numpy-array
