@@ -38,6 +38,11 @@ This folder contains a notebook that, given a shapefile (not too complex) return
     
 The coastal_buffer folder contains a shapefile of a rough outline of the Santa Barbara County coast that can be used to run the notebook. 
 
+[//]: # (--------------------)
+
+## Archived Code
+
+The notebooks in all folders starting with TRIALS_ are no longer in use.
 
 [//]: # (--------------------)
 
@@ -87,8 +92,3 @@ Functions to:
 ### `saving_prediction_rasters.py`
 This is work in progress and will probably be merged with one of the other modules.
 
-[//]: # (--------------------)
-
-## Archived Code
-
-The notebooks in all folders starting with TRIALS_ are no longer in use.
