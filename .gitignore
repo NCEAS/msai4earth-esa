@@ -144,3 +144,6 @@ iceplant_detection/data_sampling_workflow/train_set.csv
 iceplant_detection/data_sampling_workflow/test_set.csv
 iceplant_detection/data_sampling_workflow/temp/*
 /iceplant_detection/data_sampling_workflow/SantaBarbaraCounty_lidar/*
+
+
+shapefiles_n_rasters/jldp_boundary/*
