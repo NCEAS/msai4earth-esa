@@ -6,3 +6,5 @@ location: iceplant_detection/data_sampling_workflow/
 - iceplant_detection_functions_Copy1.py
 location: iceplant_detection/
 
+Alternatively, move the TRIALS_# file to the main project folder. 
+
