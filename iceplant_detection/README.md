@@ -9,17 +9,13 @@ All code is being developed and tested in [Microsoft's Planetary Computer](https
 
 [//]: # (--------------------)
 
-## TRIALS 
-
-All folders starting with TRIALS_ include notebooks with trial code that is no longer in use.
+## Active Code 
 
 Notebooks in the current folder starting with TRIALS_# are workflows on which we are working on at the moment:
 
-* TRIALS_8: classify pixels in a NAIP scene into iceplant, non-iceplant and low-ndvi using a random forest classification model trained on the spectral features of the training set generated in data_sampling_workflow
+* TRIALS_8: classify pixels in a NAIP scene into iceplant, non-iceplant and low-ndvi using a random forest classification model trained on **only the spectral and date** features of the training set generated in data_sampling_workflow
 
-* TRIALS_10: classify pixels in a NAIP scene into iceplant and non-iceplant using a random forest classification model trained on the spectral and canopy height features of the training set generated in data_sampling_workflow
-
-* TRIALS_11: same as TRIALS_10, but classifies into three categories 
+* TRIALS_11: classify pixels in a NAIP scene into iceplant, non-iceplant and low-ndvi using a random forest classification model trained on the **spectral, date and canopy height** features of the training set generated in data_sampling_workflow
 
 * TRIALS_12: assign to each pixel within an area of interest (subset of NAIP scene) the [probability](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html#sklearn.ensemble.RandomForestClassifier.predict_proba)  with which the random forest classifies it as iceplant (see 
 
@@ -54,7 +50,7 @@ The `areas_of_interest` folder contains a shapefile with a list of aeras of inte
 
 ## Custom Libraries
 
-There are four custom libraries implemented to run the notebooks in this repository. The locations are:
+There are five custom libraries implemented to run the notebooks in this repository. The locations are:
 
 	iceplant_detection/data_sampling_workflow/
 		extracting_points_from_polygons.py
@@ -90,3 +86,9 @@ Functions to:
 
 ### `saving_prediction_rasters.py`
 This is work in progress and will probably be merged with one of the other modules.
+
+[//]: # (--------------------)
+
+## Archived Code
+
+The notebooks in all folders starting with TRIALS_ are no longer in use.
