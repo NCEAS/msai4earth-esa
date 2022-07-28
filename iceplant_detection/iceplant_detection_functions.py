@@ -169,7 +169,7 @@ def select_ndvi_df(image, thresh=0.05):
     df['ndvi'] = x.reshape(x.shape[0]*x.shape[1])
     
     vegetation = df[df.ndvi>thresh]
-    #vegetation.drop(labels=['ndvi'], axis=1, inplace=True)
+    #vegetation.drop(labels=['ndvi'], axis=1, inplace=True)  # this is uncommented for TRIALS_model_with_lidar
     return vegetation
 
 # ---------------------------------
@@ -227,6 +227,32 @@ def day_in_year(day,month,year):
     if calendar.isleap(year) and month>2:
         n = n+1
     return n
+
+# **********************************************************************************************************
+
+def preds_to_image_3labels(nrows, ncols, index, predictions):
+    preds = pd.DataFrame(predictions, 
+                         columns=['is_iceplant'], 
+                         index = index)
+    is_iceplant_index = preds[preds.is_iceplant == 1].index
+    non_iceplant_index = preds[preds.is_iceplant == 0].index
+    
+    # initialize empty raster
+    reconstruct = np.zeros((nrows,ncols))
+
+    # add is_iceplant as 1's
+    i = is_iceplant_index / ncols
+    i = i.astype(int)
+    j = is_iceplant_index % ncols
+    reconstruct[i,j] = 1
+
+    # add non_iceplant as 2's
+    i = non_iceplant_index / ncols
+    i = i.astype(int)
+    j = non_iceplant_index % ncols
+    reconstruct[i,j] = 2
+
+    return reconstruct
 
 # # ---------------------------------
 
