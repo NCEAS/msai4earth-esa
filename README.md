@@ -2,8 +2,6 @@
 
 This repository gathers code for the joint project between NCEAS and Microsoft to develop a new approach Ecosystem assessment.
 
------
------
 
 # Active projects:
 **iceplant_detection**
@@ -12,14 +10,10 @@ This is a working repository for an NCEAS project that uses machine learning tec
 
 C. edulis is a succulent shrub native to coastal areas of South Africa, a region with a climate similar to that of coastal areas in California, where this plant has become an invasive species. At locations outside its native range  C. edulis competes directly with several native, threatened or endangered plant species for nutrients, water, light, and space [[1]](http://issg.org/database/species/impact_info.asp?si=1010&fr=1&sts=&lang=EN). 
 
------
-
 **examples**
 
 Examples of accessing and handling Landsat, GBIF, NAIP and other data through the Planetary Computer.
 
------
------
 
 # Archived:
 
@@ -27,14 +21,11 @@ Examples of accessing and handling Landsat, GBIF, NAIP and other data through th
 
 Developed climate data layers to detect potential zones of change or stress in the environment at the CA State level. 
 
------
 
 **IUCN_trials**
 
 R notebooks exploring the spatial metrics from [IUCN Red List Assessments package](https://cran.r-project.org/web/packages/redlistr/vignettes/redlistr-vignette.html). 
 
------
------
 
 # Data:
   
