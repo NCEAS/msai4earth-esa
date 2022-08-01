@@ -91,7 +91,7 @@ def open_window_in_scene(itemid, reduce_box):
                             Coordiantes of the box's vertices must be given in EPSG:4326 crs.
             Returns: 
                         numpy.ndarray: 
-                            aster values of all the bands (r,g,b,nir) in the subset of NAIP scene.
+                            raster values of all the bands (r,g,b,nir) in the subset of NAIP scene.
     """             
     href, win = href_and_window(itemid, reduce_box)
     return rasterio.open(href).read([1,2,3,4], window=win)
@@ -246,6 +246,8 @@ def plot_preds_vs_original(itemid, reduce_box, predictions, year, model_name = '
 
 # **********************************************************************************************************
 # **********************************************************************************************************
+ 
+def ndvi(image):
     """
         Pixel-by-pixel NDVI calculation of an image with four bands.
             Parameters:
@@ -254,12 +256,12 @@ def plot_preds_vs_original(itemid, reduce_box, predictions, year, model_name = '
             Returns: 
                     numpy.ndarray: 
                         array of size m,n, the result of calculating the NDVI to image pixel-by-pixel
-    """  
-def ndvi(image):
+    """ 
     x = image.astype('int16')
     return (x[3,...] - x[0,...])/(x[3,...] + x[0,...])
 
 # ---------------------------------
+def ndvi_thresh(image, thresh=0.05):
     """
         Identifies which pixels in a 4-band image have NDVI above a given threshold.
             Parameters:
@@ -271,7 +273,6 @@ def ndvi(image):
                     numpy.ndarray: 
                         array of size m,n in which pixels of image with ndvi<thresh have 0 value and pixels with ndvi>=thresh have value 1.
     """  
-def ndvi_thresh(image, thresh=0.05):
     x = ndvi(image)
     low_ndvi = x<thresh
     x[low_ndvi] = 0
@@ -279,7 +280,8 @@ def ndvi_thresh(image, thresh=0.05):
     return x
 
 # ---------------------------------
-# TO DO: MAYBE DELETE??
+# TO DO: MAYBE DELETE?? seems like we only need the previous one
+def select_ndvi_image(itemid, reduce_box, thresh=0.05):
     """
         Identifies which pixels in a rectangular subset of a specified NAIP scene have NDVI above a given threshold.
              Parameters:
@@ -294,63 +296,155 @@ def ndvi_thresh(image, thresh=0.05):
                     numpy.ndarray: 
                         array of size m,n in which pixels of image with ndvi<thresh have 0 value and pixels with ndvi>=thresh have value 1.
     """  
-def select_ndvi_image(itemid, reduce_box, thresh=0.05):
     image = open_window_in_scene(itemid, reduce_box)
     return ndvi_thresh(image,thresh)
 
 
-# **********************************************************************************************************
-# **********************************************************************************************************
-
-# image is a (4,m,n) np array in which bands are r,g,b,nir
-def spectral_df(image):
+# ---------------------------------
+def select_ndvi_df(image, thresh=0.05):
+    """
+        Identifies which pixels in a 4-band image have NDVI above a given threshold and returns information as data frame.
+             Parameters:
+                        image (numpy.ndarray): 
+                            a (4,m,n) array. The first bands are red, green, blue, and NIR, in that specific order.
+                        thresh (float in (-1,1)): 
+                            NDVI threshold
+            Returns: 
+                        above_thresh (pandas.DataFrame): 
+                            A data frame with all the pixels in image having ndvi>thresh.
+                            Each pixel is a row in the data frame and the columns contain a pixel's spectral information.
+                            Data frame has five columns: red, green, blue, nir and NDVI
+    """  
     pixels = image.reshape([4,-1]).T
     df = pd.DataFrame(pixels, columns=['r','g','b','nir'])
     
     x = ndvi(image)
     df['ndvi'] = x.reshape(x.shape[0]*x.shape[1])
+    
+    above_thresh = df[df.ndvi>thresh]
+    # TO DO: ?? what's this>>
+    #vegetation.drop(labels=['ndvi'], axis=1, inplace=True)  # this is uncommented for TRIALS_model_with_lidar
+    return above_thresh
+
+
+# **********************************************************************************************************
+# **********************************************************************************************************
+def spectral_df(image):
+    """
+        Transforms a 4-band image into a data frame with columns red, green, blue, nir and NDVI
+            Parameters:
+                        image (numpy.ndarray): 
+                            a (4,m,n) array. The first bands are red, green, blue, and NIR, in that specific order.def 
+            Returns:
+                        df (pandas.DataFrame):
+                            A data frame containing the spectral information of every pixel in the image as rows.
+                            Data frame has five columns: red, green, blue, nir and NDVI
+    """
+    pixels = image.reshape([4,-1]).T  
+    df = pd.DataFrame(pixels, columns=['r','g','b','nir'])
+    
+    x = ndvi(image)    # add ndvi
+    df['ndvi'] = x.reshape(x.shape[0]*x.shape[1])
     return df
+
+# ---------------------------------
+def day_in_year(day,month,year):
+    """
+        Transforms a date into a day in the year from 1 to 365/366 (takes into account leap years).
+            Paratmeters:
+                day (int): day of the date
+                month (int 1-12): month of the date
+                year (int): year of date
+            Returns:
+                n (int): date as day in year
+    """
+    days_in_month = [31,28,31,30,31,30,31,31,30,31,30,31]
+    n = 0
+    for i in range(0,month-1):
+        n = n+days_in_month[i]
+    n = n+day
+    if calendar.isleap(year) and month>2:
+        n = n+1
+    return n
+
 # ---------------------------------
 
+# TO DO: unsure this is ever used
 def add_date_features(df, item):
+    """
+        Adds a NAIP scene's date information as columns to a data frame.
+            Parameters:
+                        item (pystac.item.Item): 
+                            item associated to a NAIP image (can obtain from itemid via function get_item_from_id)
+                        df (pandas.DataFrame): 
+                            within the workflow this is a data frame in which each row is data for a pixel in image. 
+            Returns:
+                        df (pandas.DataFrame):
+                            a copy of the given data frame augmented with three columns with constant values.
+                            the columns contain information about the date of collection of the NAIP scene given by item.
+                            the columsn are: 
+                                year (int: year of scene colletion), month (int: month of scene collection), 
+                                and day_in_year (int from 1 to 365: day in year which scene was collected)
+    """    
         df['year'] = item.datetime.year
         df['month'] = item.datetime.month
         df['day_in_year'] = day_in_year(item.datetime.day, item.datetime.month, item.datetime.year)
         return df
-    
+
 # ---------------------------------
 
-# TO DO: probably should not mask ndvi here
+# TO DO: probably should not mask ndvi here?
+# TO DO: move item after image
+# TO DO: pass date features as paramenters, don't collect from items
+# TO DO: maybe just splig into three functions? select ndvi and add_date_features
 def features_over_aoi(item, image, thresh=0.05):
-
-    veg = select_ndvi_df(image, thresh)
+    """
+       Selects which pixels in a 4-band image have NDVI above a given threshold and organizes them as a dataframe in which each row is the spectral and date-of-collection information of the pixel.
+            Parameters:
+                        item (pystac.item.Item): 
+                            item associated to the NAIP scene containing image
+                        image (numpy.ndarray): 
+                            a (4,m,n) array. The first bands are red, green, blue, and NIR, in that specific order.def 
+                        thresh (float in (-1,1)): 
+                            NDVI threshold
+            Returns:
+                        df (pandas.DataFrame): 
+                            A data frame with all the pixels in image having ndvi>thresh.
+                            Each pixel is a row in the data frame and the columns contain a pixel's spectral and date-of collection information.
+                            Data frame has 8 columns (in this order): 
+                                red, green, blue, nir, NDVI, year, month and day_in_year
+    """
+    df = select_ndvi_df(image, thresh)
     
-#    veg['ndvi']=(veg.nir.astype('int16') - veg.r.astype('int16'))/(veg.nir.astype('int16') + veg.r.astype('int16'))
-
-    veg['year'] = item.datetime.year
-    veg['month'] = item.datetime.month
-    veg['day_in_year'] = day_in_year(item.datetime.day, item.datetime.month, item.datetime.year)
+    df['year'] = item.datetime.year
+    df['month'] = item.datetime.month
+    df['day_in_year'] = day_in_year(item.datetime.day, item.datetime.month, item.datetime.year)
 
     # order features
-    veg = veg[['r','g','b','nir','ndvi','year','month','day_in_year']] 
-    return veg
+    df = df[['r','g','b','nir','ndvi','year','month','day_in_year']] 
+    return df
 
-# ---------------------------------
 
-def select_ndvi_df(image, thresh=0.05):
-    pixels = image.reshape([4,-1]).T
-    df = pd.DataFrame(pixels, columns=['r','g','b','nir'])
-    
-    x = ndvi(image)
-    df['ndvi'] = x.reshape(x.shape[0]*x.shape[1])
-    
-    vegetation = df[df.ndvi>thresh]
-    #vegetation.drop(labels=['ndvi'], axis=1, inplace=True)  # this is uncommented for TRIALS_model_with_lidar
-    return vegetation
-
-# ---------------------------------
+# 
+# **********************************************************************************************************
+# **********************************************************************************************************
 
 def indices_backto_image(nrows, ncols, index):
+    """
+        Creates a binary array of dimensions nrows*ncols in which cells with value of 1 correspond to the given list of indices.
+            Parameters:
+                nrows (int): number of rows in output array
+                ncols (int): number of columns in output array
+                index (array of ints): must be values within [0, nrows*ncols-1]
+            Returns:
+                reconstruct (numpy.ndarray):
+                    array with values 0 and 1 of dimensions nrows*ncols in which cells with value of 1 correspond to the given list of indices.
+            Example:
+                Suppose nrows=ncols=3 and index = [2,3,7]. Then the output is the array 
+                |0|0|1|
+                |1|0|0|
+                |0|1|0|
+    """
     # transform indices to coordinates
     i = index / ncols
     i = i.astype(int)
@@ -361,25 +455,11 @@ def indices_backto_image(nrows, ncols, index):
     reconstruct[i,j] = 1
     return reconstruct
 
-
-
 # **********************************************************************************************************
 # **********************************************************************************************************
 
-def day_in_year(day,month,year):
-    days_in_month = [31,28,31,30,31,30,31,31,30,31,30,31]
-    n = 0
-    for i in range(0,month-1):
-        n = n+days_in_month[i]
-    n = n+day
-    if calendar.isleap(year) and month>2:
-        n = n+1
-    return n
-
-# **********************************************************************************************************
-# **********************************************************************************************************
-
-
+# TO DO: FIGURE OUT IF WE WILL KEEP THIS OR SPLIT IT INTO SIMPLER FUNCTIONS
+# TO DO: add water category?
 def preds_to_image_3labels(nrows, ncols, index, predictions):
     preds = pd.DataFrame(predictions, 
                          columns=['is_iceplant'], 
@@ -400,6 +480,6 @@ def preds_to_image_3labels(nrows, ncols, index, predictions):
     i = non_iceplant_index / ncols
     i = i.astype(int)
     j = non_iceplant_index % ncols
-    reconstruct[i,j] = 2
+    reconstruct[i,j] = 0
 
     return reconstruct
