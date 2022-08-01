@@ -1,0 +1,10 @@
+To run the trials in these notebooks you need to correctly import the following custom modules (or make a a copy of them within this folder):
+
+- lidar_sampling_functions.py
+location: iceplant_detection/data_sampling_workflow/
+
+- iceplant_detection_functions_Copy1.py
+location: iceplant_detection/
+
+Alternatively, move the TRIALS_# file to the main project folder. 
+

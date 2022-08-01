@@ -44,7 +44,6 @@ def get_item_from_id(itemid):
         ids = itemid)
     
     item = list(search.get_items())[0]
-    # sign and open item
     return item
 
 # ---------------------------------------------
