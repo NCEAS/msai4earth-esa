@@ -246,14 +246,31 @@ def plot_preds_vs_original(itemid, reduce_box, predictions, year, model_name = '
 
 # **********************************************************************************************************
 # **********************************************************************************************************
-
-# image is a (4,m,n) np array in which bands are r,g,b,nir
+    """
+        Pixel-by-pixel NDVI calculation of an image with four bands.
+            Parameters:
+                        image (numpy.ndarray): 
+                            a (4,m,n) array. The first bands are red, green, blue, and NIR, in that specific order.
+            Returns: 
+                    numpy.ndarray: 
+                        array of size m,n, the result of calculating the NDVI to image pixel-by-pixel
+    """  
 def ndvi(image):
     x = image.astype('int16')
     return (x[3,...] - x[0,...])/(x[3,...] + x[0,...])
 
 # ---------------------------------
-
+    """
+        Identifies which pixels in a 4-band image have NDVI above a given threshold.
+            Parameters:
+                        image (numpy.ndarray): 
+                            a (4,m,n) array. The first bands are red, green, blue, and NIR, in that specific order.
+                        thresh (float in (-1,1)): 
+                            NDVI threshold
+            Returns: 
+                    numpy.ndarray: 
+                        array of size m,n in which pixels of image with ndvi<thresh have 0 value and pixels with ndvi>=thresh have value 1.
+    """  
 def ndvi_thresh(image, thresh=0.05):
     x = ndvi(image)
     low_ndvi = x<thresh
@@ -262,7 +279,21 @@ def ndvi_thresh(image, thresh=0.05):
     return x
 
 # ---------------------------------
-
+# TO DO: MAYBE DELETE??
+    """
+        Identifies which pixels in a rectangular subset of a specified NAIP scene have NDVI above a given threshold.
+             Parameters:
+                        itemid (str): 
+                            the itemid of a single NAIP scene
+                        reduce_box (shapely.geometry.polygon.Polygon): 
+                            box outlining the perimter of the area of interest within the NAIP scene with itemid.
+                            Coordiantes of the box's vertices must be given in EPSG:4326 crs.
+                        thresh (float in (-1,1)): 
+                            NDVI threshold
+            Returns: 
+                    numpy.ndarray: 
+                        array of size m,n in which pixels of image with ndvi<thresh have 0 value and pixels with ndvi>=thresh have value 1.
+    """  
 def select_ndvi_image(itemid, reduce_box, thresh=0.05):
     image = open_window_in_scene(itemid, reduce_box)
     return ndvi_thresh(image,thresh)
