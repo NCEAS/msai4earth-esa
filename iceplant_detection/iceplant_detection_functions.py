@@ -16,7 +16,14 @@ import calendar
 
 # SAME AS IN POINTS FORM POLYGONS 
 def get_item_from_id(itemid):
-    # accesing Azure storage using pystac client
+    """
+        Searches the Planetary Computer's NAIP collection for the item associated with the given itemid.
+            Parameters:
+                        itemid (str): the itemid of a single NAIP scene
+            Returns:
+                        item (pystac.item.Item): item associated to given itemid (unsigned)
+   """
+    # accesing Planetary Computer's storage using pystac client
     URL = "https://planetarycomputer.microsoft.com/api/stac/v1"
     catalog = pystac_client.Client.open(URL)
 
@@ -24,62 +31,129 @@ def get_item_from_id(itemid):
         collections=["naip"],
         ids = itemid)
     
-    item = list(search.get_items())[0]
-    # sign and open item
+    # return 1st item in search (assumes itemid IS associaed to some item)
+    item = list(search.get_items())[0]   # ** TO DO: catch exception
     return item
 
 # ---------------------------------------------
 
 def get_raster_from_item(item):
+    """
+        "Opens" the raster in the given item: returns a rasterio.io.DatasetReader to the raster in item.
+            Parameters: item (pystac.item.Item)
+            Returns: reader (rasterio.io.DatasetReader) 
+    """  
     href = pc.sign(item.assets["image"].href)
-    ds = rasterio.open(href)
-    return ds
+    reader = rasterio.open(href)
+    return reader
 
-# ---------------------------------
+# **********************************************************************************************************
+# **********************************************************************************************************
 
 def href_and_window(itemid, reduce_box):
+    """
+        For the raster associated with itemid, returns location (href) and view onto subset (win) specified by reduce_box. 
+        This is an internal function used by other functions in this module.
+            Parameters:
+                        itemid (str): 
+                            the itemid of a single NAIP scene
+                        reduce_box (shapely.geometry.polygon.Polygon): 
+                            box outlining the perimter of the area of interest within the NAIP scene with itemid.
+                            Coordiantes of the box's vertices must be given in EPSG:4326 crs.
+            Returns: 
+                        href (str): 
+                            location of raster associated with itemid
+                        win (rasterio.windows.Window): 
+                            View onto the rectangular subset of raster associated with itemid, 
+                            subset is specified by reduce_box. 
+                            See https://rasterio.readthedocs.io/en/latest/topics/windowed-rw.html
+    """  
     item = get_item_from_id(itemid)
     # sign and open item
     href = pc.sign(item.assets["image"].href)
-    ds = rasterio.open(href)
+    reader = rasterio.open(href)
 
-    reduce = gpd.GeoDataFrame({'geometry':[reduce_box]}, crs="EPSG:4326")
-    reduce = reduce.to_crs(ds.crs)
-    win = ds.window(*reduce.total_bounds)
+    reduce = gpd.GeoDataFrame({'geometry':[reduce_box]}, crs="EPSG:4326") 
+    reduce = reduce.to_crs(reader.crs)
+    win = reader.window(*reduce.total_bounds)
     return href, win
-
-# **********************************************************************************************************
-# **********************************************************************************************************
-
-
-def small_raster(href, reduce_box):
-    item = get_item_from_id(itemid)
-    # sign and open item
-    href = pc.sign(item.assets["image"].href)
-    
-    rioxr.open_rasterio(href)
-    rgb_small = rgb.rio.clip_box(*reduce.total_bounds)
-    return rgb_small
-
-# *******************************************************************************************************
-
 
 # ---------------------------------
 
 def open_window_in_scene(itemid, reduce_box):
+    """
+        Extract array with raster values (all bands) in the subset of the NAIP scene with itemid outliend by reduce_box.
+             Parameters:
+                        itemid (str): 
+                            the itemid of a single NAIP scene
+                        reduce_box (shapely.geometry.polygon.Polygon): 
+                            box outlining the perimter of the area of interest within the NAIP scene with itemid.
+                            Coordiantes of the box's vertices must be given in EPSG:4326 crs.
+            Returns: 
+                        numpy.ndarray: 
+                            raster values of all the bands (r,g,b,nir) in the subset of NAIP scene.
+    """             
     href, win = href_and_window(itemid, reduce_box)
     return rasterio.open(href).read([1,2,3,4], window=win)
 
 # ---------------------------------
 
 def rgb_window_in_scene(itemid, reduce_box):
-    href, win = href_and_window(itemid, reduce_box)   
+    """
+        Extract array with raster values (only red, green and blue bands) in the subset of the NAIP scene with itemid outliend by reduce_box.
+             Parameters:
+                        itemid (str): 
+                            the itemid of a single NAIP scene
+                        reduce_box (shapely.geometry.polygon.Polygon): 
+                            box outlining the perimter of the area of interest within the NAIP scene with itemid.
+                            Coordiantes of the box's vertices must be given in EPSG:4326 crs.
+            Returns: 
+                        numpy.ndarray: 
+                            raster values of the red, green and blue bands in the subset of NAIP scene.
+    """   
+    href, win = href_and_window(itemid, reduce_box)
     return rasterio.open(href).read([1,2,3], window=win)
 
-# **********************************************************************************************************
+# ---------------------------------
+
+# ** TO DO: give this a better name
+def small_raster(itemid, reduce_box):
+    """
+        Extract a subset of a NAIP scene as a rioxarray raster.
+             Parameters:
+                        itemid (str): 
+                            the itemid of a single NAIP scene
+                        reduce_box (shapely.geometry.polygon.Polygon): 
+                            box outlining the perimeter of the area that will be extracted from the NAIP scene with itemid.
+                            Coordiantes of the box's vertices must be given in EPSG:4326 crs.
+            Returns: rast_small (xarray.core.dataarray.DataArray): 
+                            subset of NAIP scene with itemid outlined by reduce_box as rioxarray raster
+    """   
+    item = get_item_from_id(itemid)
+    href = pc.sign(item.assets["image"].href)
+    
+    rast = rioxr.open_rasterio(href)
+    
+    reduce = gpd.GeoDataFrame({'geometry':[reduce_box]}, crs="EPSG:4326")
+    reduce = reduce.to_crs(rast.rio.crs)    
+    
+    rast_small = rast.rio.clip_box(*reduce.total_bounds)
+    return rast_small
+
+# ---------------------------------
 
 def plot_window_in_scene(itemid, reduce_box, figsize=15):
-    
+    """
+        Plots a rectangular subset of a specified NAIP scene.
+             Parameters:
+                        itemid (str): 
+                            the itemid of a single NAIP scene
+                        reduce_box (shapely.geometry.polygon.Polygon): 
+                            box outlining the perimter of the area of interest within the NAIP scene with itemid.
+                            Coordiantes of the box's vertices must be given in EPSG:4326 crs.
+                        figsize (int): size of graph
+            Returns: None.
+    """             
     fig, ax = plt.subplots(figsize=(figsize, figsize))
     ax.imshow(np.moveaxis(rgb_window_in_scene(itemid, reduce_box),0,-1))
     plt.show()
@@ -87,107 +161,23 @@ def plot_window_in_scene(itemid, reduce_box, figsize=15):
 
 # ---------------------------------
 
-def plot_preds_vs_original(predictions, itemid, aoi, year, model_name = '-',figsize=(30,40)):
-    
-    original = np.moveaxis(rgb_window_in_scene(itemid, aoi),0,-1)
-    fig, ax = plt.subplots(1,2,figsize=figsize)
-
-    ax[0].imshow(predictions)
-    ax[0].set_title("PREDICTIONS "+str(year)+ model_name)
-
-    ax[1].imshow(original)
-    ax[1].set_title(str(year)+" original image")
-
-    plt.show()
-    return
-
-# **********************************************************************************************************
-
-
-# image is a (4,m,n) np array in which bands are r,g,b,nir
-def ndvi(image):
-    x = image.astype('int16')
-    return (x[3,...] - x[0,...])/(x[3,...] + x[0,...])
-
-# ---------------------------------
-
-def ndvi_thresh(image, thresh=0.05):
-    x = ndvi(image)
-    low_ndvi = x<thresh
-    x[low_ndvi] = 0
-    x[~low_ndvi] = 1
-    return x
-
-# ---------------------------------
-
-def select_ndvi_image(itemid, reduce_box, thresh=0.05):
-    image = open_window_in_scene(itemid, reduce_box)
-    return ndvi_thresh(image,thresh)
-
-
-# **********************************************************************************************************
-
-# image is a (4,m,n) np array in which bands are r,g,b,nir
-def spectral_df(image):
-    pixels = image.reshape([4,-1]).T
-    df = pd.DataFrame(pixels, columns=['r','g','b','nir'])
-    
-    x = ndvi(image)
-    df['ndvi'] = x.reshape(x.shape[0]*x.shape[1])
-    return df
-# ---------------------------------
-
-def add_date_features(df, item):
-        df['year'] = item.datetime.year
-        df['month'] = item.datetime.month
-        df['day_in_year'] = day_in_year(item.datetime.day, item.datetime.month, item.datetime.year)
-        return df
-    
-# ---------------------------------
-    
-def features_over_aoi(item, image, thresh=0.05):
-
-    veg = select_ndvi_df(image, thresh)
-    
-#    veg['ndvi']=(veg.nir.astype('int16') - veg.r.astype('int16'))/(veg.nir.astype('int16') + veg.r.astype('int16'))
-
-    veg['year'] = item.datetime.year
-    veg['month'] = item.datetime.month
-    veg['day_in_year'] = day_in_year(item.datetime.day, item.datetime.month, item.datetime.year)
-
-    # order features
-    veg = veg[['r','g','b','nir','ndvi','year','month','day_in_year']] 
-    return veg
-
-# ---------------------------------
-
-def select_ndvi_df(image, thresh=0.05):
-    pixels = image.reshape([4,-1]).T
-    df = pd.DataFrame(pixels, columns=['r','g','b','nir'])
-    
-    x = ndvi(image)
-    df['ndvi'] = x.reshape(x.shape[0]*x.shape[1])
-    
-    vegetation = df[df.ndvi>thresh]
-    #vegetation.drop(labels=['ndvi'], axis=1, inplace=True)
-    return vegetation
-
-# ---------------------------------
-
-def indices_backto_image(nrows, ncols, index):
-    # transform indices to coordinates
-    i = index / ncols
-    i = i.astype(int)
-    j = index % ncols
-    
-    # fill in array with 1 on index's coordinates 0 elsewhere
-    reconstruct = np.zeros((nrows,ncols))
-    reconstruct[i,j] = 1
-    return reconstruct
-
-# **********************************************************************************************************
-
+# ** TO DO: probably delete?
 def predict_over_subset(itemid, reduce_box, model):
+    """
+        Apply a classification model (trained on 4 features: red, green, blue and nir values of pixels) to each pixel within a rectangular subset of a specified NAIP scene.
+             Parameters:
+                        itemid (str): 
+                            the itemid of a single NAIP scene
+                        reduce_box (shapely.geometry.polygon.Polygon): 
+                            box outlining the perimter of the area of interest within the NAIP scene with itemid.
+                            Coordiantes of the box's vertices must be given in EPSG:4326 crs.
+                        model (sklearn.ensemble.RandomForestClassifier):
+                            classification model trained on 4 features: red, green, blue and nir values of pixels. 
+                            Features must be in that order.
+            Returns: 
+                         numpy.ndarray: 
+                             2D array with the classifications of each pixel in the subset of NAIP raster in itemid outlined by reduce_box
+    """
     image = open_window_in_scene(itemid, reduce_box)
     # reshape image into a np.array where each row is a pixel and the columns are the bands
     pixels = image.reshape([4,-1]).T
@@ -197,8 +187,11 @@ def predict_over_subset(itemid, reduce_box, model):
 
 # ---------------------------------
 
-# modelmust only take r, g, b, nir as featuers (IN THAT ORDER)
-def mask_ndvi_and_predict(itemid, reduce_box, model, thresh=0.05):
+# ** TO DO: probably delete?
+# ** TO DO: change name to specify it's over a subset
+# ** TO DO: shouldn't be a different function predictions over whole NAIP scene
+def mask_ndvi_and_predict(itemid, reduce_box, model, thresh=0.05): 
+
     image = open_window_in_scene(itemid, reduce_box)
     veg = select_ndvi_df(image, thresh)
     index = veg.index
@@ -216,9 +209,155 @@ def mask_ndvi_and_predict(itemid, reduce_box, model, thresh=0.05):
     
     return indices_backto_image(nrows, ncols, index)
 
+# ---------------------------------
+
+def plot_preds_vs_original(itemid, reduce_box, predictions, year, model_name = ' ', figsize=(30,40)):
+    """
+        Plots a rectangular subset of a specified NAIP scene next to the per-pixel-classifications given my model.
+             Parameters:
+                        itemid (str): 
+                            the itemid of a single NAIP scene
+                        reduce_box (shapely.geometry.polygon.Polygon): 
+                            box outlining the perimter of the area of interest within the NAIP scene with itemid.
+                            Coordiantes of the box's vertices must be given in EPSG:4326 crs.
+                        predictions (numpy.ndarray): 
+                            2D array with the classifications of each pixel in the subset of NAIP raster in itemid outlined by reduce_box
+                        year (int): 
+                            year when NAIP scene was collected
+                        model_name (str): 
+                            name of model to appear on graph's title
+                        figsize (int tuple): 
+                            size of graph
+                        
+            Returns: None.
+    """  
+    original = np.moveaxis(rgb_window_in_scene(itemid, reduce_box),0,-1)
+    fig, ax = plt.subplots(1,2,figsize=figsize)
+
+    ax[0].imshow(predictions)
+    ax[0].set_title("PREDICTIONS NAIP"+str(year)+ " - " + model_name)
+
+    ax[1].imshow(original)
+    ax[1].set_title("NAIP "+str(year)+" original image")
+
+    plt.show()
+    return
+
 
 # **********************************************************************************************************
+# **********************************************************************************************************
+ 
+def ndvi(image):
+    """
+        Pixel-by-pixel NDVI calculation of an image with four bands.
+            Parameters:
+                        image (numpy.ndarray): 
+                            a (4,m,n) array. The first bands are red, green, blue, and NIR, in that specific order.
+            Returns: 
+                    numpy.ndarray: 
+                        array of size m,n, the result of calculating the NDVI to image pixel-by-pixel
+    """ 
+    x = image.astype('int16')
+    return (x[3,...] - x[0,...])/(x[3,...] + x[0,...])
+
+# ---------------------------------
+def ndvi_thresh(image, thresh=0.05):
+    """
+        Identifies which pixels in a 4-band image have NDVI above a given threshold.
+            Parameters:
+                        image (numpy.ndarray): 
+                            a (4,m,n) array. The first bands are red, green, blue, and NIR, in that specific order.
+                        thresh (float in (-1,1)): 
+                            NDVI threshold
+            Returns: 
+                    numpy.ndarray: 
+                        array of size m,n in which pixels of image with ndvi<thresh have 0 value and pixels with ndvi>=thresh have value 1.
+    """  
+    x = ndvi(image)
+    low_ndvi = x<thresh
+    x[low_ndvi] = 0
+    x[~low_ndvi] = 1
+    return x
+
+# ---------------------------------
+# TO DO: MAYBE DELETE?? seems like we only need the previous one
+def select_ndvi_image(itemid, reduce_box, thresh=0.05):
+    """
+        Identifies which pixels in a rectangular subset of a specified NAIP scene have NDVI above a given threshold.
+             Parameters:
+                        itemid (str): 
+                            the itemid of a single NAIP scene
+                        reduce_box (shapely.geometry.polygon.Polygon): 
+                            box outlining the perimter of the area of interest within the NAIP scene with itemid.
+                            Coordiantes of the box's vertices must be given in EPSG:4326 crs.
+                        thresh (float in (-1,1)): 
+                            NDVI threshold
+            Returns: 
+                    numpy.ndarray: 
+                        array of size m,n in which pixels of image with ndvi<thresh have 0 value and pixels with ndvi>=thresh have value 1.
+    """  
+    image = open_window_in_scene(itemid, reduce_box)
+    return ndvi_thresh(image,thresh)
+
+
+# ---------------------------------
+def select_ndvi_df(image, thresh=0.05):
+    """
+        Identifies which pixels in a 4-band image have NDVI above a given threshold and returns information as data frame.
+             Parameters:
+                        image (numpy.ndarray): 
+                            a (4,m,n) array. The first bands are red, green, blue, and NIR, in that specific order.
+                        thresh (float in (-1,1)): 
+                            NDVI threshold
+            Returns: 
+                        above_thresh (pandas.DataFrame): 
+                            A data frame with all the pixels in image having ndvi>thresh.
+                            Each pixel is a row in the data frame and the columns contain a pixel's spectral information.
+                            Data frame has five columns: red, green, blue, nir and NDVI
+    """  
+    pixels = image.reshape([4,-1]).T
+    df = pd.DataFrame(pixels, columns=['r','g','b','nir'])
+    
+    x = ndvi(image)
+    df['ndvi'] = x.reshape(x.shape[0]*x.shape[1])
+    
+    above_thresh = df[df.ndvi>thresh]
+    # TO DO: ?? what's this>>
+    #vegetation.drop(labels=['ndvi'], axis=1, inplace=True)  # this is uncommented for TRIALS_model_with_lidar
+    return above_thresh
+
+
+# **********************************************************************************************************
+# **********************************************************************************************************
+def spectral_df(image):
+    """
+        Transforms a 4-band image into a data frame with columns red, green, blue, nir and NDVI
+            Parameters:
+                        image (numpy.ndarray): 
+                            a (4,m,n) array. The first bands are red, green, blue, and NIR, in that specific order.def 
+            Returns:
+                        df (pandas.DataFrame):
+                            A data frame containing the spectral information of every pixel in the image as rows.
+                            Data frame has five columns: red, green, blue, nir and NDVI
+    """
+    pixels = image.reshape([4,-1]).T  
+    df = pd.DataFrame(pixels, columns=['r','g','b','nir'])
+    
+    x = ndvi(image)    # add ndvi
+    df['ndvi'] = x.reshape(x.shape[0]*x.shape[1])
+    return df
+
+# ---------------------------------
 def day_in_year(day,month,year):
+    """
+        Transforms a date into a day in the year from 1 to 365/366 (takes into account leap years).
+            Paratmeters:
+                day (int): day of the date
+                month (int 1-12): month of the date
+                year (int): year of date
+            Returns:
+                n (int): date as day in year
+    """
     days_in_month = [31,28,31,30,31,30,31,31,30,31,30,31]
     n = 0
     for i in range(0,month-1):
@@ -228,38 +367,119 @@ def day_in_year(day,month,year):
         n = n+1
     return n
 
-# # ---------------------------------
+# ---------------------------------
 
-# def add_date_features(item, df):
+# TO DO: unsure this is ever used
+def add_date_features(df, item):
+    """
+        Adds a NAIP scene's date information as columns to a data frame.
+            Parameters:
+                        item (pystac.item.Item): 
+                            item associated to a NAIP image (can obtain from itemid via function get_item_from_id)
+                        df (pandas.DataFrame): 
+                            within the workflow this is a data frame in which each row is data for a pixel in image. 
+            Returns:
+                        df (pandas.DataFrame):
+                            a copy of the given data frame augmented with three columns with constant values.
+                            the columns contain information about the date of collection of the NAIP scene given by item.
+                            the columsn are: 
+                                year (int: year of scene colletion), month (int: month of scene collection), 
+                                and day_in_year (int from 1 to 365: day in year which scene was collected)
+    """    
+        df['year'] = item.datetime.year
+        df['month'] = item.datetime.month
+        df['day_in_year'] = day_in_year(item.datetime.day, item.datetime.month, item.datetime.year)
+        return df
 
-# #    veg = ipf.select_ndvi_df(image)
+# ---------------------------------
+
+# TO DO: probably should not mask ndvi here?
+# TO DO: move item after image
+# TO DO: pass date features as paramenters, don't collect from items
+# TO DO: maybe just splig into three functions? select ndvi and add_date_features
+def features_over_aoi(item, image, thresh=0.05):
+    """
+       Selects which pixels in a 4-band image have NDVI above a given threshold and organizes them as a dataframe in which each row is the spectral and date-of-collection information of the pixel.
+            Parameters:
+                        item (pystac.item.Item): 
+                            item associated to the NAIP scene containing image
+                        image (numpy.ndarray): 
+                            a (4,m,n) array. The first bands are red, green, blue, and NIR, in that specific order.def 
+                        thresh (float in (-1,1)): 
+                            NDVI threshold
+            Returns:
+                        df (pandas.DataFrame): 
+                            A data frame with all the pixels in image having ndvi>thresh.
+                            Each pixel is a row in the data frame and the columns contain a pixel's spectral and date-of collection information.
+                            Data frame has 8 columns (in this order): 
+                                red, green, blue, nir, NDVI, year, month and day_in_year
+    """
+    df = select_ndvi_df(image, thresh)
     
-# #    veg['ndvi']=(veg.nir.astype('int16') - veg.r.astype('int16'))/(veg.nir.astype('int16') + veg.r.astype('int16'))
+    df['year'] = item.datetime.year
+    df['month'] = item.datetime.month
+    df['day_in_year'] = day_in_year(item.datetime.day, item.datetime.month, item.datetime.year)
 
-#     df['year'] = item.datetime.year
-#     df['month'] = item.datetime.month
-#     df['day_in_year'] = day_in_year(item.datetime.day, item.datetime.month, item.datetime.year)
+    # order features
+    df = df[['r','g','b','nir','ndvi','year','month','day_in_year']] 
+    return df
 
-#     veg = veg[['r','g','b','nir','ndvi','year','month','day_in_year']] # order features
-#     return df
 
-# # **********************************************************************************************************
-# # FROM naip_flights.ipynb
+# 
+# **********************************************************************************************************
+# **********************************************************************************************************
 
-# def query_geom(geom, year):
-
-#     date_range = str(year)+'-01-01/'+str(year)+'-12-31'
-
-#     catalog = pystac_client.Client.open(
-#         "https://planetarycomputer.microsoft.com/api/stac/v1")
-
-#     search = catalog.search(
-#         collections=["naip"], 
-#         intersects=geom, 
-#         datetime=date_range)
+def indices_backto_image(nrows, ncols, index):
+    """
+        Creates a binary array of dimensions nrows*ncols in which cells with value of 1 correspond to the given list of indices.
+            Parameters:
+                nrows (int): number of rows in output array
+                ncols (int): number of columns in output array
+                index (array of ints): must be values within [0, nrows*ncols-1]
+            Returns:
+                reconstruct (numpy.ndarray):
+                    array with values 0 and 1 of dimensions nrows*ncols in which cells with value of 1 correspond to the given list of indices.
+            Example:
+                Suppose nrows=ncols=3 and index = [2,3,7]. Then the output is the array 
+                |0|0|1|
+                |1|0|0|
+                |0|1|0|
+    """
+    # transform indices to coordinates
+    i = index / ncols
+    i = i.astype(int)
+    j = index % ncols
     
-#     items =list(search.get_items()) 
-#     if len(items)==0:
-#         return None
-#     return items
+    # fill in array with 1 on index's coordinates 0 elsewhere
+    reconstruct = np.zeros((nrows,ncols))
+    reconstruct[i,j] = 1
+    return reconstruct
 
+# **********************************************************************************************************
+# **********************************************************************************************************
+
+# TO DO: FIGURE OUT IF WE WILL KEEP THIS OR SPLIT IT INTO SIMPLER FUNCTIONS
+# TO DO: add water category?
+def preds_to_image_3labels(nrows, ncols, index, predictions):
+    preds = pd.DataFrame(predictions, 
+                         columns=['is_iceplant'], 
+                         index = index)
+    is_iceplant_index = preds[preds.is_iceplant == 1].index
+    non_iceplant_index = preds[preds.is_iceplant == 0].index
+    
+    # initialize raster
+    reconstruct = np.ones((nrows,ncols))*2 # 2 = poins that did not go into model
+
+    # 1 = classified as iceplant
+    i = is_iceplant_index / ncols
+    i = i.astype(int)
+    j = is_iceplant_index % ncols
+    reconstruct[i,j] = 1
+
+    # 0 = classified as not iceplant
+    i = non_iceplant_index / ncols
+    i = i.astype(int)
+    j = non_iceplant_index % ncols
+    reconstruct[i,j] = 0
+
+    return reconstruct
