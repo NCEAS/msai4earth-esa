@@ -55,7 +55,7 @@ The `areas_of_interest` folder contains a shapefile with a list of aeras of inte
 
 ## Custom Libraries
 
-There are five custom libraries implemented to run the notebooks in this repository. The locations are:
+Custom libraries implemented to run the notebooks in this repository. The locations are:
 
 	iceplant_detection/data_sampling_workflow/
 		extracting_points_from_polygons.py
@@ -64,7 +64,6 @@ There are five custom libraries implemented to run the notebooks in this reposit
 	iceplant_detection/
 		iceplant_detection_functions.py
 		model_prep_and_evals.py
-		saving_prediction_rasters.py
 
 Descriptions:
 
@@ -88,7 +87,3 @@ Functions to:
    - Divide a dataset into train/test sets with equal proportion of points from each NAIP scene
    - Nicely print statistics about the proportion of iceplant in training/test sets
    - Nicely print threshold metrics for predictions (accuracy, sensitivity, specificity, precsion, etc)
-
-### `saving_prediction_rasters.py`
-This is work in progress and will probably be merged with one of the other modules.
-
