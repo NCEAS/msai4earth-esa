@@ -3,6 +3,8 @@ import planetary_computer as pc
 import rasterio
 
 import calendar
+import numpy as np
+import pandas as pd
 
 # **********************************************************************************************************
 
