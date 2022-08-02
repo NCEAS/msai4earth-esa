@@ -107,7 +107,7 @@ def save_avg_rasters(rast_reader, folder_path, year):
 # crs must be the crs of the csv coordinates
 def geodataframe_from_csv(fp, crs):
     df_raw = pd.read_csv(fp)
-    df = df_raw.drop(['geometry','Unnamed: 0'], axis=1)
+    df = df_raw.drop(['geometry'], axis=1)
     
     # recreate geometry column with shapely Points
     xy = []
