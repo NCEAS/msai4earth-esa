@@ -12,8 +12,7 @@ random.seed(10)
 
 import warnings
 
-import utility
-
+import utility # custom module
 
 
 # *********************************************************************
@@ -29,7 +28,7 @@ def path_to_polygons(aoi, year):
 
 # *********************************************************************
 
-# extracts at most number of random points within polygon
+# extracts number of random points within polygon
 def random_pts_poly(number, polygon):
     points = []
     min_x, min_y, max_x, max_y = polygon.bounds
