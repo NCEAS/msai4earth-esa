@@ -6,46 +6,9 @@ import rasterio
 import rioxarray as rioxr
 import geopandas as gpd
 
-import pystac_client 
 import planetary_computer as pc
 
-import calendar
-
-# **********************************************************************************************************
-# **********************************************************************************************************
-
-# SAME AS IN POINTS FORM POLYGONS 
-def get_item_from_id(itemid):
-    """
-        Searches the Planetary Computer's NAIP collection for the item associated with the given itemid.
-            Parameters:
-                        itemid (str): the itemid of a single NAIP scene
-            Returns:
-                        item (pystac.item.Item): item associated to given itemid (unsigned)
-   """
-    # accesing Planetary Computer's storage using pystac client
-    URL = "https://planetarycomputer.microsoft.com/api/stac/v1"
-    catalog = pystac_client.Client.open(URL)
-
-    search = catalog.search(
-        collections=["naip"],
-        ids = itemid)
-    
-    # return 1st item in search (assumes itemid IS associaed to some item)
-    item = list(search.get_items())[0]   # ** TO DO: catch exception
-    return item
-
-# ---------------------------------------------
-
-def get_raster_from_item(item):
-    """
-        "Opens" the raster in the given item: returns a rasterio.io.DatasetReader to the raster in item.
-            Parameters: item (pystac.item.Item)
-            Returns: reader (rasterio.io.DatasetReader) 
-    """  
-    href = pc.sign(item.assets["image"].href)
-    reader = rasterio.open(href)
-    return reader
+import data_sampling_workflow.utility as utility
 
 # **********************************************************************************************************
 # **********************************************************************************************************
@@ -68,9 +31,9 @@ def href_and_window(itemid, reduce_box):
                             subset is specified by reduce_box. 
                             See https://rasterio.readthedocs.io/en/latest/topics/windowed-rw.html
     """  
-    item = get_item_from_id(itemid)
+    item = utility.get_item_from_id(itemid)
     # sign and open item
-    href = pc.sign(item.assets["image"].href)
+    href = pc.sign(item.assets["image"].href)  # should use item, not itemid
     reader = rasterio.open(href)
 
     reduce = gpd.GeoDataFrame({'geometry':[reduce_box]}, crs="EPSG:4326") 
@@ -93,7 +56,7 @@ def open_window_in_scene(itemid, reduce_box):
                         numpy.ndarray: 
                             raster values of all the bands (r,g,b,nir) in the subset of NAIP scene.
     """             
-    href, win = href_and_window(itemid, reduce_box)
+    href, win = href_and_window(itemid, reduce_box)         # should use item, not itemid
     return rasterio.open(href).read([1,2,3,4], window=win)
 
 # ---------------------------------
@@ -129,7 +92,7 @@ def small_raster(itemid, reduce_box):
             Returns: rast_small (xarray.core.dataarray.DataArray): 
                             subset of NAIP scene with itemid outlined by reduce_box as rioxarray raster
     """   
-    item = get_item_from_id(itemid)
+    item = utility.get_item_from_id(itemid)
     href = pc.sign(item.assets["image"].href)
     
     rast = rioxr.open_rasterio(href)
@@ -161,53 +124,53 @@ def plot_window_in_scene(itemid, reduce_box, figsize=15):
 
 # ---------------------------------
 
-# ** TO DO: probably delete?
-def predict_over_subset(itemid, reduce_box, model):
-    """
-        Apply a classification model (trained on 4 features: red, green, blue and nir values of pixels) to each pixel within a rectangular subset of a specified NAIP scene.
-             Parameters:
-                        itemid (str): 
-                            the itemid of a single NAIP scene
-                        reduce_box (shapely.geometry.polygon.Polygon): 
-                            box outlining the perimter of the area of interest within the NAIP scene with itemid.
-                            Coordiantes of the box's vertices must be given in EPSG:4326 crs.
-                        model (sklearn.ensemble.RandomForestClassifier):
-                            classification model trained on 4 features: red, green, blue and nir values of pixels. 
-                            Features must be in that order.
-            Returns: 
-                         numpy.ndarray: 
-                             2D array with the classifications of each pixel in the subset of NAIP raster in itemid outlined by reduce_box
-    """
-    image = open_window_in_scene(itemid, reduce_box)
-    # reshape image into a np.array where each row is a pixel and the columns are the bands
-    pixels = image.reshape([4,-1]).T
-    predictions_class = model.predict(pixels)
-    # turn back into original raster dimensions
-    return predictions_class.reshape([image.shape[1],-1])
+# # ** TO DO: probably delete?
+# def predict_over_subset(itemid, reduce_box, model):
+#     """
+#         Apply a classification model (trained on 4 features: red, green, blue and nir values of pixels) to each pixel within a rectangular subset of a specified NAIP scene.
+#              Parameters:
+#                         itemid (str): 
+#                             the itemid of a single NAIP scene
+#                         reduce_box (shapely.geometry.polygon.Polygon): 
+#                             box outlining the perimter of the area of interest within the NAIP scene with itemid.
+#                             Coordiantes of the box's vertices must be given in EPSG:4326 crs.
+#                         model (sklearn.ensemble.RandomForestClassifier):
+#                             classification model trained on 4 features: red, green, blue and nir values of pixels. 
+#                             Features must be in that order.
+#             Returns: 
+#                          numpy.ndarray: 
+#                              2D array with the classifications of each pixel in the subset of NAIP raster in itemid outlined by reduce_box
+#     """
+#     image = open_window_in_scene(itemid, reduce_box)
+#     # reshape image into a np.array where each row is a pixel and the columns are the bands
+#     pixels = image.reshape([4,-1]).T
+#     predictions_class = model.predict(pixels)
+#     # turn back into original raster dimensions
+#     return predictions_class.reshape([image.shape[1],-1])
 
 # ---------------------------------
 
-# ** TO DO: probably delete?
-# ** TO DO: change name to specify it's over a subset
-# ** TO DO: shouldn't be a different function predictions over whole NAIP scene
-def mask_ndvi_and_predict(itemid, reduce_box, model, thresh=0.05): 
+# # ** TO DO: probably delete?
+# # ** TO DO: change name to specify it's over a subset
+# # ** TO DO: shouldn't be a different function predictions over whole NAIP scene
+# def mask_ndvi_and_predict(itemid, reduce_box, model, thresh=0.05): 
 
-    image = open_window_in_scene(itemid, reduce_box)
-    veg = select_ndvi_df(image, thresh)
-    index = veg.index
-    features = np.array(veg)
+#     image = open_window_in_scene(itemid, reduce_box)
+#     veg = select_ndvi_df(image, thresh)
+#     index = veg.index
+#     features = np.array(veg)
     
-    # get predictions from model and make them into a df
-    predictions_class = model.predict(features)
-    c = {'prediction':predictions_class}
-    df = pd.DataFrame(c, index = index)
+#     # get predictions from model and make them into a df
+#     predictions_class = model.predict(features)
+#     c = {'prediction':predictions_class}
+#     df = pd.DataFrame(c, index = index)
     
-    # transform predictions df back into binary image 
-    nrows = image.shape[1]
-    ncols = image.shape[2]
-    index = df[df.prediction == 1].index.to_numpy()
+#     # transform predictions df back into binary image 
+#     nrows = image.shape[1]
+#     ncols = image.shape[2]
+#     index = df[df.prediction == 1].index.to_numpy()
     
-    return indices_backto_image(nrows, ncols, index)
+#     return indices_backto_image(nrows, ncols, index)
 
 # ---------------------------------
 
@@ -348,26 +311,6 @@ def spectral_df(image):
     return df
 
 # ---------------------------------
-def day_in_year(day,month,year):
-    """
-        Transforms a date into a day in the year from 1 to 365/366 (takes into account leap years).
-            Paratmeters:
-                day (int): day of the date
-                month (int 1-12): month of the date
-                year (int): year of date
-            Returns:
-                n (int): date as day in year
-    """
-    days_in_month = [31,28,31,30,31,30,31,31,30,31,30,31]
-    n = 0
-    for i in range(0,month-1):
-        n = n+days_in_month[i]
-    n = n+day
-    if calendar.isleap(year) and month>2:
-        n = n+1
-    return n
-
-# ---------------------------------
 
 # TO DO: unsure this is ever used
 def add_date_features(df, item):
@@ -375,7 +318,7 @@ def add_date_features(df, item):
         Adds a NAIP scene's date information as columns to a data frame.
             Parameters:
                         item (pystac.item.Item): 
-                            item associated to a NAIP image (can obtain from itemid via function get_item_from_id)
+                            item associated to a NAIP image 
                         df (pandas.DataFrame): 
                             within the workflow this is a data frame in which each row is data for a pixel in image. 
             Returns:
@@ -388,7 +331,7 @@ def add_date_features(df, item):
     """    
         df['year'] = item.datetime.year
         df['month'] = item.datetime.month
-        df['day_in_year'] = day_in_year(item.datetime.day, item.datetime.month, item.datetime.year)
+        df['day_in_year'] = utility.day_in_year(item.datetime.day, item.datetime.month, item.datetime.year)
         return df
 
 # ---------------------------------
@@ -418,7 +361,7 @@ def features_over_aoi(item, image, thresh=0.05):
     
     df['year'] = item.datetime.year
     df['month'] = item.datetime.month
-    df['day_in_year'] = day_in_year(item.datetime.day, item.datetime.month, item.datetime.year)
+    df['day_in_year'] = utility.day_in_year(item.datetime.day, item.datetime.month, item.datetime.year)
 
     # order features
     df = df[['r','g','b','nir','ndvi','year','month','day_in_year']] 

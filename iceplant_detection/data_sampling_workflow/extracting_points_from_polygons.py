@@ -1,5 +1,4 @@
 import os
-
 import pandas as pd
 import numpy as np
 import rasterio
@@ -8,21 +7,18 @@ import shapely
 from shapely.geometry import shape
 from shapely.geometry import Point
 
-import pystac_client
-import planetary_computer as pc
-
 import random
 random.seed(10)
 
-
-import calendar
 import warnings
+
+import utility
 
 
 
 # *********************************************************************
 
-def path_to_polygons(aoi,year):
+def path_to_polygons(aoi, year):
     # root for all polygons collected on naip scenes
     root = '/home/jovyan/msai4earth-esa/iceplant_detection/data_sampling_workflow/polygons_from_naip_images'
     fp = os.path.join(root, 
@@ -30,30 +26,6 @@ def path_to_polygons(aoi,year):
                       aoi+'_polygons_'+str(year), 
                       aoi+'_polygons_'+str(year)+'.shp')
     return fp
-
-
-# *********************************************************************
-
-def get_item_from_id(itemid):
-    # accesing Azure storage using pystac client
-    URL = "https://planetarycomputer.microsoft.com/api/stac/v1"
-    catalog = pystac_client.Client.open(URL)
-
-    search = catalog.search(
-        collections=["naip"],
-        ids = itemid)
-    
-    item = list(search.get_items())[0]
-    return item
-
-# ---------------------------------------------
-
-def get_raster_from_item(item):
-    href = pc.sign(item.assets["image"].href)
-    naip = rasterio.open(href)
-    return naip
-
-
 
 # *********************************************************************
 
@@ -104,7 +76,7 @@ def sample_naip(polys, num_random_pts, naip, item):
     
     df['year'] = item.datetime.year   # add date to samples
     df['month'] = item.datetime.month
-    df['day_in_year'] = day_in_year(item.datetime.day, item.datetime.month, item.datetime.year )
+    df['day_in_year'] = utility.day_in_year(item.datetime.day, item.datetime.month, item.datetime.year )
     df['naip_id'] = item.id           # add naip item id to samples
 
     df[['geometry','x','y',
@@ -129,8 +101,8 @@ def num_pts_area_proportion(polys, naip, proportion):
 # ---------------------------------------------
 
 def sample_naip_from_polys_proportion(polys_raw, itemid, proportion):
-    item = get_item_from_id(itemid)
-    naip = get_raster_from_item(item)
+    item = utility.get_item_from_id(itemid)
+    naip = utility.get_raster_from_item(item)
     
     polys = polys_raw.to_crs(naip.crs)
     
@@ -149,9 +121,9 @@ def naip_sample_proportion_no_warnings(polys, itemid, proportion):
 
 # *********************************************************************
 
-def sample_naip_from_polys_fixedn(polys_raw, itemid, n):
-    item = get_item_from_id(itemid)
-    naip = get_raster_from_item(item)
+def sample_naip_from_polys_fixed_n(polys_raw, itemid, n):
+    item = utility.get_item_from_id(itemid)
+    naip = utility.get_raster_from_item(item)
     
     polys = polys_raw.to_crs(naip.crs)
     
@@ -199,8 +171,8 @@ def num_pts_sliding(polys, alpha, m):
 # ---------------------------------------------
 
 def sample_naip_from_polys_sliding(polys_raw, itemid, alpha, m):
-    item = get_item_from_id(itemid)
-    naip = get_raster_from_item(item)
+    item = utility.get_item_from_id(itemid)
+    naip = utility.get_raster_from_item(item)
     
     polys = polys_raw.to_crs(naip.crs)
     
@@ -220,28 +192,5 @@ def naip_sample_sliding_no_warnings(polys, itemid, alpha, m):
     return df
 
 
-# *********************************************************************
-# --- print proportions of ice plant (1) vs no iceplant (0) in an array with only 0 and 1
-def iceplant_proportions(labels):
-    unique, counts = np.unique(labels, return_counts=True)
-    print('no-iceplant:iceplant ratio    ',round(counts[0]/counts[1],1),':1')
-    n = labels.shape[0]
-    perc = [round(counts[0]/n*100,2), round(counts[1]/n*100,2)]
-    df = pd.DataFrame({'iceplant':unique,
-             'counts':counts,
-             'percentage':perc}).set_index('iceplant')
-    print(df)
-    print()
-    
 
-# *********************************************************************
 
-def day_in_year(day,month,year):
-    days_in_month = [31,28,31,30,31,30,31,31,30,31,30,31]
-    n = 0
-    for i in range(0,month-1):
-        n = n+days_in_month[i]
-    n = n+day
-    if calendar.isleap(year) and month>2:
-        n = n+1
-    return n
