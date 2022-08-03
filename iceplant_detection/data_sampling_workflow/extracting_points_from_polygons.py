@@ -20,7 +20,6 @@ import utility # custom module
 def path_to_polygons(aoi, year):
     """
         Creates a path to shapefile with polygons collected at specified aoi and year. 
-        The root of the folder containing the polygons is hardcoded inside the function.
             Parameters:
                         aoi (str): name of aoi in polygon's file name
                         year (int): year of collection in polygon's file name

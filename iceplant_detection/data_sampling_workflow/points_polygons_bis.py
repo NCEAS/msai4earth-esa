@@ -136,6 +136,8 @@ def random_pts_poly(N, polygon):
     return points  
 
 # *********************************************************************
+
+def sample_raster_from_poly(N, poly, poly_id, class_name, poly_class, rast_reader, rast_band_names, rast_crs):
     """
         Creates a dataframe of raster bands values at N points randomly sampled from a given polygon.
         Polygon and raster must have SAME CRS for results to be correct. 
@@ -162,7 +164,6 @@ def random_pts_poly(N, polygon):
                     sample (pandas.core.frame.DataFrame): data frame of raster bands' values at the N points sampled from poly.
 
     """
-def sample_raster_from_poly(N, poly, poly_id, class_name, poly_class, rast_reader, rast_band_names, rast_crs):
     # TO DO: add catch when polygon and raster do not intersect
     points = random_pts_poly(N,poly)  # select random points inside poly
     sample = pd.DataFrame({           # make data frame with sampled points
@@ -184,11 +185,12 @@ def sample_raster_from_poly(N, poly, poly_id, class_name, poly_class, rast_reade
     
     sample['pts_crs'] =  rast_crs  # add CRS of points
     
-    sample = sample[['x','y','crs','polygon_id', class_name] + rast_band_names] # organize columns
+    sample = sample[['x','y','pts_crs','polygon_id', class_name] + rast_band_names] # organize columns
 
     return sample
 
 # *********************************************************************
+def sample_naip_from_polys(polys, class_name, itemid, param, sample_fraction=0, max_sample=0, const_sample=0):
     """
         Creates a dataframe of given NAIP scene's bands values at points sampled randomly from polygons in given list.
         Resulting dataframe includes metadata about the sampled polygons and NAIP raster.
@@ -213,8 +215,7 @@ def sample_raster_from_poly(N, poly, poly_id, class_name, poly_class, rast_reade
             Return:
                     df (pandas.core.frame.DataFrame): data frame of raster bands' values at points sampled from polys.
 
-    """
-def sample_naip_from_polys(polys, class_name, itemid, param, sample_fraction=0, max_sample=0, const_sample=0):
+    """    
     item = utility.get_item_from_id(itemid)
     
     rast_reader = utility.get_raster_from_item(item)        
@@ -244,19 +245,19 @@ def sample_naip_from_polys(polys, class_name, itemid, param, sample_fraction=0, 
 
 
 # *********************************************************************
+"""
+   Runs sample_naip_from_polys function catching the following warning:
+               /srv/conda/envs/notebook/lib/python3.8/site-packages/pandas/core/dtypes/cast.py:122: ShapelyDeprecationWarning: 
+               The array interface is deprecated and will no longer work in Shapely 2.0. 
+               Convert the '.coords' to a numpy array instead. arr = construct_1d_object_array_from_listlike(values)
+    # See https://shapely.readthedocs.io/en/stable/migration.html, section Creating NumPy arrays of geometry objects
+        
+        Parameters: see parameters for sample_naip_from_polys function
+        Return: see return for sample_naip_from_polys function
+"""
 
-def naip_sample_sliding_no_warnings(polys, itemid, sample_fraction, max_sample):
+def sample_naip_from_polys_no_warnings(polys, class_name, itemid, param, sample_fraction=0, max_sample=0, const_sample=0):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        param = 'sliding'
-        df = sample_naip_from_polys(polys, itemid, param, sample_fraction, max_sample)
-    return df
-
-# ---------------------------------------------
-
-def raster_sample_proportion_no_warnings(polys, itemid, sample_fraction):
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        param = 'fraction'
-        df = sample_naip_from_polys(polys, itemid, param, sample_fraction)
+        df = sample_naip_from_polys(polys, class_name, itemid, param, sample_fraction, max_sample, const_sample)
     return df
