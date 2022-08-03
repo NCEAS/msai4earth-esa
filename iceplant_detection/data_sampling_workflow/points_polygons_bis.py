@@ -149,7 +149,7 @@ def random_pts_poly(N, polygon):
                         poly_id (int): 
                             id number of the polygon
                         class_name (str): 
-                            name of the classification (ex: 'land_cover')
+                            name of the classification in which polygons outline pixels from same class(ex: 'land_cover')
                         poly_class (int): 
                             class of the data represented by polygon (ex: 1 if polygon is building, 2 if it's water, etc)
                         rast_reader (rasterio.io.DatasetReader):
@@ -159,7 +159,7 @@ def random_pts_poly(N, polygon):
                         rast_crs (str):
                             CRS of rast_reader
             Returns: 
-                    sample (pandas.core.frame.DataFrame): data frame of raster bands values at the N points sampled from poly.
+                    sample (pandas.core.frame.DataFrame): data frame of raster bands' values at the N points sampled from poly.
 
     """
 def sample_raster_from_poly(N, poly, poly_id, class_name, poly_class, rast_reader, rast_band_names, rast_crs):
@@ -189,39 +189,56 @@ def sample_raster_from_poly(N, poly, poly_id, class_name, poly_class, rast_reade
     return sample
 
 # *********************************************************************
+    """
+        Creates a dataframe of given NAIP scene's bands values at points sampled randomly from polygons in given list.
+        Resulting dataframe includes metadata about the sampled polygons and NAIP raster.
+        No need to match polygons and raster CRS, this is done internally.
+        
+        Parameters:
+                        polys (geopandas.geodataframe.GeoDataFrame): 
+                            GeoDataFrame with geometry column of type shapely.geometry.polygon.Polygon
+                        class_name (str): 
+                            name of column in polys GeoDataFrame having the classification in which polygons outline pixels from same class (ex: 'land_cover')
+                        itemid (str): 
+                            the itemid of a single NAIP scene over which the polygons with be "overlayed" to do the data sampling
+                        param (str):
+                            must be 'fraction', 'sliding' or 'constant', 
+                            depending on how you want to calculate the number of points to be sampled from polygons
+                        sample_fraction (float in (0,1)): 
+                            fraction of points to sample from each polygon
+                        max_sample (int): 
+                            maximum number of points to sample from each polygon
+                        const_sample (int):
+                            constant number of points to sample from each polygon
+            Return:
+                    df (pandas.core.frame.DataFrame): data frame of raster bands' values at points sampled from polys.
 
-def sample_naip(polys, itemid, param, sample_fraction=0, max_sample=0, const_sample=0):
+    """
+def sample_naip_from_polys(polys, class_name, itemid, param, sample_fraction=0, max_sample=0, const_sample=0):
     item = utility.get_item_from_id(itemid)
+    
     rast_reader = utility.get_raster_from_item(item)        
+    rast_band_names = ['r','g','b','nir']
+    rast_crs = rast_reader.crs.to_dict()['init']
+    
     polys_match = polys.to_crs(rast_reader.crs)
     
     n_pixels = count_pixels_in_polygons(polys_match, rast_reader)
     n_pts = sample_size_in_polygons(n_pixels, param, sample_fraction, max_sample, const_sample)
     
     samples = []
-    for i in range(0,polys.shape[0]):   # for each polygon in set
-        poly = polys['geometry'][i]    # TO DO: put all these as parameters inside the function
-        poly_id = polys['id'][i]
-        poly_class = polys['iceplant'][i]
-        class_name = 'iceplant'
-        N = n_pts[i]
-        rast_band_names = ['r','g','b','nir']
-        
-        sample = sample_raster_from_poly()
+    for i in range(0,polys.shape[0]):   # for each polygon in list
+        sample = sample_raster_from_poly(n_pts[i], 
+                                         polys_match.geometry[i], polys.id[i], 
+                                         class_name, polys[class_name][i], 
+                                         rast_reader, rast_band_names, rast_crs)                                   
         samples.append(sample)   
-        
     df = pd.concat(samples) # create dataframe from samples list
     
     df['year'] = item.datetime.year   # add date to samples  TO DO: get from polys? raster?
     df['month'] = item.datetime.month
     df['day_in_year'] = utility.day_in_year(item.datetime.day, item.datetime.month, item.datetime.year )
-    df['naip_id'] = item.id           # add naip item id to samples
-
-    df[['x','y',
-        'iceplant',
-        'r','g','b','nir',
-        'year','month','day_in_year',
-        'naip_id','polygon_id']]
+    df['naip_id'] = itemid           # add naip item id to samples
     
     return df
 
@@ -232,7 +249,7 @@ def naip_sample_sliding_no_warnings(polys, itemid, sample_fraction, max_sample):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         param = 'sliding'
-        df = sample_naip(polys, itemid, param, sample_fraction, max_sample)
+        df = sample_naip_from_polys(polys, itemid, param, sample_fraction, max_sample)
     return df
 
 # ---------------------------------------------
@@ -241,5 +258,5 @@ def raster_sample_proportion_no_warnings(polys, itemid, sample_fraction):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         param = 'fraction'
-        df = sample_naip(polys, itemid, param, sample_fraction)
+        df = sample_naip_from_polys(polys, itemid, param, sample_fraction)
     return df
