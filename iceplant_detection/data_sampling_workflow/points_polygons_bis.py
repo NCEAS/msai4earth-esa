@@ -199,6 +199,7 @@ def sample_naip_from_polys(polys, class_name, itemid, param, sample_fraction=0, 
         Parameters:
                         polys (geopandas.geodataframe.GeoDataFrame): 
                             GeoDataFrame with geometry column of type shapely.geometry.polygon.Polygon
+                            Index must begin at 0.
                         class_name (str): 
                             name of column in polys GeoDataFrame having the classification in which polygons outline pixels from same class (ex: 'land_cover')
                         itemid (str): 

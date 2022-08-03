@@ -19,15 +19,16 @@ Notebooks in the current folder starting with TRIALS_# are workflows on which we
 
 * TRIALS_12: assign to each pixel within an area of interest (subset of NAIP scene) the [probability](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html#sklearn.ensemble.RandomForestClassifier.predict_proba)  with which the random forest classifies it as iceplant (see 
 
+#### `data_sampling_workflow`
+
+This folder contains a series of five notebooks that create a dataset of georeferenced points of known iceplant and non-iceplant locations across time on the Santa Barbara County coast. Each point in the final dataset has information about its location, collection date, and spectral and canopy height features at that point (and time of collection). The resulting dataset (or a subset of it) is used to train machine learning models to identify iceplant locations on NAIP images.  
+
 [//]: # (--------------------)
 
 ## Stable Code
 
 These are folders containing stable code:
 
-### `data_sampling_workflow`
-
-This folder contains a series of five notebooks that create a dataset of georeferenced points of known iceplant and non-iceplant locations across time on the Santa Barbara County coast. Each point in the final dataset has information about its location, collection date, and spectral and canopy height features at that point (and time of collection). The resulting dataset (or a subset of it) is used to train machine learning models to identify iceplant locations on NAIP images.  
 
 ### `separating_naip_flights`:
 
@@ -81,6 +82,9 @@ Functions to:
    - create a dataframe with spectral and date features for each pixel in a NAIP scene or subset of one
    - apply a classification model to each pixel of a NAIP scene
    - convert model binary predictions back to image
+   
+### `points_polygons_bis.py`
+Refactoring of iceplant_detection_functions.py (in development)
 
 ### `model_prep_and_evals.py`
 Functions to:
