@@ -40,44 +40,91 @@ def path_to_polygons(aoi, year):
     return fp
 
 # *********************************************************************
-
+    """
+        Counts the approximate number of pixels in a raster covered by each polygon in a list.
+        No need to match CRS: to do the count it internally matches the CRS of the polygons and the raster. 
+            Parameters:
+                        polys (geopandas.geodataframe.GeoDataFrame): 
+                            GeoDataFrame with geometry column of type shapely.geometry.polygon.Polygon
+                        rast_reader (rasterio.io.DatasetReader):
+                            reader to the raster on which we will "overlay" the polygons to count the pixels covered
+            Returns:
+                    n_pixels (numpy.ndarray): 
+                        approximate number of pixels from raster covered by each polygon
+            
+    """
 def count_pixels_in_polygons(polys, rast_reader):
     
     # convert to same crs as raster to properly calculate area of polygons
     if polys.crs != rast_reader.crs:
+        print('matched crs')
         polys = polys.to_crs(rast_reader.crs)
     
     # area of a single pixel from raster resolution    
     pixel_size = rast_reader.res[0]*rast_reader.res[1]
     
+    # get approx number of pixels by dividing polygon area by pixel_size
     n_pixels = polys.geometry.apply(lambda p: int((p.area/pixel_size)))
     
-    return  n_pixels
+    return  n_pixels.to_numpy()
 
 # *********************************************************************
-
-# n_pixels = np.array with approximate number of pixels contained in polygon
-def n_random_pts_in_polygons(n_pixels, param, sample_fraction=0, max_sample=0, const_sample=0):
+def sample_size_in_polygons(n_pixels, param, sample_fraction=0, max_sample=0, const_sample=0):
+    """
+        Calculates the number of points to sample from each polygon in a list 
+        according to the number of pixels covered by a polygon (given) and 
+        one of the following sampling count methods:
+            - 'fraction': constant fraction of the number of pixels in each polygon
+            - 'sliding': constant fraction of the number of pixels in each polygon, up to a maximum number
+            - 'constant': constant number of points in each polygon
+            
+            Parameters:
+                       n_pixels (numpy.ndarray):
+                           array with (approximate) number of pixels contained in each polygon 
+                        param (str):
+                            must be 'fraction', 'sliding' or 'constant', 
+                            depending on how you want to calculate the number of points to be sampled from each polygon
+                        sample_fraction (float in (0,1)): 
+                            fraction of points to sample from each polygon
+                        max_sample (int): 
+                            maximum number of points to sample from each polygon
+                        const_sample (int):
+                            constant number of points to sample from each polygon
+            Returns:
+                    n_pts (numpy.ndarray): 
+                        array with number of pts to sample from each polygon
+    """
     if param not in ['fraction', 'sliding', 'constant']:
+        print('not valid parameter: param must be `fraction`, `sliding` or `constant`' 
         return
+    # TO DO: add warning for other parameters
                      
     if param == 'fraction':
-        num_random_pts = sample_fraction * n_pixels
+        n_pts = sample_fraction * n_pixels
     
-    else if param == 'sliding':
-        num_random_pts = sample_fraction * n_pixels
-        num_random_pts[num_random_pts>max_sample] = max_sample
+    elif param == 'sliding':
+        n_pts = sample_fraction * n_pixels
+        n_pts[n_pts>max_sample] = max_sample
     
-    else if param == 'constant':
-        num_random_pts = np.full(n_pixels.shape[0],const_sample)
+    elif param == 'constant':
+        # TO DO: add warning not to sample more points than possible
+        n_pts = np.full(n_pixels.shape[0],const_sample)
     
-    num_random_pts = num_random_pts.astype('int32')
-    return num_random_pts
+    n_pts = n_pts.astype('int')
+    return n_pts
 
 # *********************************************************************
 
-# extracts number of random points within polygon
 def random_pts_poly(N, polygon):
+    """
+        Creates a list of N points sampled randomly from within the given polygon.
+            Parameters:
+                        N (int): number of random points to sample form polygon
+                        polygon (shapely.geometry.polygon.Polygon): 
+            Return:
+                    points (list of shapely.geometry.point.Point): 
+                        list of N random points sampled from polygons
+    """
     points = []
     min_x, min_y, max_x, max_y = polygon.bounds
     i= 0
@@ -122,7 +169,7 @@ def sample_naip(polys, itemid, param, sample_fraction=0, max_sample=0, const_sam
     polys_match = polys.to_crs(rast_reader.crs)
     
     n_pixels = count_pixels_in_polygons(polys_match, rast_reader)
-    n_pts = n_random_pts_in_polygons(n_pixels, param, sample_fraction, max_sample, const_sample)
+    n_pts = sample_size_in_polygons(n_pixels, param, sample_fraction, max_sample, const_sample)
     
     samples = []
     for i in range(0,polys.shape[0]):   # for each polygon in set
@@ -138,7 +185,7 @@ def sample_naip(polys, itemid, param, sample_fraction=0, max_sample=0, const_sam
         
     df = pd.concat(samples) # create dataframe from samples list
     
-    df['year'] = item.datetime.year   # add date to samples
+    df['year'] = item.datetime.year   # add date to samples  TO DO: get from polys? raster?
     df['month'] = item.datetime.month
     df['day_in_year'] = utility.day_in_year(item.datetime.day, item.datetime.month, item.datetime.year )
     df['naip_id'] = item.id           # add naip item id to samples
