@@ -95,8 +95,8 @@ def sample_size_in_polygons(n_pixels, param, sample_fraction=0, max_sample=0, co
                         array with number of pts to sample from each polygon
     """
     if param not in ['fraction', 'sliding', 'constant']:
-        print('not valid parameter: param must be `fraction`, `sliding` or `constant`' 
-        return
+        print('not valid parameter: param must be `fraction`, `sliding` or `constant`')
+        return 
     # TO DO: add warning for other parameters
                      
     if param == 'fraction':
@@ -120,10 +120,10 @@ def random_pts_poly(N, polygon):
         Creates a list of N points sampled randomly from within the given polygon.
             Parameters:
                         N (int): number of random points to sample form polygon
-                        polygon (shapely.geometry.polygon.Polygon): 
+                        polygon (shapely.geometry.polygon.Polygon): polygon from which to sample points
             Return:
                     points (list of shapely.geometry.point.Point): 
-                        list of N random points sampled from polygons
+                        list of N random points sampled from polygon
     """
     points = []
     min_x, min_y, max_x, max_y = polygon.bounds
@@ -136,28 +136,55 @@ def random_pts_poly(N, polygon):
     return points  
 
 # *********************************************************************
+    """
+        Creates a dataframe of raster bands values at N points randomly sampled from a given polygon.
+        Polygon and raster must have SAME CRS for results to be correct. 
+        Resulting dataframe includes metadata about the sampled polygon: poly_id, poly_class.
+        
+            Parameters:
+                        N (int): 
+                            number of random points to sample form polygon
+                        poly (shapely.geometry.polygon.Polygon): 
+                            polygon from which to sample points
+                        poly_id (int): 
+                            id number of the polygon
+                        class_name (str): 
+                            name of the classification (ex: 'land_cover')
+                        poly_class (int): 
+                            class of the data represented by polygon (ex: 1 if polygon is building, 2 if it's water, etc)
+                        rast_reader (rasterio.io.DatasetReader):
+                            reader to the raster from which to extract band information at every point sampled from polygon
+                        rast_band_names (str list):
+                            names of the bands of rast_reader
+                        rast_crs (str):
+                            CRS of rast_reader
+            Returns: 
+                    sample (pandas.core.frame.DataFrame): data frame of raster bands values at the N points sampled from poly.
 
-def sample_raster_from_poly(N, poly, poly_id, poly_class, class_name, rast_reader, rast_band_names):
-    points = random_pts_poly(N,poly)  # select random points within poly
-    sample = pd.DataFrame({
+    """
+def sample_raster_from_poly(N, poly, poly_id, class_name, poly_class, rast_reader, rast_band_names, rast_crs):
+    # TO DO: add catch when polygon and raster do not intersect
+    points = random_pts_poly(N,poly)  # select random points inside poly
+    sample = pd.DataFrame({           # make data frame with sampled points
         'geometry': pd.Series(points), 
         class_name : pd.Series(np.full(N,poly_class)),  # add class identification for all pts
         'polygon_id': pd.Series(np.full(N,poly_id))
                  })
 
-    sample_coords = sample.geometry.apply(lambda p: (p.x, p.y))  # separate coords (needed for reasterio.io.DatasetReader sample function)
-    data_generator = rast_reader.sample(sample_coords)   # extract band values from naip image 
-    data = []    # TO DO: maybe simplify this?
-    for i in data_generator: 
-        data.append(i)
-    data = np.vstack(data)
-    data = pd.DataFrame(data, columns=rast_band_names) # create pd DataFrame from np.array
+    sample_coords = sample.geometry.apply(lambda p: (p.x, p.y))  # separate coords (needed for reasterio.io.DatasetReader.sample() )
+    data_generator = rast_reader.sample(sample_coords)   # extract band values from raster
+    data = np.vstack(list(data_generator))               # make band values into dataframe
+    data = pd.DataFrame(data, columns=rast_band_names) 
 
-    sample = pd.concat([sample,data],axis=1)  # add band data to points
+    sample = pd.concat([sample,data],axis=1)  # add band data to sampled points
 
     sample['x']= sample.geometry.apply(lambda p : p.x)   # coordinate cleaning
     sample['y']= sample.geometry.apply(lambda p : p.y)
-    df.drop('geometry',axis=1,inplace=True)
+    sample.drop('geometry',axis=1,inplace=True)
+    
+    sample['pts_crs'] =  rast_crs  # add CRS of points
+    
+    sample = sample[['x','y','crs','polygon_id', class_name] + rast_band_names] # organize columns
 
     return sample
 
