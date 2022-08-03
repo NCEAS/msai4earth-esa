@@ -12,35 +12,154 @@ random.seed(10)
 
 import warnings
 
-import utility # custom module
+#import utility # custom module
 
 
 # *********************************************************************
 
 def path_to_polygons(aoi, year):
+    """
+        Creates a path to shapefile with polygons collected at specified aoi and year. 
+        The root of the folder containing the polygons is hardcoded inside the function.
+            Parameters:
+                        aoi (str): name of aoi in polygon's file name
+                        year (int): year of collection in polygon's file name
+            Return: fp (str): if the file exists it returns the constructed file path
+    """
     # root for all polygons collected on naip scenes
     root = '/home/jovyan/msai4earth-esa/iceplant_detection/data_sampling_workflow/polygons_from_naip_images'
     fp = os.path.join(root, 
                       aoi+'_polygons', 
                       aoi+'_polygons_'+str(year), 
                       aoi+'_polygons_'+str(year)+'.shp')
+
+    # check there is a file at filepath
+    if not os.path.exists(fp):
+        print('invalid filepath: no file')
+        return
+    
     return fp
 
 # *********************************************************************
 
 # extracts number of random points within polygon
-def random_pts_poly(number, polygon):
+def random_pts_poly(N, polygon):
+    """
+        Creates a list of N points sampled randomly from within the given polygon.
+            Parameters:
+                        N (int): number of random points to sample form polygon
+                        polygon (shapely.geometry.polygon.Polygon): 
+            Return:
+                    points (list of shapely.geometry.point.Point): list of N random points sampled from polygons
+    """
     points = []
     min_x, min_y, max_x, max_y = polygon.bounds
     i= 0
-    while i < number:
+    while i < N:
         point = Point(random.uniform(min_x, max_x), random.uniform(min_y, max_y))
         if polygon.contains(point):
             points.append(point)
             i += 1
     return points  
 
+
+# *********************************************************************
+
+# rast_reader = rasterio reader of naip image
+# polys and naip have to be in same crs, do polys.to_crs(naip.crs,inplace=True) before
+def num_pts_proportion(polys, rast_reader, proportion):
+
+    # area of a single pixel from raster resolution
+    pixel_size = rast_reader.res[0]*rast_reader.res[1]
+    
+    # calculating how many pixels are there in the polygon (approx)
+    # by dividing the area of poly by area of a single pixel
+    return polys.geometry.apply(lambda p: int((p.area/pixel_size)*proportion))
+
 # ---------------------------------------------
+
+def sample_raster_from_polys_proportion(polys, itemid, proportion):
+
+    item = utility.get_item_from_id(itemid)
+    rast_reader = utility.get_raster_from_item(item)
+    
+    # convert to same crs as raster to properly calculate area of polygons
+    polys_match = polys.to_crs(rast_reader.crs)
+    
+    # area of a single pixel from raster resolution    
+    pixel_size = rast_reader.res[0]*rast_reader.res[1]
+    
+    # calculating how many pixels are there in the polygon (approx)
+    # by dividing the area of poly by area of a single pixel
+    num_random_pts = polys_match.geometry.apply(lambda p: int((p.area/pixel_size)*proportion))
+    
+    return sample_naip(polys_match, num_random_pts, rast_reader, item)
+
+# ---------------------------------------------
+
+def num_pts_sliding(polys, alpha, m):
+    
+    num_random_pts = alpha * polys.pixels.to_numpy()
+    num_random_pts = num_random_pts.astype('int32')
+    num_random_pts[num_random_pts>m] = m
+    
+    return num_random_pts
+
+# ---------------------------------------------
+
+def sample_naip_from_polys_sliding(polys_raw, itemid, alpha, m):
+    item = utility.get_item_from_id(itemid)
+    naip = utility.get_raster_from_item(item)
+    
+    polys = polys_raw.to_crs(naip.crs)
+    
+    pixel_size = naip.res[0]*naip.res[1]
+    polys['pixels'] = polys.geometry.apply(lambda p: int((p.area/pixel_size)))
+#    polys = polys.sort_values(by=['pixels'], ascending=False).reset_index(drop=True)
+        
+    num_random_pts = num_pts_sliding(polys, alpha, m)
+    return sample_naip(polys, num_random_pts, naip, item)
+
+# ---------------------------------------------
+
+def sample_naip_from_polys_fixed_n(polys, itemid, n):
+    item = utility.get_item_from_id(itemid)
+    naip = utility.get_raster_from_item(item)
+    
+    polys_match = polys.to_crs(naip.crs)
+    
+    num_random_pts = np.full(polys_raw.shape[0],n)
+    return sample_naip(polys_match, num_random_pts, naip, item)
+
+# *********************************************************************
+
+# TO DO: maybe this shouldn't catch warnings here, but in notebook
+def raster_sample_proportion_no_warnings(polys, itemid, proportion):
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        df = sample_raster_from_polys_proportion(polys, itemid, proportion)
+    return df
+
+# ---------------------------------------------
+
+# TO DO: maybe this shouldn't catch warnings here, but in notebook
+def naip_sample_n_no_warnings(polys, itemid, n):
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        df = sample_naip_from_polys_fixedn(polys, itemid, n)
+    return df
+
+# ---------------------------------------------
+
+# TO DO: maybe this shouldn't catch warnings here, but in notebook
+def naip_sample_sliding_no_warnings(polys, itemid, alpha, m):
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        df = sample_naip_from_polys_sliding(polys, itemid, alpha, m)
+    return df
+
+
+# *********************************************************************
 # polys needs to have at least geometry, iceplant and id columns 
 
 def sample_naip(polys, num_random_pts, naip, item):
@@ -84,112 +203,3 @@ def sample_naip(polys, num_random_pts, naip, item):
         'year','month','day_in_year',
         'naip_id','polygon_id']]
     return df
-
-# *********************************************************************
-
-# naip = rasterio reader of naip image
-# polys and naip have to be in same crs, do polys.to_crs(naip.crs,inplace=True) before
-def num_pts_area_proportion(polys, naip, proportion):
-    
-    pixel_size = naip.res[0]*naip.res[1]
-    
-    # calculating how many pixels are there in the polygon (approx)
-    # by dividing the area of poly by area of a single pixel
-    return polys.geometry.apply(lambda p: int((p.area/pixel_size)*proportion))
-
-# ---------------------------------------------
-
-def sample_naip_from_polys_proportion(polys_raw, itemid, proportion):
-    item = utility.get_item_from_id(itemid)
-    naip = utility.get_raster_from_item(item)
-    
-    polys = polys_raw.to_crs(naip.crs)
-    
-    num_random_pts = num_pts_area_proportion(polys, naip, proportion)
-    return sample_naip(polys, num_random_pts, naip, item)
-
-# ---------------------------------------------
-
-def naip_sample_proportion_no_warnings(polys, itemid, proportion):
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        df = sample_naip_from_polys_proportion(polys, itemid, proportion)
-    return df
-
-
-
-# *********************************************************************
-
-def sample_naip_from_polys_fixed_n(polys_raw, itemid, n):
-    item = utility.get_item_from_id(itemid)
-    naip = utility.get_raster_from_item(item)
-    
-    polys = polys_raw.to_crs(naip.crs)
-    
-    num_random_pts = np.full(polys_raw.shape[0],n)
-    return sample_naip(polys, num_random_pts, naip, item)
-
-# ---------------------------------------------
-
-def naip_sample_n_no_warnings(polys, itemid, n):
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        df = sample_naip_from_polys_fixedn(polys, itemid, n)
-    return df
-
-# *********************************************************************
-# alpha = proportion of pixels in the smallest polygon to be sampled
-# diff = difference between #pixels sampled from smallest polygon and #pixels sampled from biggest polygon
-
-def num_pts_sliding_proportion(polys, alpha, diff):
-    
-    n1 = polys.pixels[polys.shape[0]-1]
-    nN = polys.pixels[0]
-    beta = (diff + alpha*n1)/nN
-    step = (alpha - beta)/polys.shape[0]
-    
-    proportions = np.arange(beta,alpha,step)       
-    #print(proportions)
-    num_random_pts = proportions * polys.pixels.to_numpy()
-    #print(num_random_pts)
-    num_random_pts = num_random_pts.astype('int16')
-    #print(num_random_pts)
-    
-    return num_random_pts
-
-# ---------------------------------------------
-
-def num_pts_sliding(polys, alpha, m):
-    
-    num_random_pts = alpha * polys.pixels.to_numpy()
-    num_random_pts = num_random_pts.astype('int32')
-    num_random_pts[num_random_pts>m] = m
-    
-    return num_random_pts
-
-# ---------------------------------------------
-
-def sample_naip_from_polys_sliding(polys_raw, itemid, alpha, m):
-    item = utility.get_item_from_id(itemid)
-    naip = utility.get_raster_from_item(item)
-    
-    polys = polys_raw.to_crs(naip.crs)
-    
-    pixel_size = naip.res[0]*naip.res[1]
-    polys['pixels'] = polys.geometry.apply(lambda p: int((p.area/pixel_size)))
-    polys = polys.sort_values(by=['pixels'], ascending=False).reset_index(drop=True)
-        
-    num_random_pts = num_pts_sliding(polys, alpha, m)
-    return sample_naip(polys, num_random_pts, naip, item)
-
-# ---------------------------------------------
-
-def naip_sample_sliding_no_warnings(polys, itemid, alpha, m):
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        df = sample_naip_from_polys_sliding(polys, itemid, alpha, m)
-    return df
-
-
-
-
