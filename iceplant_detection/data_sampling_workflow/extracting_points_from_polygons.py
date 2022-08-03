@@ -12,7 +12,7 @@ random.seed(10)
 
 import warnings
 
-#import utility # custom module
+import utility # custom module
 
 
 # *********************************************************************
@@ -78,6 +78,16 @@ def num_pts_proportion(polys, rast_reader, proportion):
 
 # ---------------------------------------------
 
+def num_pts_sliding(polys, alpha, m):
+    
+    num_random_pts = alpha * polys.pixels.to_numpy()
+    num_random_pts = num_random_pts.astype('int32')
+    num_random_pts[num_random_pts>m] = m
+    
+    return num_random_pts
+
+# *********************************************************************
+
 def sample_raster_from_polys_proportion(polys, itemid, proportion):
 
     item = utility.get_item_from_id(itemid)
@@ -97,28 +107,18 @@ def sample_raster_from_polys_proportion(polys, itemid, proportion):
 
 # ---------------------------------------------
 
-def num_pts_sliding(polys, alpha, m):
-    
-    num_random_pts = alpha * polys.pixels.to_numpy()
-    num_random_pts = num_random_pts.astype('int32')
-    num_random_pts[num_random_pts>m] = m
-    
-    return num_random_pts
-
-# ---------------------------------------------
-
-def sample_naip_from_polys_sliding(polys_raw, itemid, alpha, m):
+def sample_naip_from_polys_sliding(polys, itemid, alpha, m):
     item = utility.get_item_from_id(itemid)
     naip = utility.get_raster_from_item(item)
     
-    polys = polys_raw.to_crs(naip.crs)
+    polys_match = polys.to_crs(naip.crs)
     
     pixel_size = naip.res[0]*naip.res[1]
-    polys['pixels'] = polys.geometry.apply(lambda p: int((p.area/pixel_size)))
+    polys['pixels'] = polys_match.geometry.apply(lambda p: int((p.area/pixel_size)))
 #    polys = polys.sort_values(by=['pixels'], ascending=False).reset_index(drop=True)
         
-    num_random_pts = num_pts_sliding(polys, alpha, m)
-    return sample_naip(polys, num_random_pts, naip, item)
+    num_random_pts = num_pts_sliding(polys_match, alpha, m)
+    return sample_naip(polys_match, num_random_pts, naip, item)
 
 # ---------------------------------------------
 
