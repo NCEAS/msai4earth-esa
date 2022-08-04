@@ -75,3 +75,40 @@ def iceplant_proportions(labels):
     print()
     
 
+# **********************************************************************************
+
+# raster = numpy array
+# bands = array or 1
+def save_raster(raster, fp, shape, bands_n, crs, transform, dtype):
+    bands_array = 1
+    if bands_n > 1:
+        bands_array = np.arange(1,bands_n+1)
+        
+    with rasterio.open(
+        fp,  # file path
+        'w',           # w = write
+        driver='GTiff', # format
+        height = shape[0], 
+        width = shape[1],
+        count = bands_n,  # number of raster bands in the dataset
+        dtype = dtype,
+        crs = crs,
+        transform = transform,
+    ) as dst:
+        dst.write(raster.astype(dtype), bands_array)
+    return 
+
+# **********************************************************************************
+# TO DO: not used
+def crs_from_itemid(itemid):
+    # accesing Azure storage using pystac client
+    catalog = pystac_client.Client.open("https://planetarycomputer.microsoft.com/api/stac/v1")
+
+    # search for naip scene where the pts were sampled from
+    search = catalog.search(
+        collections=["naip"],
+        ids = itemid
+    )
+    item = list(search.get_items())[0]
+    epsg_code = item.properties['proj:epsg']
+    return  CRS.from_epsg(epsg_code)
