@@ -171,7 +171,8 @@ def sample_raster_from_poly(N, poly, poly_id, class_name, poly_class, rast_reade
         class_name : pd.Series(np.full(N,poly_class)),  # add class identification for all pts
         'polygon_id': pd.Series(np.full(N,poly_id))
                  })
-
+    
+    # TO DO: substitute four lines by sample_raster_from_pts: input= sample.geometry
     sample_coords = sample.geometry.apply(lambda p: (p.x, p.y))  # separate coords (needed for reasterio.io.DatasetReader.sample() )
     data_generator = rast_reader.sample(sample_coords)   # extract band values from raster
     data = np.vstack(list(data_generator))               # make band values into dataframe
