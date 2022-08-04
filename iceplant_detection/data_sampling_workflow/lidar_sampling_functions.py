@@ -18,16 +18,13 @@ import utility
 
 # *********************************************************************
 
-# TO DO: move to notebook
+# TO DO: move to notebook?
 def path_to_lidar(year):
     # root for all Santa Barbara County canopy height rasters
     root = '/home/jovyan/msai4earth-esa/iceplant_detection/data_sampling_workflow/SantaBarbaraCounty_lidar/'
     fp = os.path.join(root, 
                       'SantaBarbaraCounty_lidar_'+str(year)+'.tif')
     return fp
-
-
-    
 
 # ------------------------------------------------------------------------------
 
