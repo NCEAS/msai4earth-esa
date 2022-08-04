@@ -13,12 +13,10 @@ from scipy.ndimage import maximum_filter as maxf2D
 from scipy.ndimage import minimum_filter as minf2D
 from scipy.ndimage import convolve as conf2D
 
-import pystac_client
 import utility
 
 
 # *********************************************************************
-
 def geodataframe_from_csv(fp, lon_label, lat_label, crs):
     """
         Transforms a csv with longitude and latitude columns into a GeoDataFrame.
