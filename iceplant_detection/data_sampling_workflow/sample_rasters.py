@@ -16,11 +16,23 @@ import geopandas as gpd
 import rasterio
 from rasterio.crs import CRS
 
+from scipy.ndimage import maximum_filter as maxf2D
+from scipy.ndimage import minimum_filter as minf2D
+from scipy.ndimage import convolve as conf2D
+
 import utility # custom module
 
 # *********************************************************************
+# TO DO: maybe all these path_to functions should be in a different .py
 
 def path_to_lidar(year):
+    """
+        Creates a path to the Santa Barbara County canopy hieght raster from given year
+        The path to the folder containing the polygons is hardcoded inside the function.
+            Parameters:
+                        year (int): year of canopy height data
+            Return: fp (str): returns the file path to the canopy height raster
+    """
     # root for all Santa Barbara County canopy height rasters
     root = '/home/jovyan/msai4earth-esa/iceplant_detection/data_sampling_workflow/SantaBarbaraCounty_lidar/'
     fp = os.path.join(root, 
@@ -31,8 +43,8 @@ def path_to_lidar(year):
 
 def path_to_polygons(aoi, year):
     """
-        Creates a path to shapefile with polygons collected at specified aoi and year. 
-        The root of the folder containing the polygons is hardcoded inside the function.
+        Creates a path to the shapefile with polygons collected at specified aoi and year. 
+        The path to the folder containing the polygons is hardcoded inside the function.
             Parameters:
                         aoi (str): name of aoi in polygon's file name
                         year (int): year of collection in polygon's file name
@@ -57,10 +69,13 @@ def path_to_spectral_pts(aoi, year):
     fp = os.path.join(os.getcwd(), 
                              'temp', 
                             aoi + '_points_'+str(year)+'.csv')
+    # TO DO: maybe change to _spectral_points
     return fp
 
 
 # *********************************************************************
+
+def count_pixels_in_polygons(polys, rast_reader):
     """
         Counts the approximate number of pixels in a raster covered by each polygon in a list.
         No need to match CRS: to do the count it internally matches the CRS of the polygons and the raster. 
@@ -74,8 +89,6 @@ def path_to_spectral_pts(aoi, year):
                         approximate number of pixels from raster covered by each polygon
             
     """
-def count_pixels_in_polygons(polys, rast_reader):
-    
     # convert to same crs as raster to properly calculate area of polygons
     if polys.crs != rast_reader.crs:
         print('matched crs')
@@ -90,6 +103,7 @@ def count_pixels_in_polygons(polys, rast_reader):
     return  n_pixels.to_numpy()
 
 # *********************************************************************
+
 def sample_size_in_polygons(n_pixels, param, sample_fraction=0, max_sample=0, const_sample=0):
     """
         Calculates the number of points to sample from each polygon in a list 
@@ -318,6 +332,8 @@ def geodataframe_from_csv(fp, lon_label, lat_label, crs):
     return gpd.GeoDataFrame(df, crs=crs)
 
 # *********************************************************************
+
+def sample_raster_from_pts(pts, rast_reader, rast_band_names):
 """
     Creates a dataframe of raster bands values at the given points.
     Points and raster MUST HAVE SAME CRS for results to be correct. 
@@ -332,9 +348,6 @@ def geodataframe_from_csv(fp, lon_label, lat_label, crs):
             samples (pandas.core.frame.DataFrame): data frame of raster bands' values at the given points
             
 """
-# pts have to be in same crs as rast_reader
-# pts are shapely.Points
-def sample_raster_from_pts(pts, rast_reader, rast_band_names):
     if rast_reader.count != len(rast_band_names):
         print('# band names != # bands in raster')
         return
@@ -348,3 +361,57 @@ def sample_raster_from_pts(pts, rast_reader, rast_band_names):
     samples = pd.DataFrame(samples, columns=rast_band_names)
     
     return samples
+
+# *********************************************************************
+
+# folder_path = path to folder to save rasters
+def min_max_rasters(rast_reader, n, rast_name, folder_path=''):  
+    rast = rast_reader.read([1]).squeeze() # read raster
+
+    maxs = maxf2D(rast, size=(n,n)) # calculate min and max
+    mins = minf2D(rast, size=(n,n))   
+    
+    # save rasters
+    if not folder_path:    # create temp directory if needed
+        folder_path = os.path.join(os.getcwd(),'temp')  
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+                
+    m = [maxs, mins]
+    m_labels = ['_maxs_', '_mins_']
+    for i in range(0,2):
+        fp = os.path.join(folder_path, rast_name + m_labels[i]+'.tif')
+        utility.save_raster(m[i], 
+                    fp, 
+                    rast.shape,
+                    1,
+                    rast_reader.crs, 
+                    rast_reader.transform, 
+                    rasterio.uint8)  # TO DO: figure out raster type from rast_reader
+    return
+
+# ------------------------------------------------------------------------------
+
+def avg_rasters(rast_reader, n, folder_path, year):
+    rast = rast_reader.read([1]).squeeze() # read raster
+    
+    # calculate averages
+    w = np.ones(n*n).reshape(n,n)
+    avgs = conf2D(rast, 
+             weights=w,
+             mode='constant')
+    avgs = avgs/(n*n)
+    
+#    negative_avg = avgs<0   # TO DO: NOT SURE IF THIS IS USED DOWNSTREAM 
+#    avgs[negative_avg] = 0  # BUT PROBABLY SHOULD NOT BE HERE
+    
+    # save averages
+    fp = os.path.join(folder_path, 'lidar_avgs_'+ str(year)+'.tif')
+    utility.save_raster(avgs, 
+                fp, 
+                rast.shape, 
+                1,
+                rast_reader.crs, 
+                rast_reader.transform, 
+                rasterio.float32)  # TO DO: figure out raster type from rast_reader
+    return fp
