@@ -282,18 +282,19 @@ def sample_naip_from_polys(polys, class_name, itemid, param, sample_fraction=0, 
 
 
 # *********************************************************************
-"""
-   Runs sample_naip_from_polys function catching the following warning:
-               /srv/conda/envs/notebook/lib/python3.8/site-packages/pandas/core/dtypes/cast.py:122: ShapelyDeprecationWarning: 
-               The array interface is deprecated and will no longer work in Shapely 2.0. 
-               Convert the '.coords' to a numpy array instead. arr = construct_1d_object_array_from_listlike(values)
-    # See https://shapely.readthedocs.io/en/stable/migration.html, section Creating NumPy arrays of geometry objects
-        
-        Parameters: see parameters for sample_naip_from_polys function
-        Return: see return for sample_naip_from_polys function
-"""
+
 
 def sample_naip_from_polys_no_warnings(polys, class_name, itemid, param, sample_fraction=0, max_sample=0, const_sample=0):
+    """
+       Runs sample_naip_from_polys function catching the following warning:
+                   /srv/conda/envs/notebook/lib/python3.8/site-packages/pandas/core/dtypes/cast.py:122: ShapelyDeprecationWarning: 
+                   The array interface is deprecated and will no longer work in Shapely 2.0. 
+                   Convert the '.coords' to a numpy array instead. arr = construct_1d_object_array_from_listlike(values)
+        # See https://shapely.readthedocs.io/en/stable/migration.html, section Creating NumPy arrays of geometry objects
+
+            Parameters: see parameters for sample_naip_from_polys function
+            Return: see return for sample_naip_from_polys function
+    """
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         df = sample_naip_from_polys(polys, class_name, itemid, param, sample_fraction, max_sample, const_sample)
@@ -334,20 +335,20 @@ def geodataframe_from_csv(fp, lon_label, lat_label, crs):
 # *********************************************************************
 
 def sample_raster_from_pts(pts, rast_reader, rast_band_names):
-"""
-    Creates a dataframe of raster bands values at the given points.
-    Points and raster MUST HAVE SAME CRS for results to be correct. 
-        Parameters: 
-            pts (geopandas.geoseries.GeoSeries): 
-                GeoSeries of the points  (type shapely.geometry.point.Point) where the samples from the rasters will be taken
-            rast_reader (rasterio.io.DatasetReader):
-                reader to the raster from which to sample bands
-            rast_band_names (str list):
-                names of the bands of rast_reader
-        Return:
-            samples (pandas.core.frame.DataFrame): data frame of raster bands' values at the given points
-            
-"""
+    """
+        Creates a dataframe of raster bands values at the given points.
+        Points and raster MUST HAVE SAME CRS for results to be correct. 
+            Parameters: 
+                pts (geopandas.geoseries.GeoSeries): 
+                    GeoSeries of the points  (type shapely.geometry.point.Point) where the samples from the rasters will be taken
+                rast_reader (rasterio.io.DatasetReader):
+                    reader to the raster from which to sample bands
+                rast_band_names (str list):
+                    names of the bands of rast_reader
+            Return:
+                samples (pandas.core.frame.DataFrame): data frame of raster bands' values at the given points
+
+    """
     if rast_reader.count != len(rast_band_names):
         print('# band names != # bands in raster')
         return
@@ -364,21 +365,25 @@ def sample_raster_from_pts(pts, rast_reader, rast_band_names):
 
 # *********************************************************************
 
-# folder_path = path to folder to save rasters
-def min_max_rasters(rast_reader, n, rast_name, folder_path=''):  
-    rast = rast_reader.read([1]).squeeze() # read raster
 
-    maxs = maxf2D(rast, size=(n,n)) # calculate min and max
+def min_max_rasters(rast_reader, n, rast_name, folder_path=''):  
+    rast = rast_reader.read([1]).squeeze() # read raster values
+
+    maxs = maxf2D(rast, size=(n,n))    # calculate min and max in window
     mins = minf2D(rast, size=(n,n))   
+    m = [maxs, mins] 
     
-    # save rasters
-    if not folder_path:    # create temp directory if needed
+    # if needed, create temp directory to save files 
+    if not folder_path:    
         folder_path = os.path.join(os.getcwd(),'temp')  
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
-                
-    m = [maxs, mins]
+
+    # parameters for saving
     m_labels = ['_maxs_', '_mins_']
+    dtype = rasterio.dtypes.get_minimum_dtype(maxs)
+    
+    # save rasters
     for i in range(0,2):
         fp = os.path.join(folder_path, rast_name + m_labels[i]+'.tif')
         utility.save_raster(m[i], 
@@ -387,16 +392,15 @@ def min_max_rasters(rast_reader, n, rast_name, folder_path=''):
                     1,
                     rast_reader.crs, 
                     rast_reader.transform, 
-                    rasterio.uint8)  # TO DO: figure out raster type from rast_reader
+                    dtype)  
     return
 
 # ------------------------------------------------------------------------------
 
-def avg_rasters(rast_reader, n, folder_path, year):
-    rast = rast_reader.read([1]).squeeze() # read raster
-    
-    # calculate averages
-    w = np.ones(n*n).reshape(n,n)
+def avg_rasters(rast_reader, n, rast_name, folder_path=''):  
+    rast = rast_reader.read([1]).squeeze() # read raster values
+
+    w = np.ones(n*n).reshape(n,n)      # calculate averages in window
     avgs = conf2D(rast, 
              weights=w,
              mode='constant')
@@ -405,13 +409,30 @@ def avg_rasters(rast_reader, n, folder_path, year):
 #    negative_avg = avgs<0   # TO DO: NOT SURE IF THIS IS USED DOWNSTREAM 
 #    avgs[negative_avg] = 0  # BUT PROBABLY SHOULD NOT BE HERE
     
-    # save averages
-    fp = os.path.join(folder_path, 'lidar_avgs_'+ str(year)+'.tif')
-    utility.save_raster(avgs, 
+    # if needed, create temp directory to save files 
+    if not folder_path:   
+        folder_path = os.path.join(os.getcwd(),'temp')  
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+            
+    # parameters for saving   
+    fp = os.path.join(folder_path, rast_name +'_avgs.tif')                
+    dtype = rasterio.dtypes.get_minimum_dtype(avgs)
+            
+    utility.save_raster(avgs,    # save rasters
                 fp, 
                 rast.shape, 
                 1,
                 rast_reader.crs, 
                 rast_reader.transform, 
-                rasterio.float32)  # TO DO: figure out raster type from rast_reader
-    return fp
+                dtype)  
+    return
+                      
+                      
+# **********************************************************************************
+
+def open_and_match(fp, reproject_to):
+    rast = rioxr.open_rasterio(fp)
+    rast_match = rast.rio.reproject_match(reproject_to)
+    return rast_match.squeeze()
+

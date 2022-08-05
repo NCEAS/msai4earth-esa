@@ -113,6 +113,7 @@ def sample_raster(pts_xy, raster_reader):
 
 # **********************************************************************************
 
+# DONE
 def open_and_match(fp, reproject_to):
     rast = rioxr.open_rasterio(fp)
     rast_match = rast.rio.reproject_match(reproject_to)
