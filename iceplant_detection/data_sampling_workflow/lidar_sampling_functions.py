@@ -18,7 +18,7 @@ import utility
 
 # *********************************************************************
 
-# TO DO: move to notebook?
+# DONE
 def path_to_lidar(year):
     # root for all Santa Barbara County canopy height rasters
     root = '/home/jovyan/msai4earth-esa/iceplant_detection/data_sampling_workflow/SantaBarbaraCounty_lidar/'
@@ -28,7 +28,7 @@ def path_to_lidar(year):
 
 # ------------------------------------------------------------------------------
 
-# folder_path = path to folder to save rasters
+# DONE
 def save_min_max_rasters(rast_reader, folder_path, year):    
     rast = rast_reader.read([1]).squeeze() # read raster
 
@@ -51,6 +51,7 @@ def save_min_max_rasters(rast_reader, folder_path, year):
 
 # ------------------------------------------------------------------------------
 
+# DONE
 def save_avg_rasters(rast_reader, folder_path, year):
     rast = rast_reader.read([1]).squeeze() # read raster
     
@@ -77,10 +78,7 @@ def save_avg_rasters(rast_reader, folder_path, year):
 
 
 # **********************************************************************************
-
-
-# fp = filepath of csv, must have x and y columns representing coordinates of point
-# crs must be the crs of the csv coordinates
+# DONE
 def geodataframe_from_csv(fp, crs):
     df_raw = pd.read_csv(fp)
     df = df_raw.drop(['geometry'], axis=1)
@@ -97,12 +95,14 @@ def geodataframe_from_csv(fp, crs):
 
 # ------------------------------------------------------------------------------
 
+# DONE
 def pts_for_lidar_sampling(pts, crs):
     pts_xy = pts.to_crs(crs).geometry.apply(lambda p :(p.x, p.y)).to_list()
     return pts_xy
 
 # ------------------------------------------------------------------------------
 
+# DONE
 def sample_raster(pts_xy, raster_reader):
     sample = raster_reader.sample(pts_xy)
     samples = []
@@ -121,6 +121,7 @@ def open_and_match(fp, reproject_to):
 
 # **********************************************************************************
 
+# DONE
 def crs_from_itemid(itemid):
     # accesing Azure storage using pystac client
     catalog = pystac_client.Client.open("https://planetarycomputer.microsoft.com/api/stac/v1")
