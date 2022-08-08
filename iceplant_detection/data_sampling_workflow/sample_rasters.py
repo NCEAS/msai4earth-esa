@@ -369,6 +369,20 @@ def sample_raster_from_pts(pts, rast_reader, rast_band_names):
 
 
 def min_max_rasters(rast_reader, rast_name, n, folder_path=''):  
+    """
+        Creates a new raster by replacing each pixel p in given raster R by the max value in a nxn window centered at p.
+        The raster with maximum values is saved in a temp folder in the current working directory if no folder_path is given.
+            Parameters: 
+                        rast_reader (rasterio.io.DatasetReader):
+                            reader to the raster from which to compute the maximum values in a window
+                        rast_name (str):
+                            name of raster. The resulting raster will be saved as rast_name_maxs.tif.
+                        n (int):
+                            Side length (in pixels) of the square window over which to compute maximum values for each pixel.
+                        folder_path (str):
+                            directory where to save raster. If none is given, then it saves the raster in a temp folder in the cwd.
+            Return: None    
+    """
     rast = rast_reader.read([1]).squeeze() # read raster values
 
     maxs = maxf2D(rast, size=(n,n))    # calculate min and max in window
@@ -399,7 +413,21 @@ def min_max_rasters(rast_reader, rast_name, n, folder_path=''):
 
 # ------------------------------------------------------------------------------
 
-def avg_rasters(rast_reader, rast_name, n, folder_path=''):  
+def avg_rasters(rast_reader, rast_name, n, folder_path=''): 
+    """
+        Creates a new raster by replacing each pixel p in given raster R by the avg value in a nxn window centered at p.
+        The raster with averege values is saved in a temp folder in the current working directory if no folder_path is given.
+            Parameters: 
+                        rast_reader (rasterio.io.DatasetReader):
+                            reader to the raster from which to compute the average values in a window
+                        rast_name (str):
+                            name of raster. The resulting raster will be saved as rast_name_avgs.tif.
+                        n (int):
+                            Side length (in pixels) of the square window over which to compute average values for each pixel.
+                        folder_path (str):
+                            directory where to save raster. If none is given, then it saves the raster in a temp folder in the cwd.
+            Return: None    
+    """
     rast = rast_reader.read([1]).squeeze() # read raster values
 
     w = np.ones(n*n).reshape(n,n)      # calculate averages in window
