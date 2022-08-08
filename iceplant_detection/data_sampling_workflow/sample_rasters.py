@@ -208,6 +208,8 @@ def sample_raster_from_poly(N, poly, poly_id, class_name, poly_class, rast_reade
                  })
     
     # TO DO: substitute four lines by sample_raster_from_pts: input= sample.geometry
+    # pts_naip = pts.to_crs(rast_reader_NAIP.crs).geometry
+    # sample_raster_from_pts(pts_naip, rast_reader_NAIP, ['r','g','b','nir'])
     sample_coords = sample.geometry.apply(lambda p: (p.x, p.y))  # separate coords (needed for reasterio.io.DatasetReader.sample() )
     data_generator = rast_reader.sample(sample_coords)   # extract band values from raster
     data = np.vstack(list(data_generator))               # make band values into dataframe
@@ -366,7 +368,7 @@ def sample_raster_from_pts(pts, rast_reader, rast_band_names):
 # *********************************************************************
 
 
-def min_max_rasters(rast_reader, n, rast_name, folder_path=''):  
+def min_max_rasters(rast_reader, rast_name, n, folder_path=''):  
     rast = rast_reader.read([1]).squeeze() # read raster values
 
     maxs = maxf2D(rast, size=(n,n))    # calculate min and max in window
@@ -380,8 +382,8 @@ def min_max_rasters(rast_reader, n, rast_name, folder_path=''):
             os.makedirs(folder_path)
 
     # parameters for saving
-    m_labels = ['_maxs_', '_mins_']
-    dtype = rasterio.dtypes.get_minimum_dtype(maxs)
+    m_labels = ['_maxs', '_mins']
+    dtypes = [rasterio.dtypes.get_minimum_dtype(maxs), rasterio.dtypes.get_minimum_dtype(mins)]
     
     # save rasters
     for i in range(0,2):
@@ -392,12 +394,12 @@ def min_max_rasters(rast_reader, n, rast_name, folder_path=''):
                     1,
                     rast_reader.crs, 
                     rast_reader.transform, 
-                    dtype)  
+                    dtypes[i])  
     return
 
 # ------------------------------------------------------------------------------
 
-def avg_rasters(rast_reader, n, rast_name, folder_path=''):  
+def avg_rasters(rast_reader, rast_name, n, folder_path=''):  
     rast = rast_reader.read([1]).squeeze() # read raster values
 
     w = np.ones(n*n).reshape(n,n)      # calculate averages in window
