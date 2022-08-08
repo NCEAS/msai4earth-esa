@@ -42,6 +42,22 @@ def get_raster_from_item(item):
     reader = rasterio.open(href)
     return reader
 
+# ---------------------------------------------
+
+# TO DO: not used
+def get_crs_from_itemid(itemid):
+    # accesing Azure storage using pystac client
+    catalog = pystac_client.Client.open("https://planetarycomputer.microsoft.com/api/stac/v1")
+
+    # search for naip scene where the pts were sampled from
+    search = catalog.search(
+        collections=["naip"],
+        ids = itemid
+    )
+    item = list(search.get_items())[0]
+    epsg_code = item.properties['proj:epsg']
+    return  CRS.from_epsg(epsg_code)
+
 # *********************************************************************
 
 def day_in_year(day,month,year):
@@ -65,6 +81,7 @@ def day_in_year(day,month,year):
 
 # *********************************************************************
 # --- print proportions of ice plant (1) vs no iceplant (0) in an array with only 0 and 1
+# TO DO: change to label_proportions
 def iceplant_proportions(labels):
     unique, counts = np.unique(labels, return_counts=True)
     print('no-iceplant:iceplant ratio    ',round(counts[0]/counts[1],1),':1')
@@ -78,6 +95,8 @@ def iceplant_proportions(labels):
     
 
 # **********************************************************************************
+
+def save_raster(raster, fp, shape, bands_n, crs, transform, dtype):
     """
         Saves an array as a 'GTiff' raster with specified parameters.
         Parameters:
@@ -89,8 +108,6 @@ def iceplant_proportions(labels):
                     transform (affine.Affine): affine transformation of raster
         Return: None
     """
-    
-def save_raster(raster, fp, shape, bands_n, crs, transform, dtype):
     bands_array = 1
     if bands_n > 1:
         bands_array = np.arange(1,bands_n+1)
@@ -110,25 +127,13 @@ def save_raster(raster, fp, shape, bands_n, crs, transform, dtype):
     return 
 
 # **********************************************************************************
-    """ 
-        dir_name (str)
-    """
+
 def make_directory(dir_name): 
+    """ 
+        Checks if the directory with name dir_name (str) exists in the current working directory. 
+        If it doesn't, it creates the directory and returns the filepath to it.
+    """    
     fp = os.path.join(os.getcwd(),dir_name)  
     if not os.path.exists(fp):
         os.makedirs(fp)
     return fp
-# **********************************************************************************
-# TO DO: not used
-def crs_from_itemid(itemid):
-    # accesing Azure storage using pystac client
-    catalog = pystac_client.Client.open("https://planetarycomputer.microsoft.com/api/stac/v1")
-
-    # search for naip scene where the pts were sampled from
-    search = catalog.search(
-        collections=["naip"],
-        ids = itemid
-    )
-    item = list(search.get_items())[0]
-    epsg_code = item.properties['proj:epsg']
-    return  CRS.from_epsg(epsg_code)
