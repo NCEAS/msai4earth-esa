@@ -6,6 +6,8 @@ import calendar
 import numpy as np
 import pandas as pd
 
+import os
+
 # **********************************************************************************************************
 
 def get_item_from_id(itemid):
@@ -76,9 +78,18 @@ def iceplant_proportions(labels):
     
 
 # **********************************************************************************
-
-# raster = numpy array
-# bands = array or 1
+    """
+        Saves an array as a 'GTiff' raster with specified parameters.
+        Parameters:
+                    raster (numpy.ndarray): array of raster values
+                    fp (str): directory where raster will be saved
+                    shape (tuple):shape of raster (height, width) TO DO: SHOULD THIS BE READ DIRECTLY FROM raster??
+                    bands_n (integer): number of bands in the raster
+                    crs (str): CRS of raster
+                    transform (affine.Affine): affine transformation of raster
+        Return: None
+    """
+    
 def save_raster(raster, fp, shape, bands_n, crs, transform, dtype):
     bands_array = 1
     if bands_n > 1:
@@ -87,7 +98,7 @@ def save_raster(raster, fp, shape, bands_n, crs, transform, dtype):
     with rasterio.open(
         fp,  # file path
         'w',           # w = write
-        driver='GTiff', # format
+        driver = 'GTiff', # format
         height = shape[0], 
         width = shape[1],
         count = bands_n,  # number of raster bands in the dataset
@@ -98,6 +109,15 @@ def save_raster(raster, fp, shape, bands_n, crs, transform, dtype):
         dst.write(raster.astype(dtype), bands_array)
     return 
 
+# **********************************************************************************
+    """ 
+        dir_name (str)
+    """
+def make_directory(dir_name): 
+    fp = os.path.join(os.getcwd(),dir_name)  
+    if not os.path.exists(fp):
+        os.makedirs(fp)
+    return fp
 # **********************************************************************************
 # TO DO: not used
 def crs_from_itemid(itemid):

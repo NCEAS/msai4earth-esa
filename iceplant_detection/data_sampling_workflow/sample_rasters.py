@@ -367,8 +367,42 @@ def sample_raster_from_pts(pts, rast_reader, rast_band_names):
 
 # *********************************************************************
 
+def min_raster(rast_reader, rast_name, n, folder_path=''):  
+    """
+        Creates a new raster by replacing each pixel p in given raster R by the minimum value in a nxn window centered at p.
+        The raster with minimum values is saved in a temp folder in the current working directory if no folder_path is given.
+            Parameters: 
+                        rast_reader (rasterio.io.DatasetReader):
+                            reader to the raster from which to compute the minimum values in a window
+                        rast_name (str):
+                            name of raster. The resulting raster will be saved as rast_name_maxs.tif.
+                        n (int):
+                            Side length (in pixels) of the square window over which to compute minimum values for each pixel.
+                        folder_path (str):
+                            directory where to save raster. If none is given, then it saves the raster in a temp folder in the cwd.
+            Return: None    
+    """
+    rast = rast_reader.read([1]).squeeze() # read raster values
+    mins = minf2D(rast, size=(n,n))    # calculate min in window
+    
+    if not folder_path:                         # if needed, create temp directory to save files 
+        folder_path = utility.make_directory('temp')
+    
+    dtype = rasterio.dtypes.get_minimum_dtype(mins)  # parameters for saving
+    
+    fp = os.path.join(folder_path, rast_name +'_mins.tif')      # save raster
+    utility.save_raster(mins, 
+                fp, 
+                rast.shape,
+                1,
+                rast_reader.crs, 
+                rast_reader.transform, 
+                dtype)  
+    return
 
-def min_max_rasters(rast_reader, rast_name, n, folder_path=''):  
+# ------------------------------------------------------------------------------
+
+def max_raster(rast_reader, rast_name, n, folder_path=''):  
     """
         Creates a new raster by replacing each pixel p in given raster R by the max value in a nxn window centered at p.
         The raster with maximum values is saved in a temp folder in the current working directory if no folder_path is given.
@@ -384,36 +418,26 @@ def min_max_rasters(rast_reader, rast_name, n, folder_path=''):
             Return: None    
     """
     rast = rast_reader.read([1]).squeeze() # read raster values
-
-    maxs = maxf2D(rast, size=(n,n))    # calculate min and max in window
-    mins = minf2D(rast, size=(n,n))   
-    m = [maxs, mins] 
+    maxs = maxf2D(rast, size=(n,n))    # calculate min in window
     
-    # if needed, create temp directory to save files 
-    if not folder_path:    
-        folder_path = os.path.join(os.getcwd(),'temp')  
-        if not os.path.exists(folder_path):
-            os.makedirs(folder_path)
-
-    # parameters for saving
-    m_labels = ['_maxs', '_mins']
-    dtypes = [rasterio.dtypes.get_minimum_dtype(maxs), rasterio.dtypes.get_minimum_dtype(mins)]
+    if not folder_path:                         # if needed, create temp directory to save files 
+        folder_path = utility.make_directory('temp')
     
-    # save rasters
-    for i in range(0,2):
-        fp = os.path.join(folder_path, rast_name + m_labels[i]+'.tif')
-        utility.save_raster(m[i], 
-                    fp, 
-                    rast.shape,
-                    1,
-                    rast_reader.crs, 
-                    rast_reader.transform, 
-                    dtypes[i])  
+    dtype = rasterio.dtypes.get_minimum_dtype(maxs)  # parameters for saving
+    
+    fp = os.path.join(folder_path, rast_name +'_maxs.tif')      # save raster
+    utility.save_raster(maxs, 
+                fp, 
+                rast.shape,
+                1,
+                rast_reader.crs, 
+                rast_reader.transform, 
+                dtype)  
     return
 
 # ------------------------------------------------------------------------------
 
-def avg_rasters(rast_reader, rast_name, n, folder_path=''): 
+def avg_raster(rast_reader, rast_name, n, folder_path=''): 
     """
         Creates a new raster by replacing each pixel p in given raster R by the avg value in a nxn window centered at p.
         The raster with averege values is saved in a temp folder in the current working directory if no folder_path is given.
@@ -436,14 +460,9 @@ def avg_rasters(rast_reader, rast_name, n, folder_path=''):
              mode='constant')
     avgs = avgs/(n*n)
     
-#    negative_avg = avgs<0   # TO DO: NOT SURE IF THIS IS USED DOWNSTREAM 
-#    avgs[negative_avg] = 0  # BUT PROBABLY SHOULD NOT BE HERE
-    
     # if needed, create temp directory to save files 
-    if not folder_path:   
-        folder_path = os.path.join(os.getcwd(),'temp')  
-        if not os.path.exists(folder_path):
-            os.makedirs(folder_path)
+    if not folder_path:  
+        folder_path = utility.make_directory('temp')
             
     # parameters for saving   
     fp = os.path.join(folder_path, rast_name +'_avgs.tif')                
