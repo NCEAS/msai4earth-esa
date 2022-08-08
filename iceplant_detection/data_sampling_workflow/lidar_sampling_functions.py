@@ -62,8 +62,8 @@ def save_avg_rasters(rast_reader, folder_path, year):
              mode='constant')
     avgs = avgs/9
     
-    negative_avg = avgs<0
-    avgs[negative_avg] = 0
+    # negative_avg = avgs<0
+    # avgs[negative_avg] = 0
     
     # save averages
     fp = os.path.join(folder_path, 'lidar_'+ str(year)+'_avgs.tif')
