@@ -478,7 +478,7 @@ def avg_raster(rast_reader, rast_name, n, folder_path=''):
     return
                       
                       
-# **********************************************************************************
+# *********************************************************************
 
 def open_and_match(fp, reproject_to):
     rast = rioxr.open_rasterio(fp)
