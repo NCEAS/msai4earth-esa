@@ -140,8 +140,6 @@ iceplant_detection/training_set/aux_data/*
 examples/naip_example/data/*
 examples/naip_example/requirements.txt
 
-iceplant_detection/data_sampling_workflow/train_set.csv
-iceplant_detection/data_sampling_workflow/test_set.csv
 iceplant_detection/data_sampling_workflow/temp/*
 /iceplant_detection/data_sampling_workflow/SantaBarbaraCounty_lidar/*
 
