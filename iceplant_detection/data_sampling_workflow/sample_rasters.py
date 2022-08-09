@@ -11,7 +11,7 @@ random.seed(10)
 
 import warnings
 
-#import rioxarray as rioxr
+import rioxarray as rioxr
 import geopandas as gpd
 import rasterio
 from rasterio.crs import CRS
