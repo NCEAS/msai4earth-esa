@@ -329,10 +329,10 @@ def add_date_features(df, item):
                                 year (int: year of scene colletion), month (int: month of scene collection), 
                                 and day_in_year (int from 1 to 365: day in year which scene was collected)
     """    
-        df['year'] = item.datetime.year
-        df['month'] = item.datetime.month
-        df['day_in_year'] = utility.day_in_year(item.datetime.day, item.datetime.month, item.datetime.year)
-        return df
+    df['year'] = item.datetime.year
+    df['month'] = item.datetime.month
+    df['day_in_year'] = utility.day_in_year(item.datetime.day, item.datetime.month, item.datetime.year)
+    return df
 
 # ---------------------------------
 
