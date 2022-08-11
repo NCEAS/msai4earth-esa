@@ -69,13 +69,13 @@ def normalized_difference_index(df, *args):
     y = df.iloc[:, n].astype('int16')
     return (x-y) / (x+y)
 
-# ----------------------------
+# **********************************************************************************************************
 
 def feature_df_treshold(df, feature_name, thresh, keep_gr, func, *args):
     
     df[feature_name] = func(df, *args)
     
-    if keep_gr = True:
+    if keep_gr == True:
         keep = df[df[feature_name] > thresh]
         deleted_indices = df[df[feature_name] <= thresh].index
     else : 
@@ -87,3 +87,16 @@ def feature_df_treshold(df, feature_name, thresh, keep_gr, func, *args):
     return keep, deleted_indices
 
 # **********************************************************************************************************
+
+def indices_to_image(nrows, ncols, indices_list, values, back_value):
+    # background, any pixel not in the union of indices will be given this value
+    reconstruct = np.ones((nrows,ncols))*back_value 
+
+    # TO DO: check indices list and values lengths are the same?
+    for k in range(0,len(indices_list)):
+        i = indices_list[k] / ncols
+        i = i.astype(int)
+        j = indices_list[k] % ncols
+        reconstruct[i,j] = values[k]
+    
+    return reconstruct
