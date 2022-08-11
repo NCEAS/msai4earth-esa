@@ -88,6 +88,14 @@ def feature_df_treshold(df, feature_name, thresh, keep_gr, func, *args):
 
 # **********************************************************************************************************
 
+def add_date_features(df, date): 
+    df['year'] = date.year
+    df['month'] = date.month
+    df['day_in_year'] = utility.day_in_year(date.day, date.month, date.year)
+    return df
+
+# **********************************************************************************************************
+
 def indices_to_image(nrows, ncols, indices_list, values, back_value):
     # background, any pixel not in the union of indices will be given this value
     reconstruct = np.ones((nrows,ncols))*back_value 
@@ -100,3 +108,4 @@ def indices_to_image(nrows, ncols, indices_list, values, back_value):
         reconstruct[i,j] = values[k]
     
     return reconstruct
+
