@@ -10,6 +10,11 @@ import planetary_computer as pc
 
 import data_sampling_workflow.utility as utility
 
+#https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html #returning-a-view-versus-a-copy
+#mode.chained_assignment
+
+
+
 # **********************************************************************************************************
 # **********************************************************************************************************
 
@@ -73,7 +78,9 @@ def normalized_difference_index(df, *args):
 
 def feature_df_treshold(df, feature_name, thresh, keep_gr, func, *args):
     
-    df[feature_name] = func(df, *args)
+    #df[feature_name] = func(df, *args)
+    kwargs = {feature_name : func(df, *args)}
+    df = df.assign(**kwargs)
     
     if keep_gr == True:
         keep = df[df[feature_name] > thresh]
@@ -88,11 +95,24 @@ def feature_df_treshold(df, feature_name, thresh, keep_gr, func, *args):
 
 # **********************************************************************************************************
 
+def add_spectral_features(df, ndwi_thresh, ndvi_thresh):
+    
+    not_water, water_index = feature_df_treshold(df, 
+                                             'ndwi', ndwi_thresh, False, 
+                                             normalized_difference_index, 1,3)   
+    is_veg, not_veg_index = feature_df_treshold(not_water, 
+                                                   'ndvi', ndvi_thresh, True, 
+                                                   normalized_difference_index, 3,0)
+    return is_veg, water_index, not_veg_index
+
+# ----------------------------------------------------
+
 def add_date_features(df, date): 
-    df['year'] = date.year
-    df['month'] = date.month
-    df['day_in_year'] = utility.day_in_year(date.day, date.month, date.year)
-    return df
+    kwargs = {'year' : date.year,
+             'month' : date.month,
+             'day_in_year' : utility.day_in_year(date.day, date.month, date.year)}
+    
+    return df.assign(**kwargs)
 
 # **********************************************************************************************************
 
