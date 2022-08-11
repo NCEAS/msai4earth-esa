@@ -7,11 +7,14 @@ is_veg, water_index, not_veg_index = rm.add_spectral_features(df = rm.raster_as_
                                                            ndvi_thresh = 0.05) 
 is_veg.drop('ndwi', axis=1, inplace=True)
 
-
 is_veg = rm.add_date_features(is_veg, raster.datetime)
 
-print('time to make features df: ', (time.time()-t0))
-# time to make features df:  10.682304620742798
+# convert all auxiliary lidar rasters as df and sample with veg index
+# add lidar to spectral + dates   ## df_lidar_veg = df_lidar.iloc[veg.index]
+
+reconstruct = indices_to_image(12500, 10580, [water_index, non_veg_index], [3,2], back_value=1)
+
+
 
 # -------------------------------------------------------
 
