@@ -101,7 +101,7 @@ def save_raster(raster, fp, shape, bands_n, crs, transform, dtype):
         Saves an array as a 'GTiff' raster with specified parameters.
         Parameters:
                     raster (numpy.ndarray): array of raster values
-                    fp (str): directory where raster will be saved
+                    fp (str): file path where raster will be saved
                     shape (tuple):shape of raster (height, width) TO DO: SHOULD THIS BE READ DIRECTLY FROM raster??
                     bands_n (integer): number of bands in the raster
                     crs (str): CRS of raster

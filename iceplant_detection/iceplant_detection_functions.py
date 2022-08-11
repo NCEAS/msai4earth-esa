@@ -220,11 +220,26 @@ def ndvi(image):
                     numpy.ndarray: 
                         array of size m,n, the result of calculating the NDVI to image pixel-by-pixel
     """ 
-    x = image.astype('int16')
+    x = image.astype('int16')  # TO DO: add sth in documentation about data type 
     return (x[3,...] - x[0,...])/(x[3,...] + x[0,...])
 
 # ---------------------------------
+def ndwi(image):
+    """
+        Pixel-by-pixel NDWI calculation of an image with four bands.
+            Parameters:
+                        image (numpy.ndarray): 
+                            a (4,m,n) array. The first bands are red, green, blue, and NIR, in that specific order.
+            Returns: 
+                    numpy.ndarray: 
+                        array of size m,n, the result of calculating the NDWI to image pixel-by-pixel
+    """ 
+    x = image.astype('int16')
+    return (x[1,...] - x[3,...])/(x[1,...] + x[3,...])
+
+# ---------------------------------
 def ndvi_thresh(image, thresh=0.05):
+    # TO DO: change to apply ndvi or ndwi
     """
         Identifies which pixels in a 4-band image have NDVI above a given threshold.
             Parameters:
@@ -243,24 +258,24 @@ def ndvi_thresh(image, thresh=0.05):
     return x
 
 # ---------------------------------
-# TO DO: MAYBE DELETE?? seems like we only need the previous one
-def select_ndvi_image(itemid, reduce_box, thresh=0.05):
-    """
-        Identifies which pixels in a rectangular subset of a specified NAIP scene have NDVI above a given threshold.
-             Parameters:
-                        itemid (str): 
-                            the itemid of a single NAIP scene
-                        reduce_box (shapely.geometry.polygon.Polygon): 
-                            box outlining the perimter of the area of interest within the NAIP scene with itemid.
-                            Coordiantes of the box's vertices must be given in EPSG:4326 crs.
-                        thresh (float in (-1,1)): 
-                            NDVI threshold
-            Returns: 
-                    numpy.ndarray: 
-                        array of size m,n in which pixels of image with ndvi<thresh have 0 value and pixels with ndvi>=thresh have value 1.
-    """  
-    image = open_window_in_scene(itemid, reduce_box)
-    return ndvi_thresh(image,thresh)
+# # TO DO: MAYBE DELETE?? seems like we only need the previous one
+# def select_ndvi_image(itemid, reduce_box, thresh=0.05):
+#     """
+#         Identifies which pixels in a rectangular subset of a specified NAIP scene have NDVI above a given threshold.
+#              Parameters:
+#                         itemid (str): 
+#                             the itemid of a single NAIP scene
+#                         reduce_box (shapely.geometry.polygon.Polygon): 
+#                             box outlining the perimter of the area of interest within the NAIP scene with itemid.
+#                             Coordiantes of the box's vertices must be given in EPSG:4326 crs.
+#                         thresh (float in (-1,1)): 
+#                             NDVI threshold
+#             Returns: 
+#                     numpy.ndarray: 
+#                         array of size m,n in which pixels of image with ndvi<thresh have 0 value and pixels with ndvi>=thresh have value 1.
+#     """  
+#     image = open_window_in_scene(itemid, reduce_box)
+#     return ndvi_thresh(image,thresh)
 
 
 # ---------------------------------
@@ -347,7 +362,7 @@ def features_over_aoi(item, image, thresh=0.05):
                         item (pystac.item.Item): 
                             item associated to the NAIP scene containing image
                         image (numpy.ndarray): 
-                            a (4,m,n) array. The first bands are red, green, blue, and NIR, in that specific order.def 
+                            a (4,m,n) array. The first bands are red, green, blue, and NIR, in that specific order
                         thresh (float in (-1,1)): 
                             NDVI threshold
             Returns:
