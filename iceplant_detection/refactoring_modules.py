@@ -10,15 +10,11 @@ import planetary_computer as pc
 
 import data_sampling_workflow.utility as utility
 
-#https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html #returning-a-view-versus-a-copy
-#mode.chained_assignment
-
-
 
 # **********************************************************************************************************
 # **********************************************************************************************************
 
-def rioxr_from_itemid(itemid, reduce_box = False, reduce_box_crs = False):
+def rioxr_from_itemid(itemid, reduce_box = None, reduce_box_crs = None):
     """
         Opens the raster associated with the given itemid. 
         If a reduce_box is given, then it opens the subset of raster determined by teh box.
@@ -36,7 +32,7 @@ def rioxr_from_itemid(itemid, reduce_box = False, reduce_box_crs = False):
     
     rast = rioxr.open_rasterio(href)           # open raster
     
-    if reduce_box != False:
+    if reduce_box != None:
         reduce = gpd.GeoDataFrame({'geometry':[reduce_box]}, crs=reduce_box_crs)    # clip if needed
         reduce = reduce.to_crs(rast.rio.crs)        
         rast = rast.rio.clip_box(*reduce.total_bounds)
@@ -50,11 +46,13 @@ def rioxr_from_itemid(itemid, reduce_box = False, reduce_box_crs = False):
 #raster = nd.array
 def raster_as_df(raster, band_names):
     """
+        Transforms the given raster into a dataframe of the pixels with column names equal to the band ndames.
              Parameters:
-                       raster (numpy.ndarray): # bands is 1st in shape
-                       band_names (list): 
+                       raster (numpy.ndarray): raster values
+                       band_names (list): names (str) of band names. order of names must be the same order as bands.
             Returns: 
-                    df (pandas.core.frame.DataFrame):
+                    df (pandas.core.frame.DataFrame): dataframe where each pixels is a row and columns are the 
+                    rasters's band values at pixel
     """  
     pixels = raster.reshape([len(band_names),-1]).T
     df = pd.DataFrame(pixels, columns=band_names) 
@@ -63,9 +61,18 @@ def raster_as_df(raster, band_names):
 # **********************************************************************************************************
 def normalized_difference_index(df, *args):
     """
-    
-        Returns:
-                pandas.core.series.Series
+        Calculates the normalized difference index of two columns in the given data frame.
+        In doing so it converts the column types to int16 (spectral bands are usually uint8).
+            Parameters:
+                        df (pandas.core.frame.DataFrame): dataframe from which two columns will be used
+                            to calculate a normalized difference index
+                        *args: tuple of column indices used as x and y in normalized difference
+            Returns:
+                    pandas.core.series.Series: the normalized difference index of the selected columns
+                    
+            Example: for dataframe with columns red, green, blue, nir (in that order)
+                     ndvi would be normalized_difference_index(df, 3,0), and
+                     ndwi would be normalized_difference_index(df, 1,3)
     """    
     m = args[0]
     n = args[1]
@@ -77,14 +84,34 @@ def normalized_difference_index(df, *args):
 # **********************************************************************************************************
 
 def feature_df_treshold(df, feature_name, thresh, keep_gr, func, *args):
-    
-    #df[feature_name] = func(df, *args)
-    kwargs = {feature_name : func(df, *args)}
+    """
+        Adds a new column C to a dataframe using the action of a function and 
+        selects only the rows that whose values in C are above a certain threshold.
+            Parameters: 
+                        df (pandas.core.frame.DataFrame): data frame on which to do the operation
+                        feature_name (str): name of new column
+                        thresh (float): threshold for new column
+                        keep_gr (bool): if keep_gr == True then it keeps the rows with new_column > thresh
+                                        if keep_gr == False then it keeps the rows with new_column < thresh
+                        func (function): function to calculate new column in dataframe
+                        *args: arguments for function 
+            Returns:
+                    keep (pandas.core.frame.DataFrame):
+                        a copy of dataframe with the values of function as a new column and subsetted by threshold
+                    deleted_indices (numpy.ndarray): 
+                        indices of the rows that were deleted from df 
+                        (those with value of function not compatible with threshold condition)s
+                        
+    """
+    # add new column
+    kwargs = {feature_name : func(df, *args)}        # TO DO: maybe take these two lines out?
     df = df.assign(**kwargs)
     
+    # select rows above threshold, keep indices of deleted rows
     if keep_gr == True:
         keep = df[df[feature_name] > thresh]
         deleted_indices = df[df[feature_name] <= thresh].index
+    # select rows below threshold, keep indices of deleted rows
     else : 
         keep = df[df[feature_name] < thresh]
         deleted_indices = df[df[feature_name] >= thresh].index
@@ -96,18 +123,39 @@ def feature_df_treshold(df, feature_name, thresh, keep_gr, func, *args):
 # **********************************************************************************************************
 
 def add_spectral_features(df, ndwi_thresh, ndvi_thresh):
-    
+    """
+       Finds the rows in df with ndwi values below ndwi_thresh and ndvi values above ndvi_thresh. 
+       Keeps track of the rows deleted.
+           Parameters:
+                       df (pandas.core.frame.DataFrame): dataframe with columns red, green, blue and nir (in that order)
+                       ndwi_tresh (float): threshold for ndwi
+                       ndvi_tresh (float): threshold for ndvi
+           Returns: 
+                    is_veg (pandas.core.frame.DataFrame):
+                        subset of df in which all rows have ndwi values below ndwi_thresh and ndvi values above ndvi_thresh
+                    water_index (numpy.ndarray): 
+                        indices of rows in df with ndwi values above ndwi_thresh 
+                    not_veg_index (numpy.ndarray): 
+                        indices of rows in df with ndwi values below ndwi_thresh and ndvi values below ndvi_thresh
+    """
+    # remove water pixels
     not_water, water_index = feature_df_treshold(df, 
                                              'ndwi', ndwi_thresh, False, 
                                              normalized_difference_index, 1,3)   
+    # remove non-vegetation pixels
     is_veg, not_veg_index = feature_df_treshold(not_water, 
                                                    'ndvi', ndvi_thresh, True, 
                                                    normalized_difference_index, 3,0)
+    # return pixels that are vegetation and are not water
+    # return indices of water pixels and not vegetation pixels
     return is_veg, water_index, not_veg_index
 
 # ----------------------------------------------------
 
 def add_date_features(df, date): 
+    """
+        Adds three constant columns to the data frame df with info from date (datetime.datetime): year, month and day_in_year.
+    """
     kwargs = {'year' : date.year,
              'month' : date.month,
              'day_in_year' : utility.day_in_year(date.day, date.month, date.year)}
@@ -117,6 +165,29 @@ def add_date_features(df, date):
 # **********************************************************************************************************
 
 def indices_to_image(nrows, ncols, indices_list, values, back_value):
+    """
+        Parameters:
+                    nrows (int): number of rows in ouput array
+                    ncols (int): number of columns in output array
+                    indices_list (list): 
+                        list of 1-dimensional np.arrays. 
+                        each element in list must be values within [0, nrows*ncols-1], 
+                        these represent cells in the output array with same value
+                    values (list): the value to assign to each of the arrays in indices_list
+                    back_value (int): value of any cell not in the union of indices_list
+            Returns:
+                reconstruct (numpy.ndarray):
+                    array with values in valuesU{back_value} with dimensions nrows*ncols 
+                    the cells with 'index' in the array indices_list[i] get assigned the value values[i]
+                    the index of a i,j cell of the array is i*nrows+j
+            Example:
+                Suppose nrows=ncols=3, indices_list = [[2,3,7],[0,1,8]], values = [1,2] and back_value =0. 
+                Then the output is the array 
+                |2|2|1|
+                |1|0|0|
+                |0|1|2|
+                        
+    """
     # background, any pixel not in the union of indices will be given this value
     reconstruct = np.ones((nrows,ncols))*back_value 
 
