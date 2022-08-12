@@ -1,3 +1,17 @@
+import pystac_client 
+import planetary_computer as pc
+import rasterio
+
+import calendar
+import numpy as np
+import pandas as pd
+
+import os
+
+# *********************************************************************
+# *********************************************************************
+# *********************************************************************
+
 import os
 import pandas as pd
 import numpy as np
@@ -20,8 +34,132 @@ from scipy.ndimage import maximum_filter as maxf2D
 from scipy.ndimage import minimum_filter as minf2D
 from scipy.ndimage import convolve as conf2D
 
-import utility # custom module
 
+
+
+# *********************************************************************
+
+
+def get_item_from_id(itemid):
+    """
+        Searches the Planetary Computer's NAIP collection for the item associated with the given itemid.
+            Parameters:
+                        itemid (str): the itemid of a single NAIP scene
+            Returns:
+                        item (pystac.item.Item): item associated to given itemid (unsigned)
+   """
+    # accesing Planetary Computer's storage using pystac client
+    URL = "https://planetarycomputer.microsoft.com/api/stac/v1"
+    catalog = pystac_client.Client.open(URL)
+
+    search = catalog.search(
+        collections=["naip"],
+        ids = itemid)
+    
+    # return 1st item in search (assumes itemid IS associaed to some item)
+    item = list(search.get_items())[0]   # ** TO DO: catch exception
+    return item
+
+# ---------------------------------------------
+
+def get_raster_from_item(item):
+    """
+        "Opens" the raster in the given item: returns a rasterio.io.DatasetReader to the raster in item.
+            Parameters: item (pystac.item.Item)
+            Returns: reader (rasterio.io.DatasetReader) 
+    """  
+    href = pc.sign(item.assets["image"].href)
+    reader = rasterio.open(href)
+    return reader
+
+# ---------------------------------------------
+
+# TO DO: not used
+def get_crs_from_itemid(itemid):
+    # accesing Azure storage using pystac client
+    catalog = pystac_client.Client.open("https://planetarycomputer.microsoft.com/api/stac/v1")
+
+    # search for naip scene where the pts were sampled from
+    search = catalog.search(
+        collections=["naip"],
+        ids = itemid
+    )
+    item = list(search.get_items())[0]
+    epsg_code = item.properties['proj:epsg']
+    return  CRS.from_epsg(epsg_code)
+
+# *********************************************************************
+
+def day_in_year(day,month,year):
+    """
+        Transforms a date into a day in the year from 1 to 365/366 (takes into account leap years).
+            Paratmeters:
+                day (int): day of the date
+                month (int 1-12): month of the date
+                year (int): year of date
+            Returns:
+                n (int): date as day in year
+    """
+    days_in_month = [31,28,31,30,31,30,31,31,30,31,30,31]
+    n = 0
+    for i in range(0,month-1):
+        n = n+days_in_month[i]
+    n = n+day
+    if calendar.isleap(year) and month>2:
+        n = n+1
+    return n
+
+
+# **********************************************************************************
+
+def save_raster(raster, fp, shape, bands_n, crs, transform, dtype):
+    """
+        Saves an array as a 'GTiff' raster with specified parameters.
+        Parameters:
+                    raster (numpy.ndarray): array of raster values
+                    fp (str): file path where raster will be saved
+                    shape (tuple):shape of raster (height, width) TO DO: SHOULD THIS BE READ DIRECTLY FROM raster??
+                    bands_n (integer): number of bands in the raster
+                    crs (str): CRS of raster
+                    transform (affine.Affine): affine transformation of raster
+        Return: None
+    """
+    bands_array = 1
+    if bands_n > 1:
+        bands_array = np.arange(1,bands_n+1)
+        
+    with rasterio.open(
+        fp,  # file path
+        'w',           # w = write
+        driver = 'GTiff', # format
+        height = shape[0], 
+        width = shape[1],
+        count = bands_n,  # number of raster bands in the dataset
+        dtype = dtype,
+        crs = crs,
+        transform = transform,
+    ) as dst:
+        dst.write(raster.astype(dtype), bands_array)
+    return 
+
+# **********************************************************************************
+
+def make_directory(dir_name): 
+    """ 
+        Checks if the directory with name dir_name (str) exists in the current working directory. 
+        If it doesn't, it creates the directory and returns the filepath to it.
+    """    
+    fp = os.path.join(os.getcwd(),dir_name)  
+    if not os.path.exists(fp):
+        os.makedirs(fp)
+    return fp
+
+
+
+
+# *********************************************************************
+# *********************************************************************
+# *********************************************************************
 # *********************************************************************
 # TO DO: maybe all these path_to functions should be in a different .py
 
@@ -255,9 +393,9 @@ def sample_naip_from_polys(polys, class_name, itemid, param, sample_fraction=0, 
                     df (pandas.core.frame.DataFrame): data frame of raster bands' values at points sampled from polys.
 
     """    
-    item = utility.get_item_from_id(itemid)
+    item = get_item_from_id(itemid)
     
-    rast_reader = utility.get_raster_from_item(item)        
+    rast_reader = get_raster_from_item(item)        
     rast_band_names = ['r','g','b','nir']
     rast_crs = rast_reader.crs.to_dict()['init']
     
@@ -277,7 +415,7 @@ def sample_naip_from_polys(polys, class_name, itemid, param, sample_fraction=0, 
     
     df['year'] = item.datetime.year   # add date to samples  TO DO: get from polys? raster?
     df['month'] = item.datetime.month
-    df['day_in_year'] = utility.day_in_year(item.datetime.day, item.datetime.month, item.datetime.year )
+    df['day_in_year'] = day_in_year(item.datetime.day, item.datetime.month, item.datetime.year )
     df['naip_id'] = itemid           # add naip item id to samples
     
     return df
@@ -386,12 +524,12 @@ def min_raster(rast_reader, rast_name, n, folder_path=''):
     mins = minf2D(rast, size=(n,n))    # calculate min in window
     
     if not folder_path:                         # if needed, create temp directory to save files 
-        folder_path = utility.make_directory('temp')
+        folder_path = make_directory('temp')
     
     dtype = rasterio.dtypes.get_minimum_dtype(mins)  # parameters for saving
     
     fp = os.path.join(folder_path, rast_name +'_mins.tif')      # save raster
-    utility.save_raster(mins, 
+    save_raster(mins, 
                 fp, 
                 rast.shape,
                 1,
@@ -421,12 +559,12 @@ def max_raster(rast_reader, rast_name, n, folder_path=''):
     maxs = maxf2D(rast, size=(n,n))    # calculate min in window
     
     if not folder_path:                         # if needed, create temp directory to save files 
-        folder_path = utility.make_directory('temp')
+        folder_path = make_directory('temp')
     
     dtype = rasterio.dtypes.get_minimum_dtype(maxs)  # parameters for saving
     
     fp = os.path.join(folder_path, rast_name +'_maxs.tif')      # save raster
-    utility.save_raster(maxs, 
+    save_raster(maxs, 
                 fp, 
                 rast.shape,
                 1,
@@ -462,13 +600,13 @@ def avg_raster(rast_reader, rast_name, n, folder_path=''):
     
     # if needed, create temp directory to save files 
     if not folder_path:  
-        folder_path = utility.make_directory('temp')
+        folder_path = make_directory('temp')
             
     # parameters for saving   
     fp = os.path.join(folder_path, rast_name +'_avgs.tif')                
     dtype = rasterio.dtypes.get_minimum_dtype(avgs)
             
-    utility.save_raster(avgs,    # save rasters
+    save_raster(avgs,    # save rasters
                 fp, 
                 rast.shape, 
                 1,
@@ -484,4 +622,21 @@ def open_and_match(fp, reproject_to):
     rast = rioxr.open_rasterio(fp)
     rast_match = rast.rio.reproject_match(reproject_to)
     return rast_match.squeeze()
+
+# *********************************************************************
+# *********************************************************************
+# *********************************************************************
+# --- print proportions of ice plant (1) vs no iceplant (0) in an array with only 0 and 1
+# TO DO: change to label_proportions
+def iceplant_proportions(labels):
+    unique, counts = np.unique(labels, return_counts=True)
+    print('no-iceplant:iceplant ratio    ',round(counts[0]/counts[1],1),':1')
+    n = labels.shape[0]
+    perc = [round(counts[0]/n*100,2), round(counts[1]/n*100,2)]
+    df = pd.DataFrame({'iceplant':unique,
+             'counts':counts,
+             'percentage':perc}).set_index('iceplant')
+    print(df)
+    print()
+    
 
