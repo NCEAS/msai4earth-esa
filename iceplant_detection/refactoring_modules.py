@@ -8,7 +8,7 @@ import geopandas as gpd
 
 import planetary_computer as pc
 
-import data_sampling_workflow.utility as utility
+import data_sampling_workflow.sample_rasters as sr
 
 
 # **********************************************************************************************************
@@ -27,7 +27,7 @@ def rioxr_from_itemid(itemid, reduce_box = None, reduce_box_crs = None):
             Return: 
                     xarray.core.dataarray.DataArray : rioxarray of scene or a subset of it.
     """
-    item = utility.get_item_from_id(itemid)    # locate raster
+    item = sr.get_item_from_id(itemid)    # locate raster
     href = pc.sign(item.assets["image"].href)
     
     rast = rioxr.open_rasterio(href)           # open raster
@@ -158,7 +158,7 @@ def add_date_features(df, date):
     """
     kwargs = {'year' : date.year,
              'month' : date.month,
-             'day_in_year' : utility.day_in_year(date.day, date.month, date.year)}
+             'day_in_year' : sr.day_in_year(date.day, date.month, date.year)}
     
     return df.assign(**kwargs)
 
