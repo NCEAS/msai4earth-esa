@@ -34,7 +34,7 @@ Folder with various shapefiles and rasters used throughout.
 - CA_geometry
   California, US boundary shapefile. [Source](https://data.ca.gov/dataset/ca-geographic-boundaries)
 - Santa Barbara, CA shapefile. 
-  Shapefile of Santa Barbara County's boundary
+  Shapefile of Santa Barbara County's boundary [Source](https://databasin.org/datasets/1cdc07adea7d4dee9cc1f07ab44cfef3/)
 - sedgwick_reserve
   - sedgwick_geometry
   Shapefile of the University of California's Sedgwick Reserve. [Source](https://www.dropbox.com/sh/kwt1dvdsloe5fep/AAA-HJPYdnPEOoSdD6dJKKMma/Sedgwick%20Reserve%20(32)?dl=0&preview=Sedgwick.zip&subfolder_nav_tracking=1)
