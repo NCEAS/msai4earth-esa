@@ -43,7 +43,6 @@ def rioxr_from_itemid(itemid, reduce_box = None, reduce_box_crs = None):
 
 # **********************************************************************************************************
 
-#raster = nd.array
 def raster_as_df(raster, band_names):
     """
         Transforms the given raster into a dataframe of the pixels with column names equal to the band ndames.
