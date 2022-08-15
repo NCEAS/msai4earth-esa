@@ -11,13 +11,15 @@ All code is being developed and tested in [Microsoft's Planetary Computer](https
 
 ## Active Code 
 
-Notebooks in the current folder starting with TRIALS_# are workflows on which we are working on at the moment:
+Notebooks in the current folder are workflows on which we are working on at the moment:
 
-* TRIALS_8: classify pixels in a NAIP scene into iceplant, non-iceplant and low-ndvi using a random forest classification model trained on **only the spectral and date** features of the training set generated in data_sampling_workflow
+* `spectral_model_training.ipynb`: training and saving a random forest classifier using **only the spectral and date** features of the training set generated in `data_sampling_workflow` 
 
-* TRIALS_11: classify pixels in a NAIP scene into iceplant, non-iceplant and low-ndvi using a random forest classification model trained on the **spectral, date and canopy height** features of the training set generated in data_sampling_workflow
+* `spectral_model_on_NAIP.ipynb`: classify pixels in a NAIP scene into iceplant, non-iceplant, high-ndwi and low-ndvi using the random forest classification model generated in `spectral_model_training`
 
-* TRIALS_12: assign to each pixel within an area of interest (subset of NAIP scene) the [probability](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html#sklearn.ensemble.RandomForestClassifier.predict_proba)  with which the random forest classifies it as iceplant (see 
+* `lidar_spectral_model_training.ipynb`: training and saving a random forest classifier using **spectral, date and canopy height** features of the training set generated in `data_sampling_workflow`
+
+* `lidar_spectral_model_on_NAIP.ipynb`: classify pixels in a NAIP scene into iceplant, non-iceplant, high-ndwi, and low-ndvi using the random forest classification model generated in `lidar_spectral_model_training`
 
 
 
@@ -32,7 +34,7 @@ These are folders containing stable code:
 This folder contains a series of notebooks that creates a dataset of georeferenced points of known iceplant and non-iceplant locations across time on the Santa Barbara County coast. Each point in the final dataset has information about its location, collection date, and spectral and canopy height features at that point. The resulting dataset (or a subset) is used to train machine learning models to identify iceplant locations on NAIP images.  
 
 
-### `separating_naip_flights`:
+#### `separating_naip_flights`:
 
 This folder contains a notebook that, given a shapefile (not too complex) returns:
 
@@ -62,7 +64,6 @@ Custom libraries implemented to run the notebooks in this repository. The locati
 
 	iceplant_detection/data_sampling_workflow/
 		sample_rasters.py
-		utility.py
         
 	iceplant_detection/
 		iceplant_detection_functions.py
@@ -72,22 +73,20 @@ Descriptions:
 
 ### `sample_rasters.py`
 Custom functions to:
+   - functions to access NAIP data in the Planetary Computer repository using pystac_client and planetary_computer libraries.
    - sample random points inside a polygon    
    - sample raster values at a list of points
    - extract spectral and calendar values from NAIP iamges at specific coordinates
    - create and save auxiliary rasters to sample avg_lidar, max_lidar and min_lidar features using methods from scipy.ndimage 
    - convert points in csv to geodataframe
-
-### `utility.py`
-Mainly functions to access NAIP data in the Planetary Computer repository using pystac_client and planetary_computer libraries.
     
-### `iceplant_detection_functions.py`
+    
+### `raster_to_features.py`
 Functions to:
    - get a subset of a NAIP scene via the Planetary Computer's API
    - calculate NDVI and of a given raster with bands r,g,b,nir
-   - create a dataframe with spectral and date features for each pixel in a NAIP scene or subset of one
-   - apply a classification model to each pixel of a NAIP scene
-   - convert model binary predictions back to image
+   - create a dataframe with spectral and date features for each pixel in a subset of aNAIP scene
+   - convert model predictions back to image
 
 ### `model_prep_and_evals.py`
 Functions to:
