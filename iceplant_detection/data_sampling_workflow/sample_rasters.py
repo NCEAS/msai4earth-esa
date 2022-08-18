@@ -447,7 +447,7 @@ def geodataframe_from_csv(fp, lon_label, lat_label, crs):
         Transforms a csv with longitude and latitude columns into a GeoDataFrame.
             Parameters:
                         fp (str): 
-                            File path to csv containing coordinates of points.
+                            File path to csv containing coordinates of points.    # TO DO: update to pandas data frame, don't read in file here
                             The coordiantes must be in separate columns. 
                         lon_label (str): 
                             name of column having longitudes of points
@@ -462,7 +462,7 @@ def geodataframe_from_csv(fp, lon_label, lat_label, crs):
     """
     df = pd.read_csv(fp)
     if 'geometry' in df.columns:           # rename geometry column if it exists
-        df = df = df.rename(columns={'geometry': 'geometry_0'})
+        df = df.rename(columns = {'geometry': 'geometry_0'})
     
     # recreate geometry column as shapely Points
     xy = []
