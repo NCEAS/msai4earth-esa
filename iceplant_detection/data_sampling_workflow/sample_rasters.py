@@ -172,9 +172,9 @@ def path_to_lidar(year):
             Return: fp (str): returns the file path to the canopy height raster
     """
     # root for all Santa Barbara County canopy height rasters
-    root = '/home/jovyan/msai4earth-esa/iceplant_detection/data_sampling_workflow/SantaBarbaraCounty_lidar/'
+    root = '/home/jovyan/msai4earth-esa/iceplant_detection/data_sampling_workflow/SantaBarbaraCounty_CanopyHeight/'
     fp = os.path.join(root, 
-                      'SantaBarbaraCounty_lidar_'+str(year)+'.tif')
+                      'SantaBarbaraCounty_CanopyHeight_'+str(year)+'.tif')
     return fp
 
 # ----------------------------------

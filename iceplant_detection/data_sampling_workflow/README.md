@@ -27,16 +27,20 @@ The starting point for the data sampling is a set of polygons that outline confi
 
 The notebooks are numbered in the order they should be run. 
 
-* 1_sample_pts_from_polygons
+* `1_sample_pts_from_polygons`
+
 Creates datasets of random points extracted from polygons in the 'polygons_form_naip_images' folder, together with the corresponding spectral and date features from NAIP images.
 
-* 2_download_CFO_canopy_height_raster
+* `2_download_CFO_canopy_height_raster`
+
 Creates a canopy height raster layer for Santa Barbara County from the CFO canopy height data for the state of California. These rasters are not deleted in any of the next notebooks.
 
-* 3_add_canopy_height_features
+* `3_add_canopy_height_features`
+
 Adds canopy height features to the points sampled in the first notebook.
 
-* 4_assemble_data_samples
+* `4_assemble_data_samples`
+
 Assembles all the csv files produced by the previous notebooks into a single dataframe. It either saves the data frame as a single csv or splits it into training and test sets. It also includes statistics of the combined dataset.
 
 
@@ -63,19 +67,14 @@ Each point in the final dataset has the following associated features:
 
 ## Custom Libraries
 
-There are two custom libraries implemented for the data sampling:
-
 ### sample_rasters.py
-Custom functions to:
+Functions to:
+   - access NAIP data in the Planetary Computer repository using pystac_client and planetary_computer libraries.
    - sample random points inside a polygon    
    - sample raster values at a list of points
    - extract spectral and calendar values from NAIP iamges at specific coordinates
    - create and save auxiliary rasters to sample avg_lidar, max_lidar and min_lidar features using methods from scipy.ndimage 
    - convert points in csv to geodataframe
-
-### utility.py:
-Mainly functions to access NAIP data in the Planetary Computer repository using pystac_client and planetary_computer libraries.
-
 
 
 
