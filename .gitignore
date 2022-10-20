@@ -142,6 +142,11 @@ examples/naip_example/requirements.txt
 
 iceplant_detection/data_sampling_workflow/temp/*
 /iceplant_detection/data_sampling_workflow/SantaBarbaraCounty_lidar/*
+iceplant_detection/data_sampling_workflow/SantaBarbaraCounty_CanopyHeight/*
+
+iceplant_detection/temp/*
+iceplant_detection/*.joblib # ignore models
+
 
 
 shapefiles_n_rasters/jldp_boundary/*
