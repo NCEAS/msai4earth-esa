@@ -523,8 +523,8 @@ def min_raster(rast_reader, rast_name, n, folder_path=''):
     rast = rast_reader.read([1]).squeeze() # read raster values
     mins = minf2D(rast, size=(n,n))    # calculate min in window
     
-    if not folder_path:                         # if needed, create temp directory to save files 
-        folder_path = make_directory('temp')
+    if not folder_path:                         # TO DO: this does not work if needed, create temp directory to save files 
+        folder_path = os.make_directory('temp')
     
     dtype = rasterio.dtypes.get_minimum_dtype(mins)  # parameters for saving
     
