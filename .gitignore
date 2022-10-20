@@ -146,6 +146,6 @@ iceplant_detection/data_sampling_workflow/SantaBarbaraCounty_CanopyHeight/*
 
 iceplant_detection/temp/*
 
-*.joblib # ignore models
+**/*.joblib # ignore models
 
 shapefiles_n_rasters/jldp_boundary/*
