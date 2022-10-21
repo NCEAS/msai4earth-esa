@@ -151,7 +151,7 @@ def make_directory(dir_name):
     """    
     fp = os.path.join(os.getcwd(),dir_name)  
     if not os.path.exists(fp):
-        os.makedirs(fp)
+        os.mkdir(fp)
     return fp
 
 
@@ -523,8 +523,8 @@ def min_raster(rast_reader, rast_name, n, folder_path=''):
     rast = rast_reader.read([1]).squeeze() # read raster values
     mins = minf2D(rast, size=(n,n))    # calculate min in window
     
-    if not folder_path:                         # TO DO: this does not work if needed, create temp directory to save files 
-        folder_path = os.make_directory('temp')
+    if not os.path.exists(folder_path):                         # TO DO: this does not work if needed, create temp directory to save files 
+        folder_path = make_directory('temp')
     
     dtype = rasterio.dtypes.get_minimum_dtype(mins)  # parameters for saving
     
@@ -558,7 +558,7 @@ def max_raster(rast_reader, rast_name, n, folder_path=''):
     rast = rast_reader.read([1]).squeeze() # read raster values
     maxs = maxf2D(rast, size=(n,n))    # calculate min in window
     
-    if not folder_path:                         # if needed, create temp directory to save files 
+    if not os.path.exists(folder_path):  # if needed, create temp directory to save files 
         folder_path = make_directory('temp')
     
     dtype = rasterio.dtypes.get_minimum_dtype(maxs)  # parameters for saving
@@ -599,7 +599,7 @@ def avg_raster(rast_reader, rast_name, n, folder_path=''):
     avgs = avgs/(n*n)
     
     # if needed, create temp directory to save files 
-    if not folder_path:  
+    if not os.path.exists(folder_path):  
         folder_path = make_directory('temp')
             
     # parameters for saving   
