@@ -505,7 +505,7 @@ def sample_raster_from_pts(pts, rast_reader, rast_band_names):
 
 # *********************************************************************
 
-def min_raster(rast_reader, rast_name, n, folder_path=''):  
+def min_raster(rast_reader=None, raster=None, band=1, rast_name=None, n=3, folder_path=None):  
     """
         Creates a new raster by replacing each pixel p in given raster R by the minimum value in a nxn window centered at p.
         The raster with minimum values is saved in a temp folder in the current working directory if no folder_path is given.
@@ -520,10 +520,22 @@ def min_raster(rast_reader, rast_name, n, folder_path=''):
                             directory where to save raster. If none is given, then it saves the raster in a temp folder in the cwd.
             Return: None    
     """
-    rast = rast_reader.read([1]).squeeze() # read raster values
-    mins = minf2D(rast, size=(n,n))    # calculate min in window
+    if (rast_reader is None) and (raster is None):
+        return 
     
-    if not os.path.exists(folder_path):                         # TO DO: this does not work if needed, create temp directory to save files 
+    if rast_reader is not None:
+        rast = rast_reader.read([band]).squeeze() # read raster values
+        crs = rast_reader.crs
+        transf = rast_reader.transform
+        
+    elif raster is not None:
+        rast = raster[band-1].squeeze()
+        crs = raster.rio.crs
+        transf = raster.rio.transform()
+        
+    mins = minf2D(rast, size=(n,n))    # calculate min in window        
+    
+    if (folder_path is None) or (os.path.exists(folder_path) == False):       
         folder_path = make_directory('temp')
     
     dtype = rasterio.dtypes.get_minimum_dtype(mins)  # parameters for saving
@@ -533,14 +545,14 @@ def min_raster(rast_reader, rast_name, n, folder_path=''):
                 fp, 
                 rast.shape,
                 1,
-                rast_reader.crs, 
-                rast_reader.transform, 
+                crs, 
+                transf, 
                 dtype)  
     return
 
 # ------------------------------------------------------------------------------
 
-def max_raster(rast_reader, rast_name, n, folder_path=''):  
+def max_raster(rast_reader=None, raster=None, band=1, rast_name=None, n=3, folder_path=None):  
     """
         Creates a new raster by replacing each pixel p in given raster R by the max value in a nxn window centered at p.
         The raster with maximum values is saved in a temp folder in the current working directory if no folder_path is given.
@@ -555,10 +567,24 @@ def max_raster(rast_reader, rast_name, n, folder_path=''):
                             directory where to save raster. If none is given, then it saves the raster in a temp folder in the cwd.
             Return: None    
     """
-    rast = rast_reader.read([1]).squeeze() # read raster values
-    maxs = maxf2D(rast, size=(n,n))    # calculate min in window
+    if (rast_reader is None) and (raster is None):
+        return 
     
-    if not os.path.exists(folder_path):  # if needed, create temp directory to save files 
+    if rast_reader is not None:
+        rast = rast_reader.read([band]).squeeze() # read raster values
+        crs = rast_reader.crs
+        transf = rast_reader.transform
+        
+    elif raster is not None:
+        rast = raster[band-1].squeeze()
+        crs = raster.rio.crs
+        transf = raster.rio.transform()
+        
+    # calculate max in window
+    maxs = maxf2D(rast, size=(n,n))    
+    
+    # if needed, create temp directory to save files 
+    if (folder_path is None) or (os.path.exists(folder_path) == False):  
         folder_path = make_directory('temp')
     
     dtype = rasterio.dtypes.get_minimum_dtype(maxs)  # parameters for saving
@@ -568,14 +594,14 @@ def max_raster(rast_reader, rast_name, n, folder_path=''):
                 fp, 
                 rast.shape,
                 1,
-                rast_reader.crs, 
-                rast_reader.transform, 
+                crs, 
+                transf, 
                 dtype)  
     return
 
 # ------------------------------------------------------------------------------
 
-def avg_raster(rast_reader, rast_name, n, folder_path=''): 
+def avg_raster(rast_reader=None, raster=None, band=1, rast_name=None, n=3, folder_path=None): 
     """
         Creates a new raster by replacing each pixel p in given raster R by the avg value in a nxn window centered at p.
         The raster with averege values is saved in a temp folder in the current working directory if no folder_path is given.
@@ -590,7 +616,18 @@ def avg_raster(rast_reader, rast_name, n, folder_path=''):
                             directory where to save raster. If none is given, then it saves the raster in a temp folder in the cwd.
             Return: None    
     """
-    rast = rast_reader.read([1]).squeeze() # read raster values
+    if (rast_reader is None) and (raster is None):
+        return 
+    
+    if rast_reader is not None:
+        rast = rast_reader.read([band]).squeeze() # read raster values
+        crs = rast_reader.crs
+        transf = rast_reader.transform
+        
+    elif raster is not None:
+        rast = raster[band-1].squeeze()
+        crs = raster.rio.crs
+        transf = raster.rio.transform()
 
     w = np.ones(n*n).reshape(n,n)      # calculate averages in window
     avgs = conf2D(rast, 
@@ -599,7 +636,7 @@ def avg_raster(rast_reader, rast_name, n, folder_path=''):
     avgs = avgs/(n*n)
     
     # if needed, create temp directory to save files 
-    if not os.path.exists(folder_path):  
+    if (folder_path is None) or (os.path.exists(folder_path) == False):  
         folder_path = make_directory('temp')
             
     # parameters for saving   
@@ -610,8 +647,8 @@ def avg_raster(rast_reader, rast_name, n, folder_path=''):
                 fp, 
                 rast.shape, 
                 1,
-                rast_reader.crs, 
-                rast_reader.transform, 
+                crs, 
+                transf, 
                 dtype)  
     return
                       
