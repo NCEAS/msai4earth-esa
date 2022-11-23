@@ -442,7 +442,7 @@ def sample_naip_from_polys_no_warnings(polys, class_name, itemid, param, sample_
 
 
 # *********************************************************************
-def geodataframe_from_csv(fp, lon_label, lat_label, crs):
+def geodataframe_from_csv(df=None, fp=None, lon_label=None, lat_label=None, crs=None):
     """
         Transforms a csv with longitude and latitude columns into a GeoDataFrame.
             Parameters:
@@ -460,7 +460,11 @@ def geodataframe_from_csv(fp, lon_label, lat_label, crs):
                         the csv in given file path converted to a GeoDataFrame with geometry column 
                         of type shapely.geometry.Point constructed from longitude and latitude columns
     """
-    df = pd.read_csv(fp)
+    if df is None:
+        if fp is not None:
+            df = pd.read_csv(fp)
+        else:
+            return False
     if 'geometry' in df.columns:           # rename geometry column if it exists
         df = df.rename(columns = {'geometry': 'geometry_0'})
     
@@ -505,7 +509,7 @@ def sample_raster_from_pts(pts, rast_reader, rast_band_names):
 
 # *********************************************************************
 
-def min_raster(rast_reader=None, raster=None, band=1, rast_name=None, n=3, folder_path=None):  
+def min_raster(rast_reader=None, raster=None,  rast_data=None, crs=None, transf=None, band=1, rast_name=None, n=3, folder_path=None):  
     """
         Creates a new raster by replacing each pixel p in given raster R by the minimum value in a nxn window centered at p.
         The raster with minimum values is saved in a temp folder in the current working directory if no folder_path is given.
@@ -520,8 +524,6 @@ def min_raster(rast_reader=None, raster=None, band=1, rast_name=None, n=3, folde
                             directory where to save raster. If none is given, then it saves the raster in a temp folder in the cwd.
             Return: None    
     """
-    if (rast_reader is None) and (raster is None):
-        return 
     
     if rast_reader is not None:
         rast = rast_reader.read([band]).squeeze() # read raster values
@@ -532,6 +534,13 @@ def min_raster(rast_reader=None, raster=None, band=1, rast_name=None, n=3, folde
         rast = raster[band-1].squeeze()
         crs = raster.rio.crs
         transf = raster.rio.transform()
+    
+    elif rast_data is not None:
+        rast = rast_data
+        crs = crs
+        transf = transf
+    else:
+        return 
         
     mins = minf2D(rast, size=(n,n))    # calculate min in window        
     
@@ -552,7 +561,7 @@ def min_raster(rast_reader=None, raster=None, band=1, rast_name=None, n=3, folde
 
 # ------------------------------------------------------------------------------
 
-def max_raster(rast_reader=None, raster=None, band=1, rast_name=None, n=3, folder_path=None):  
+def max_raster(rast_reader=None, raster=None,  rast_data=None, crs=None, transf=None, band=1, rast_name=None, n=3, folder_path=None):  
     """
         Creates a new raster by replacing each pixel p in given raster R by the max value in a nxn window centered at p.
         The raster with maximum values is saved in a temp folder in the current working directory if no folder_path is given.
@@ -567,8 +576,6 @@ def max_raster(rast_reader=None, raster=None, band=1, rast_name=None, n=3, folde
                             directory where to save raster. If none is given, then it saves the raster in a temp folder in the cwd.
             Return: None    
     """
-    if (rast_reader is None) and (raster is None):
-        return 
     
     if rast_reader is not None:
         rast = rast_reader.read([band]).squeeze() # read raster values
@@ -579,6 +586,13 @@ def max_raster(rast_reader=None, raster=None, band=1, rast_name=None, n=3, folde
         rast = raster[band-1].squeeze()
         crs = raster.rio.crs
         transf = raster.rio.transform()
+    
+    elif rast_data is not None:
+        rast = rast_data
+        crs = crs
+        transf = transf
+    else:
+        return 
         
     # calculate max in window
     maxs = maxf2D(rast, size=(n,n))    
@@ -601,7 +615,7 @@ def max_raster(rast_reader=None, raster=None, band=1, rast_name=None, n=3, folde
 
 # ------------------------------------------------------------------------------
 
-def avg_raster(rast_reader=None, raster=None, band=1, rast_name=None, n=3, folder_path=None): 
+def avg_raster(rast_reader=None, raster=None, rast_data=None, crs=None, transf=None, band=1, rast_name=None, n=3, folder_path=None): 
     """
         Creates a new raster by replacing each pixel p in given raster R by the avg value in a nxn window centered at p.
         The raster with averege values is saved in a temp folder in the current working directory if no folder_path is given.
@@ -616,8 +630,6 @@ def avg_raster(rast_reader=None, raster=None, band=1, rast_name=None, n=3, folde
                             directory where to save raster. If none is given, then it saves the raster in a temp folder in the cwd.
             Return: None    
     """
-    if (rast_reader is None) and (raster is None):
-        return 
     
     if rast_reader is not None:
         rast = rast_reader.read([band]).squeeze() # read raster values
@@ -628,8 +640,16 @@ def avg_raster(rast_reader=None, raster=None, band=1, rast_name=None, n=3, folde
         rast = raster[band-1].squeeze()
         crs = raster.rio.crs
         transf = raster.rio.transform()
+    
+    elif rast_data is not None:
+        rast = rast_data
+        crs = crs
+        transf = transf
+    else:
+        return 
 
-    w = np.ones(n*n).reshape(n,n)      # calculate averages in window
+    # calculate averages in window
+    w = np.ones(n*n).reshape(n,n)      
     avgs = conf2D(rast, 
              weights=w,
              mode='constant')
