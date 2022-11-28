@@ -1,13 +1,18 @@
-library(tidyverse)
-library(sf)
-library(janitor)
+## This script imports the ouptut csv file of the classification validation and process it to
+## create a long format geojson for further inspection of false positive and negative
+##
+## Julien Brun (brun@nceas.ucsb.edu)
 
+
+librarian::shelf(tidyverse, janitor, sf)
 
 # Read the data in and select relevant columns
 validation_results_2020 <- read_csv("naip_iceplant_2020/validation_results_2020.csv") %>%
   janitor::clean_names() %>%
-  select(plotid, center_lon, center_lat, email, pl_class, starts_with("Category"), starts_with("Validation"))
-
+  select(plotid, center_lon, center_lat, email, pl_class, 
+         starts_with("Category"), 
+         starts_with("Validation")
+         )
 
 
 # Make long format
