@@ -34,7 +34,8 @@ from scipy.ndimage import maximum_filter as maxf2D
 from scipy.ndimage import minimum_filter as minf2D
 from scipy.ndimage import convolve as conf2D
 
-
+from skimage.filters.rank import entropy
+from skimage.morphology import disk
 
 
 # *********************************************************************
@@ -509,6 +510,32 @@ def sample_raster_from_pts(pts, rast_reader, rast_band_names):
 
 # *********************************************************************
 
+def input_raster(rast_reader=None, raster=None, band=1, rast_data=None, crs=None, transf=None):
+    
+    if rast_reader is not None:
+        rast = rast_reader.read([band]).squeeze() # read raster values
+        crs = rast_reader.crs
+        transf = rast_reader.transform
+        
+    elif raster is not None:
+        if len(raster.shape) == 3: # multiband raster            
+            rast = raster[band-1].squeeze()
+        elif len(raster.shape) == 2: #one band raster
+            rast = raster
+        crs = raster.rio.crs
+        transf = raster.rio.transform()
+    
+    elif rast_data is not None:
+        rast = rast_data
+        crs = crs
+        transf = transf
+    else:
+        return 
+    
+    return rast, crs, transf
+
+# *********************************************************************
+
 def min_raster(rast_reader=None, raster=None,  rast_data=None, crs=None, transf=None, band=1, rast_name=None, n=3, folder_path=None):  
     """
         Creates a new raster by replacing each pixel p in given raster R by the minimum value in a nxn window centered at p.
@@ -525,22 +552,7 @@ def min_raster(rast_reader=None, raster=None,  rast_data=None, crs=None, transf=
             Return: None    
     """
     
-    if rast_reader is not None:
-        rast = rast_reader.read([band]).squeeze() # read raster values
-        crs = rast_reader.crs
-        transf = rast_reader.transform
-        
-    elif raster is not None:
-        rast = raster[band-1].squeeze()
-        crs = raster.rio.crs
-        transf = raster.rio.transform()
-    
-    elif rast_data is not None:
-        rast = rast_data
-        crs = crs
-        transf = transf
-    else:
-        return 
+    rast, crs, transf = input_raster(rast_reader, raster, band, rast_data, crs, transf)
         
     mins = minf2D(rast, size=(n,n))    # calculate min in window        
     
@@ -577,22 +589,7 @@ def max_raster(rast_reader=None, raster=None,  rast_data=None, crs=None, transf=
             Return: None    
     """
     
-    if rast_reader is not None:
-        rast = rast_reader.read([band]).squeeze() # read raster values
-        crs = rast_reader.crs
-        transf = rast_reader.transform
-        
-    elif raster is not None:
-        rast = raster[band-1].squeeze()
-        crs = raster.rio.crs
-        transf = raster.rio.transform()
-    
-    elif rast_data is not None:
-        rast = rast_data
-        crs = crs
-        transf = transf
-    else:
-        return 
+    rast, crs, transf = input_raster(rast_reader, raster, band, rast_data, crs, transf)
         
     # calculate max in window
     maxs = maxf2D(rast, size=(n,n))    
@@ -631,22 +628,7 @@ def avg_raster(rast_reader=None, raster=None, rast_data=None, crs=None, transf=N
             Return: None    
     """
     
-    if rast_reader is not None:
-        rast = rast_reader.read([band]).squeeze() # read raster values
-        crs = rast_reader.crs
-        transf = rast_reader.transform
-        
-    elif raster is not None:
-        rast = raster[band-1].squeeze()
-        crs = raster.rio.crs
-        transf = raster.rio.transform()
-    
-    elif rast_data is not None:
-        rast = rast_data
-        crs = crs
-        transf = transf
-    else:
-        return 
+    rast, crs, transf = input_raster(rast_reader, raster, band, rast_data, crs, transf)
 
     # calculate averages in window
     w = np.ones(n*n).reshape(n,n)      
@@ -672,7 +654,48 @@ def avg_raster(rast_reader=None, raster=None, rast_data=None, crs=None, transf=N
                 dtype)  
     return
                       
-                      
+# ------------------------------------------------------------------------------
+
+def entropy_raster(rast_reader=None, raster=None, rast_data=None, crs=None, transf=None, band=1, rast_name=None, n=2, folder_path=None): 
+    """
+        Creates a new raster by replacing each pixel p in given raster R by the avg value in a nxn window centered at p.
+        The raster with averege values is saved in a temp folder in the current working directory if no folder_path is given.
+            Parameters: 
+                        rast_reader (rasterio.io.DatasetReader):
+                            reader to the raster from which to compute the average values in a window
+                        rast_name (str):
+                            name of raster. The resulting raster will be saved as rast_name_avgs.tif.
+                        n (int):
+                            Side length (in pixels) of the square window over which to compute average values for each pixel.
+                        folder_path (str):
+                            directory where to save raster. If none is given, then it saves the raster in a temp folder in the cwd.
+            Return: None    
+    """
+    
+    rast, crs, transf = input_raster(rast_reader, raster, band, rast_data, crs, transf)
+
+    # calculate entropy in window
+    entropies = entropy(rast, disk(n))    
+    
+    # if needed, create temp directory to save files 
+    if (folder_path is None) or (os.path.exists(folder_path) == False):  
+        folder_path = make_directory('temp')
+    
+    dtype = rasterio.dtypes.get_minimum_dtype(entropies)  # parameters for saving
+    
+    if rast_name is None:
+        rast_name = 'raster'
+        
+    fp = os.path.join(folder_path, rast_name +'_entrs.tif')      # save raster
+    save_raster(entropies, 
+                fp, 
+                rast.shape,
+                1,
+                crs, 
+                transf, 
+                dtype)  
+    return
+
 # *********************************************************************
 
 def open_and_match(fp, reproject_to):
