@@ -466,16 +466,11 @@ def geodataframe_from_csv(df=None, fp=None, lon_label=None, lat_label=None, crs=
             df = pd.read_csv(fp)
         else:
             return False
-    if 'geometry' in df.columns:           # rename geometry column if it exists
+    # rename geometry column if it exists        
+    if 'geometry' in df.columns:          
         df = df.rename(columns = {'geometry': 'geometry_0'})
-    
-    # recreate geometry column as shapely Points
-    xy = []
-    for x,y in zip(df[lon_label],df[lat_label]):
-        xy.append(Point(x,y))
-    df['geometry'] = xy
 
-    return gpd.GeoDataFrame(df, crs=crs)
+    return gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df[lon_label],df[lat_label]), crs = crs)
 
 # *********************************************************************
 
