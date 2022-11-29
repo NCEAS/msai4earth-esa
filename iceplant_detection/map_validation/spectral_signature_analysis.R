@@ -32,18 +32,18 @@ data_assessmt_flag <- data_assessmt %>%
     ref_class == 2 & map_class == 2 ~ "low_true_pos", # TRUE positive
     ref_class == 3 & map_class == 3 ~ "water_true_pos", # TRUE positive
     TRUE                      ~ "not_flagged"
-  ))
+  )) 
 
 
 
 #### COMPUTE MEAN FOR ICEPLANT SIGNATURES ####
 
 # Subset the "pure" spectral signatures
-truepos_signatures <- data_assessmt_flag %>% 
+iceplant_signatures <- data_assessmt_flag %>% 
   filter(str_detect(category_flag, "iceplant")) 
 
 # Compute the average "pure" spectral signatures
-truepos_signatures_mean <- truepos_signatures %>%
+iceplant_signatures_mean <- iceplant_signatures %>%
   select(-c(year, month, day_in_yea, pl_which_r, low_confid, map_class, ref_class)) %>% # remove unwanted columns
   group_by(category_flag, .drop = FALSE) %>%  # Create groups
   summarise(across(where(is.numeric),   # compute the mean
@@ -56,11 +56,11 @@ truepos_signatures_mean <- truepos_signatures %>%
 
 
 # make it a long format so ggplot is happy
-truepos_signatures_mean_long <- truepos_signatures_mean %>%
+iceplant_signatures_mean_long <- iceplant_signatures_mean %>%
   pivot_longer(cols = -c(category_flag, count),
                names_to = "channel_mean",
                values_to = "mean") %>%
-  filter(!str_detect(channel_mean, "lidar")) %>%
+  filter(!str_detect(channel_mean, "lidar")) %>% # Something is funky with the lidar data
   mutate(channel_mean = factor(channel_mean, 
                                 levels = c("b", "g", "r", "nir", 
                                            "lidar", "min_lidar", "avg_lidar", "max_lidar")))
@@ -72,7 +72,7 @@ truepos_signatures_mean_long <- truepos_signatures_mean %>%
 #### COMPUTE SD FOR ICEPLANT SIGNATURES ####
 
 # Compute the average "pure" spectral signatures
-truepos_signatures_sd <- truepos_signatures %>%
+iceplant_signatures_sd <- iceplant_signatures %>%
   select(-c(year, month, day_in_yea, pl_which_r, low_confid, map_class, ref_class)) %>% # remove unwanted columns
   group_by(category_flag, .drop = FALSE) %>%  # Create groups
   summarise(across(where(is.numeric),   # compute the mean
@@ -85,7 +85,7 @@ truepos_signatures_sd <- truepos_signatures %>%
 
 
 # make it a long format so ggplot is happy
-truepos_signatures_sd_long <- truepos_signatures_sd %>%
+iceplant_signatures_sd_long <- iceplant_signatures_sd %>%
   pivot_longer(cols = -c(category_flag, count),
                names_to = "channel_sd",
                values_to = "sd") %>%
@@ -96,17 +96,29 @@ truepos_signatures_sd_long <- truepos_signatures_sd %>%
 
 
 #### Join mean and sd ####
-truepos_signatures_long <- truepos_signatures_mean_long %>%
-  left_join( truepos_signatures_sd_long, by=c("category_flag", "channel_mean" = "channel_sd")) %>%
+iceplant_signatures_long <- iceplant_signatures_mean_long %>%
+  left_join( iceplant_signatures_sd_long, by=c("category_flag", "channel_mean" = "channel_sd")) %>%
   select(-count.y) %>%
   rename(count = count.x,
          channel = channel_mean)
 
 # plot the spectral signatures
-ggplot(truepos_signatures_long) + 
+ggplot(iceplant_signatures_long) + 
   geom_line(aes(x = channel, y = mean, color = category_flag, group = category_flag)) + 
   geom_point(aes(x = channel, y = mean, color = category_flag, group = category_flag)) +
   labs(color = "Category") +
   ggtitle("Iceplant spectral signatures") +
   theme_bw()
+
+
+# plot the spectral signatures
+ggplot(iceplant_signatures_long) + 
+  geom_ribbon(aes(x = channel, ymin = mean - 1.96 * sd / sqrt(count), ymax = mean + 1.96 * sd / sqrt(count), group = category_flag, fill = category_flag, alpha=0.1)) +  # confidence interval
+  geom_line(aes(x = channel, y = mean, color = category_flag, group = category_flag)) + 
+  geom_point(aes(x = channel, y = mean, color = category_flag, group = category_flag)) +
+  labs(color = "Category") +
+  ggtitle("Iceplant spectral signatures") +
+  theme_bw()
+
+
 
