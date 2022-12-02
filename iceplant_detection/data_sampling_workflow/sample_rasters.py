@@ -690,6 +690,13 @@ def entropy_raster(rast_reader=None, raster=None, rast_data=None, crs=None, tran
                 transf, 
                 dtype)  
     return
+# ------------------------------------------------------------------------------
+
+def max_min_avg_rasters(rast_reader=None, raster=None, rast_data=None, crs=None, transf=None, band=1, rast_name=None, n=2, folder_path=None):
+    max_raster(rast_reader, raster, rast_data, crs, transf, band, rast_name, n, folder_path)
+    min_raster(rast_reader, raster, rast_data, crs, transf, band, rast_name, n, folder_path)
+    avg_raster(rast_reader, raster, rast_data, crs, transf, band, rast_name, n, folder_path)
+    return
 
 # *********************************************************************
 
@@ -715,3 +722,9 @@ def iceplant_proportions(labels):
     print()
     
 
+# ---------------------------------------------
+# rast is 4 badn xarray
+def ndvi_xarray(rast):
+    red_band = rast.sel(band=1).astype('int16') 
+    nir_band = rast.sel(band=4).astype('int16')
+    return (nir_band - red_band) / (nir_band + red_band)
