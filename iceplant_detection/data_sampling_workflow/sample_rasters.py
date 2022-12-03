@@ -668,20 +668,22 @@ def entropy_raster(rast_reader=None, raster=None, rast_data=None, crs=None, tran
     """
     
     rast, crs, transf = input_raster(rast_reader, raster, band, rast_data, crs, transf)
+    
+    # if needed, create temp directory and name to save files 
+    if (folder_path is None) or (os.path.exists(folder_path) == False):  
+        folder_path = make_directory('temp')
+    
+    if rast_name is None:
+        rast_name = 'raster'
 
     # calculate entropy in window
     entropies = entropy(rast, disk(n))    
     
-    # if needed, create temp directory to save files 
-    if (folder_path is None) or (os.path.exists(folder_path) == False):  
-        folder_path = make_directory('temp')
-    
-    dtype = rasterio.dtypes.get_minimum_dtype(entropies)  # parameters for saving
-    
-    if rast_name is None:
-        rast_name = 'raster'
-        
-    fp = os.path.join(folder_path, rast_name +'_entrs.tif')      # save raster
+    # parameters for saving
+    dtype = rasterio.dtypes.get_minimum_dtype(entropies)  
+
+    # save raster
+    fp = os.path.join(folder_path, rast_name +'_entrs.tif')      
     save_raster(entropies, 
                 fp, 
                 rast.shape,
@@ -723,7 +725,7 @@ def iceplant_proportions(labels):
     
 
 # ---------------------------------------------
-# rast is 4 badn xarray
+# rast is 4 band xarray
 def ndvi_xarray(rast):
     red_band = rast.sel(band=1).astype('int16') 
     nir_band = rast.sel(band=4).astype('int16')

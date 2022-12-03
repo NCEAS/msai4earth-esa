@@ -235,3 +235,25 @@ def create_aux_canopyheight_rasters(year):
         if not os.path.exists(lidar_fps[3]):
             sr.avg_raster(rast_reader = lidar_rast_reader, rast_name = rast_name, n=3, folder_path=temp_fp)
     return lidar_fps
+
+# **********************************************************************************************************
+def finish_processing(status, processed, reason, times_pre, times_class, times_post, veg_pixels):
+    
+    processed.append('N')
+    times_pre.append(0)
+    times_class.append(0)        
+    times_post.append(0)
+    veg_pixels.append(0)
+    
+    if status == 'no_data':
+        reason.append('no data in intersection')
+        print('no data at intersection of scene with coastal buffer')
+    elif status == 'no_veg':
+        reason.append('no vegeatation in intersection')
+        print('no vegetation pixels at intersection of scene data with coastal buffer')
+    else: 
+        print('invalid status')
+        return 
+    
+    print('FINISHED: ', itemid , '\n')
+    return
