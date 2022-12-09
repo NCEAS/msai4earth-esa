@@ -1,21 +1,11 @@
+import os
+import pandas as pd
+import numpy as np
+
 import pystac_client 
 import planetary_computer as pc
-import rasterio
 
 import calendar
-import numpy as np
-import pandas as pd
-
-import os
-
-# *********************************************************************
-# *********************************************************************
-# *********************************************************************
-
-import os
-import pandas as pd
-import numpy as np
-
 
 from shapely.geometry import shape
 from shapely.geometry import Point
@@ -27,6 +17,7 @@ import warnings
 
 import rioxarray as rioxr
 import geopandas as gpd
+
 import rasterio
 from rasterio.crs import CRS
 
@@ -34,9 +25,8 @@ from scipy.ndimage import maximum_filter as maxf2D
 from scipy.ndimage import minimum_filter as minf2D
 from scipy.ndimage import convolve as conf2D
 
-from skimage.filters.rank import entropy
 from skimage.morphology import disk
-
+from skimage.filters.rank import entropy
 
 # *********************************************************************
 
@@ -118,7 +108,7 @@ def save_raster(raster, fp, shape, bands_n, crs, transform, dtype):
         Saves an array as a 'GTiff' raster with specified parameters.
         Parameters:
                     raster (numpy.ndarray): array of raster values
-                    fp (str): file path where raster will be saved
+                    fp (str): file path where raster will be saved, including file name
                     shape (tuple):shape of raster (height, width) TO DO: SHOULD THIS BE READ DIRECTLY FROM raster??
                     bands_n (integer): number of bands in the raster
                     crs (str): CRS of raster
@@ -492,9 +482,11 @@ def sample_raster_from_pts(pts, rast_reader, rast_band_names):
     if rast_reader.count != len(rast_band_names):
         print('# band names != # bands in raster')
         return
+    
+    pts_match = pts.to_crs(rast_reader.crs)
 
     # sample
-    sample_coords = pts.apply(lambda p :(p.x, p.y))  
+    sample_coords = pts_match.apply(lambda p :(p.x, p.y))  
     samples_generator = rast_reader.sample(sample_coords)    
     
     # make band values into dataframe
@@ -529,6 +521,28 @@ def input_raster(rast_reader=None, raster=None, band=1, rast_data=None, crs=None
     
     return rast, crs, transf
 
+# ------------------------------------------------------------------------------
+def save_raster_checkpoints(rast, crs, transf, rast_name=None, folder_path=None):  
+
+    if rast_name is None:
+        rast_name = 'raster'        
+
+    if (folder_path is None) or (os.path.exists(folder_path) == False):  
+        folder_path = make_directory('temp')        
+        
+    fp = os.path.join(folder_path, rast_name +'_'+suffix+'.tif')      
+    
+    dtype = rasterio.dtypes.get_minimum_dtype(rast)      
+
+    save_raster(rast, 
+                fp, 
+                rast.shape,
+                1,
+                crs, 
+                transf, 
+                dtype) 
+    return 
+
 # *********************************************************************
 
 def min_raster(rast_reader=None, raster=None,  rast_data=None, crs=None, transf=None, band=1, rast_name=None, n=3, folder_path=None):  
@@ -548,22 +562,15 @@ def min_raster(rast_reader=None, raster=None,  rast_data=None, crs=None, transf=
     """
     
     rast, crs, transf = input_raster(rast_reader, raster, band, rast_data, crs, transf)
+
+    if rio.dtypes.get_minimum_dtype(rast)  == 'uint8':
+        cval = 255
+    else:
+        cval = 0
         
-    mins = minf2D(rast, size=(n,n))    # calculate min in window        
+    mins = minf2D(rast, size=(n,n), cval)     
     
-    if (folder_path is None) or (os.path.exists(folder_path) == False):       
-        folder_path = make_directory('temp')
-    
-    dtype = rasterio.dtypes.get_minimum_dtype(mins)  # parameters for saving
-    
-    fp = os.path.join(folder_path, rast_name +'_mins.tif')      # save raster
-    save_raster(mins, 
-                fp, 
-                rast.shape,
-                1,
-                crs, 
-                transf, 
-                dtype)  
+    save_raster_checkpoints(mins, crs, transf, rast_name, 'mins', folder_path)
     return
 
 # ------------------------------------------------------------------------------
@@ -586,23 +593,9 @@ def max_raster(rast_reader=None, raster=None,  rast_data=None, crs=None, transf=
     
     rast, crs, transf = input_raster(rast_reader, raster, band, rast_data, crs, transf)
         
-    # calculate max in window
-    maxs = maxf2D(rast, size=(n,n))    
+    maxs = maxf2D(rast, size=(n,n))
     
-    # if needed, create temp directory to save files 
-    if (folder_path is None) or (os.path.exists(folder_path) == False):  
-        folder_path = make_directory('temp')
-    
-    dtype = rasterio.dtypes.get_minimum_dtype(maxs)  # parameters for saving
-    
-    fp = os.path.join(folder_path, rast_name +'_maxs.tif')      # save raster
-    save_raster(maxs, 
-                fp, 
-                rast.shape,
-                1,
-                crs, 
-                transf, 
-                dtype)  
+    save_raster_checkpoints(maxs, crs, transf, rast_name, 'maxs', folder_path)
     return
 
 # ------------------------------------------------------------------------------
@@ -625,28 +618,14 @@ def avg_raster(rast_reader=None, raster=None, rast_data=None, crs=None, transf=N
     
     rast, crs, transf = input_raster(rast_reader, raster, band, rast_data, crs, transf)
 
-    # calculate averages in window
     w = np.ones(n*n).reshape(n,n)      
     avgs = conf2D(rast, 
              weights=w,
-             mode='constant')
-    avgs = avgs/(n*n)
-    
-    # if needed, create temp directory to save files 
-    if (folder_path is None) or (os.path.exists(folder_path) == False):  
-        folder_path = make_directory('temp')
-            
-    # parameters for saving   
-    fp = os.path.join(folder_path, rast_name +'_avgs.tif')                
-    dtype = rasterio.dtypes.get_minimum_dtype(avgs)
-            
-    save_raster(avgs,    # save rasters
-                fp, 
-                rast.shape, 
-                1,
-                crs, 
-                transf, 
-                dtype)  
+             mode='constant',
+             output='int64')
+    avgs = avgs/(n**2)
+
+    save_raster_checkpoints(avgs, crs, transf, rast_name, 'avgs', folder_path)            
     return
                       
 # ------------------------------------------------------------------------------
@@ -669,28 +648,9 @@ def entropy_raster(rast_reader=None, raster=None, rast_data=None, crs=None, tran
     
     rast, crs, transf = input_raster(rast_reader, raster, band, rast_data, crs, transf)
     
-    # if needed, create temp directory and name to save files 
-    if (folder_path is None) or (os.path.exists(folder_path) == False):  
-        folder_path = make_directory('temp')
-    
-    if rast_name is None:
-        rast_name = 'raster'
-
-    # calculate entropy in window
     entropies = entropy(rast, disk(n))    
     
-    # parameters for saving
-    dtype = rasterio.dtypes.get_minimum_dtype(entropies)  
-
-    # save raster
-    fp = os.path.join(folder_path, rast_name +'_entrs.tif')      
-    save_raster(entropies, 
-                fp, 
-                rast.shape,
-                1,
-                crs, 
-                transf, 
-                dtype)  
+    save_raster_checkpoints(entropies, crs, transf, rast_name, 'entrs', folder_path)            
     return
 # ------------------------------------------------------------------------------
 
