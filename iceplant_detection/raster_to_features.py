@@ -237,7 +237,7 @@ def create_aux_canopyheight_rasters(year):
     return lidar_fps
 
 # **********************************************************************************************************
-def finish_processing(status, processed, reason, times_pre, times_class, times_post, veg_pixels):
+def finish_processing(status, processed, reason, times_pre, times_class, times_post, veg_pixels, itemid):
     
     processed.append('N')
     times_pre.append(0)
@@ -247,13 +247,13 @@ def finish_processing(status, processed, reason, times_pre, times_class, times_p
     
     if status == 'no_data':
         reason.append('no data in intersection')
-        print('no data at intersection of scene with coastal buffer')
+        print('no data at intersection of scene with coastal buffer', end="\r")  
     elif status == 'no_veg':
         reason.append('no vegeatation in intersection')
-        print('no vegetation pixels at intersection of scene data with coastal buffer')
+        print('no vegetation pixels at intersection of scene data with coastal buffer', end="\r")    
     else: 
         print('invalid status')
         return 
     
-    print('FINISHED: ', itemid , '\n')
+    print('FINISHED: ', itemid , '\n', end="\r")
     return

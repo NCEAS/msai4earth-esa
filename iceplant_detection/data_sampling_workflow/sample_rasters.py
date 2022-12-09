@@ -43,13 +43,10 @@ def get_item_from_id(itemid):
     URL = "https://planetarycomputer.microsoft.com/api/stac/v1"
     catalog = pystac_client.Client.open(URL)
 
-    search = catalog.search(
-        collections=["naip"],
-        ids = itemid)
+    search = catalog.search(collections=["naip"], ids = itemid)
     
     # return 1st item in search (assumes itemid IS associaed to some item)
-    item = list(search.get_items())[0]   # ** TO DO: catch exception
-    return item
+    return list(search.get_items())[0]   # ** TO DO: catch exception
 
 # ---------------------------------------------
 
@@ -99,51 +96,6 @@ def day_in_year(day,month,year):
     if calendar.isleap(year) and month>2:
         n = n+1
     return n
-
-
-# **********************************************************************************
-
-def save_raster(raster, fp, shape, bands_n, crs, transform, dtype):
-    """
-        Saves an array as a 'GTiff' raster with specified parameters.
-        Parameters:
-                    raster (numpy.ndarray): array of raster values
-                    fp (str): file path where raster will be saved, including file name
-                    shape (tuple):shape of raster (height, width) TO DO: SHOULD THIS BE READ DIRECTLY FROM raster??
-                    bands_n (integer): number of bands in the raster
-                    crs (str): CRS of raster
-                    transform (affine.Affine): affine transformation of raster
-        Return: None
-    """
-    bands_array = 1
-    if bands_n > 1:
-        bands_array = np.arange(1,bands_n+1)
-        
-    with rasterio.open(
-        fp,  # file path
-        'w',           # w = write
-        driver = 'GTiff', # format
-        height = shape[0], 
-        width = shape[1],
-        count = bands_n,  # number of raster bands in the dataset
-        dtype = dtype,
-        crs = crs,
-        transform = transform,
-    ) as dst:
-        dst.write(raster.astype(dtype), bands_array)
-    return 
-
-# **********************************************************************************
-
-def make_directory(dir_name): 
-    """ 
-        Checks if the directory with name dir_name (str) exists in the current working directory. 
-        If it doesn't, it creates the directory and returns the filepath to it.
-    """    
-    fp = os.path.join(os.getcwd(),dir_name)  
-    if not os.path.exists(fp):
-        os.mkdir(fp)
-    return fp
 
 
 
@@ -329,8 +281,11 @@ def sample_raster_from_poly(N, poly, poly_id, class_name, poly_class, rast_reade
 
     """
     # TO DO: add catch when polygon and raster do not intersect
-    points = random_pts_poly(N,poly)  # select random points inside poly
-    sample = pd.DataFrame({           # make data frame with sampled points
+    # select random points inside poly
+    points = random_pts_poly(N,poly)  
+    
+    # make data frame with sampled points
+    sample = pd.DataFrame({           
         'geometry': pd.Series(points), 
         class_name : pd.Series(np.full(N,poly_class)),  # add class identification for all pts
         'polygon_id': pd.Series(np.full(N,poly_id))
@@ -343,16 +298,23 @@ def sample_raster_from_poly(N, poly, poly_id, class_name, poly_class, rast_reade
     data_generator = rast_reader.sample(sample_coords)   # extract band values from raster
     data = np.vstack(list(data_generator))               # make band values into dataframe
     data = pd.DataFrame(data, columns=rast_band_names) 
-
-    sample = pd.concat([sample,data],axis=1)  # add band data to sampled points
-
-    sample['x']= sample.geometry.apply(lambda p : p.x)   # coordinate cleaning
-    sample['y']= sample.geometry.apply(lambda p : p.y)
+    
+    # add band data to sampled points
+    sample = pd.concat([sample,data],axis=1)  
+    
+    kwargs = {'x' : sample.geometry.apply(lambda p : p.x),
+             'y' : sample.geometry.apply(lambda p : p.y),
+             'pts_crs' : rast_crs}
+     sample.assign(**kwargs)    
+#     # coordinate cleaning
+#     sample['x']= sample.geometry.apply(lambda p : p.x)   
+#     sample['y']= sample.geometry.apply(lambda p : p.y)
+    
+#     # add CRS of points
+#     sample['pts_crs'] =  rast_crs  
     sample.drop('geometry',axis=1,inplace=True)
-    
-    sample['pts_crs'] =  rast_crs  # add CRS of points
-    
-    sample = sample[['x','y','pts_crs','polygon_id', class_name] + rast_band_names] # organize columns
+    # organize columns
+    sample = sample[['x','y','pts_crs','polygon_id', class_name] + rast_band_names] 
 
     return sample
 
@@ -403,11 +365,16 @@ def sample_naip_from_polys(polys, class_name, itemid, param, sample_fraction=0, 
                                          rast_reader, rast_band_names, rast_crs)                                   
         samples.append(sample)   
     df = pd.concat(samples) # create dataframe from samples list
+    # df['year'] = item.datetime.year   # add date to samples  TO DO: get from polys? raster?
+    # df['month'] = item.datetime.month
+    # df['day_in_year'] = day_in_year(item.datetime.day, item.datetime.month, item.datetime.year)
+    # df['naip_id'] = itemid           # add naip item id to samples
     
-    df['year'] = item.datetime.year   # add date to samples  TO DO: get from polys? raster?
-    df['month'] = item.datetime.month
-    df['day_in_year'] = day_in_year(item.datetime.day, item.datetime.month, item.datetime.year )
-    df['naip_id'] = itemid           # add naip item id to samples
+    kwargs = {'year' : item.datetime.year,
+             'month' : item.datetime.month,
+             'day_in_year' : rday_in_year(item.datetime.day, item.datetime.month, item.datetime.year),
+             'naip_id' : itemid}
+    df.assign(**kwargs)        
     
     return df
 
@@ -497,6 +464,13 @@ def sample_raster_from_pts(pts, rast_reader, rast_band_names):
 
 # *********************************************************************
 
+def open_and_match(fp, reproject_to):
+    rast = rioxr.open_rasterio(fp)
+    rast_match = rast.rio.reproject_match(reproject_to)
+    return rast_match.squeeze()
+
+# ------------------------------------------------------------------------------
+
 def input_raster(rast_reader=None, raster=None, band=1, rast_data=None, crs=None, transf=None):
     
     if rast_reader is not None:
@@ -520,6 +494,48 @@ def input_raster(rast_reader=None, raster=None, band=1, rast_data=None, crs=None
         return 
     
     return rast, crs, transf
+
+# *********************************************************************
+def make_directory(dir_name): 
+    """ 
+        Checks if the directory with name dir_name (str) exists in the current working directory. 
+        If it doesn't, it creates the directory and returns the filepath to it.
+    """    
+    fp = os.path.join(os.getcwd(),dir_name)  
+    if not os.path.exists(fp):
+        os.mkdir(fp)
+    return fp
+
+# ------------------------------------------------------------------------------
+def save_raster(raster, fp, shape, bands_n, crs, transform, dtype):
+    """
+        Saves an array as a 'GTiff' raster with specified parameters.
+        Parameters:
+                    raster (numpy.ndarray): array of raster values
+                    fp (str): file path where raster will be saved, including file name
+                    shape (tuple):shape of raster (height, width) TO DO: SHOULD THIS BE READ DIRECTLY FROM raster??
+                    bands_n (integer): number of bands in the raster
+                    crs (str): CRS of raster
+                    transform (affine.Affine): affine transformation of raster
+        Return: None
+    """
+    bands_array = 1
+    if bands_n > 1:
+        bands_array = np.arange(1,bands_n+1)
+        
+    with rasterio.open(
+        fp,  # file path
+        'w',           # w = write
+        driver = 'GTiff', # format
+        height = shape[0], 
+        width = shape[1],
+        count = bands_n,  # number of raster bands in the dataset
+        dtype = dtype,
+        crs = crs,
+        transform = transform,
+    ) as dst:
+        dst.write(raster.astype(dtype), bands_array)
+    return 
 
 # ------------------------------------------------------------------------------
 def save_raster_checkpoints(rast, crs, transf, rast_name=None, folder_path=None):  
@@ -659,13 +675,6 @@ def max_min_avg_rasters(rast_reader=None, raster=None, rast_data=None, crs=None,
     min_raster(rast_reader, raster, rast_data, crs, transf, band, rast_name, n, folder_path)
     avg_raster(rast_reader, raster, rast_data, crs, transf, band, rast_name, n, folder_path)
     return
-
-# *********************************************************************
-
-def open_and_match(fp, reproject_to):
-    rast = rioxr.open_rasterio(fp)
-    rast_match = rast.rio.reproject_match(reproject_to)
-    return rast_match.squeeze()
 
 # *********************************************************************
 # *********************************************************************
