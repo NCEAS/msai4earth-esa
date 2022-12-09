@@ -305,7 +305,7 @@ def sample_raster_from_poly(N, poly, poly_id, class_name, poly_class, rast_reade
     kwargs = {'x' : sample.geometry.apply(lambda p : p.x),
              'y' : sample.geometry.apply(lambda p : p.y),
              'pts_crs' : rast_crs}
-     sample.assign(**kwargs)    
+    sample.assign(**kwargs)    
 #     # coordinate cleaning
 #     sample['x']= sample.geometry.apply(lambda p : p.x)   
 #     sample['y']= sample.geometry.apply(lambda p : p.y)
@@ -538,16 +538,19 @@ def save_raster(raster, fp, shape, bands_n, crs, transform, dtype):
     return 
 
 # ------------------------------------------------------------------------------
-def save_raster_checkpoints(rast, crs, transf, rast_name=None, folder_path=None):  
+def save_raster_checkpoints(rast, crs, transf, rast_name=None, suffix= None, folder_path=None):  
 
     if rast_name is None:
         rast_name = 'raster'        
 
     if (folder_path is None) or (os.path.exists(folder_path) == False):  
-        folder_path = make_directory('temp')        
+        folder_path = make_directory('temp')  
+
+    if suffix is None:
+        suffix = ''
         
-    fp = os.path.join(folder_path, rast_name +'_'+suffix+'.tif')      
-    
+    fp = os.path.join(folder_path, rast_name + '_' + suffix + '.tif')      
+
     dtype = rasterio.dtypes.get_minimum_dtype(rast)      
 
     save_raster(rast, 
@@ -579,12 +582,12 @@ def min_raster(rast_reader=None, raster=None,  rast_data=None, crs=None, transf=
     
     rast, crs, transf = input_raster(rast_reader, raster, band, rast_data, crs, transf)
 
-    if rio.dtypes.get_minimum_dtype(rast)  == 'uint8':
+    if rasterio.dtypes.get_minimum_dtype(rast)  == 'uint8':
         cval = 255
     else:
         cval = 0
         
-    mins = minf2D(rast, size=(n,n), cval)     
+    mins = minf2D(rast, size=(n,n), cval=cval)     
     
     save_raster_checkpoints(mins, crs, transf, rast_name, 'mins', folder_path)
     return
