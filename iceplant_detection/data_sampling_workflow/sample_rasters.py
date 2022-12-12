@@ -90,7 +90,7 @@ def day_in_year(day,month,year):
     """
     days_in_month = [31,28,31,30,31,30,31,31,30,31,30,31]
     n = 0
-    for i in range(0,month-1):
+    for i in range(month-1):
         n = n+days_in_month[i]
     n = n+day
     if calendar.isleap(year) and month>2:
@@ -286,22 +286,22 @@ def sample_raster_from_poly(N, poly, poly_id, class_name, poly_class, rast_reade
 
     """
     # TO DO: add catch when polygon and raster do not intersect
+    
     # select random points inside poly
-    points = random_pts_poly(N,poly)  
+    points = random_pts_poly(N, poly)  
     
     # make data frame with sampled points
     sample = pd.DataFrame({           
         'geometry': pd.Series(points), 
-        class_name : pd.Series(np.full(N,poly_class)),  # add class identification for all pts
-        'polygon_id': pd.Series(np.full(N,poly_id))
+        class_name : pd.Series(np.full(N, poly_class)), 
+        'polygon_id': pd.Series(np.full(N, poly_id))
                  })
-    
-    # TO DO: substitute four lines by sample_raster_from_pts: input= sample.geometry
-    # pts_naip = pts.to_crs(rast_reader_NAIP.crs).geometry
-    # sample_raster_from_pts(pts_naip, rast_reader_NAIP, ['r','g','b','nir'])
-    sample_coords = sample.geometry.apply(lambda p: (p.x, p.y))  # separate coords (needed for reasterio.io.DatasetReader.sample() )
-    data_generator = rast_reader.sample(sample_coords)   # extract band values from raster
-    data = np.vstack(list(data_generator))               # make band values into dataframe
+    # separate coords (needed for rasterio.io.DatasetReader.sample() )
+    sample_coords = sample.geometry.apply(lambda p: (p.x, p.y))  
+    data_generator = rast_reader.sample(sample_coords)
+
+    # make band values into dataframe
+    data = np.vstack(list(data_generator))               
     data = pd.DataFrame(data, columns=rast_band_names) 
     
     # add band data to sampled points
@@ -310,14 +310,9 @@ def sample_raster_from_poly(N, poly, poly_id, class_name, poly_class, rast_reade
     kwargs = {'x' : sample.geometry.apply(lambda p : p.x),
              'y' : sample.geometry.apply(lambda p : p.y),
              'pts_crs' : rast_crs}
-    sample.assign(**kwargs)    
-#     # coordinate cleaning
-#     sample['x']= sample.geometry.apply(lambda p : p.x)   
-#     sample['y']= sample.geometry.apply(lambda p : p.y)
-    
-#     # add CRS of points
-#     sample['pts_crs'] =  rast_crs  
-    sample.drop('geometry',axis=1,inplace=True)
+    sample = sample.assign(**kwargs)    
+    sample = sample.drop('geometry', axis=1)
+
     # organize columns
     sample = sample[['x','y','pts_crs','polygon_id', class_name] + rast_band_names] 
 
@@ -363,23 +358,24 @@ def sample_naip_from_polys(polys, class_name, itemid, param, sample_fraction=0, 
     n_pts = sample_size_in_polygons(n_pixels, param, sample_fraction, max_sample, const_sample)
     
     samples = []
-    for i in range(0,polys.shape[0]):   # for each polygon in list
+    for i in range(polys.shape[0]):
         sample = sample_raster_from_poly(n_pts[i], 
-                                         polys_match.geometry[i], polys.id[i], 
-                                         class_name, polys[class_name][i], 
-                                         rast_reader, rast_band_names, rast_crs)                                   
+                                         polys_match.geometry[i], 
+                                         polys.id[i], 
+                                         class_name, 
+                                         polys[class_name][i], 
+                                         rast_reader, 
+                                         rast_band_names, 
+                                         rast_crs)                                   
         samples.append(sample)   
-    df = pd.concat(samples) # create dataframe from samples list
-    # df['year'] = item.datetime.year   # add date to samples  TO DO: get from polys? raster?
-    # df['month'] = item.datetime.month
-    # df['day_in_year'] = day_in_year(item.datetime.day, item.datetime.month, item.datetime.year)
-    # df['naip_id'] = itemid           # add naip item id to samples
+    # create dataframe from samples list        
+    df = pd.concat(samples) 
     
     kwargs = {'year' : item.datetime.year,
              'month' : item.datetime.month,
-             'day_in_year' : rday_in_year(item.datetime.day, item.datetime.month, item.datetime.year),
+             'day_in_year' : day_in_year(item.datetime.day, item.datetime.month, item.datetime.year),
              'naip_id' : itemid}
-    df.assign(**kwargs)        
+    df = df.assign(**kwargs)        
     
     return df
 
