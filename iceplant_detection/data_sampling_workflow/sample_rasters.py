@@ -153,6 +153,11 @@ def path_to_spectral_pts(aoi, year):
     # TO DO: maybe change to _spectral_points
     return fp
 
+# ----------------------------------
+def path_to_aoi_itemids_csv():
+
+    return '/home/jovyan/msai4earth-esa/iceplant_detection/areas_of_interest/aoi_naip_itemids.csv'
+
 
 # *********************************************************************
 
@@ -673,7 +678,7 @@ def entropy_raster(rast_reader=None, raster=None, rast_data=None, crs=None, tran
     return
 # ------------------------------------------------------------------------------
 
-def max_min_avg_rasters(rast_reader=None, raster=None, rast_data=None, crs=None, transf=None, band=1, rast_name=None, n=2, folder_path=None):
+def max_min_avg_rasters(rast_reader=None, raster=None, rast_data=None, crs=None, transf=None, band=1, rast_name=None, n=3, folder_path=None):
     max_raster(rast_reader, raster, rast_data, crs, transf, band, rast_name, n, folder_path)
     min_raster(rast_reader, raster, rast_data, crs, transf, band, rast_name, n, folder_path)
     avg_raster(rast_reader, raster, rast_data, crs, transf, band, rast_name, n, folder_path)
