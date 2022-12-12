@@ -61,7 +61,7 @@ def raster_as_df(raster, band_names):
 
 # **********************************************************************************************************
 def normalized_difference_index(df, *args):
-    """
+    """f
         Calculates the normalized difference index of two columns in the given data frame.
         In doing so it converts the column types to int16 (spectral bands are usually uint8).
             Parameters:
@@ -247,10 +247,18 @@ def finish_processing(status, processed, reason, times_pre, times_class, times_p
     
     if status == 'no_data':
         reason.append('no data in intersection')
-        print('no data at intersection of scene with coastal buffer', end="\r")  
     elif status == 'no_veg':
         reason.append('no vegeatation in intersection')
-        print('no vegetation pixels at intersection of scene data with coastal buffer', end="\r")    
+    else: 
+        reason.append('invalid status') 
+    
+    return
+    
+def finish_processing_message(status, itemid):
+    if status == 'no_data':
+        print('no data at intersection of scene with coastal buffer')  
+    elif status == 'no_veg':
+        print('no vegetation pixels at intersection of scene data with coastal buffer')
     else: 
         print('invalid status')
         return 
