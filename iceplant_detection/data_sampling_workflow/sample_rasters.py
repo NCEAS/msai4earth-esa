@@ -97,11 +97,6 @@ def day_in_year(day,month,year):
         n = n+1
     return n
 
-
-
-
-# *********************************************************************
-# *********************************************************************
 # *********************************************************************
 # *********************************************************************
 # TO DO: maybe all these path_to functions should be in a different .py
@@ -428,7 +423,7 @@ def geodataframe_from_csv(df=None, fp=None, lon_label=None, lat_label=None, crs=
     if 'geometry' in df.columns:          
         df = df.rename(columns = {'geometry': 'geometry_0'})
 
-    return gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df[lon_label],df[lat_label]), crs = crs)
+    return gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df[lon_label],df[lat_label]), crs=crs)
 
 # *********************************************************************
 
