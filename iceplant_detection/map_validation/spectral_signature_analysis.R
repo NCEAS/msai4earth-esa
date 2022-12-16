@@ -1,5 +1,5 @@
 ### Inspecting spectral signature of different classification confusions
-
+###
 
 librarian::shelf(tidyverse, janitor, naniar, sf, spatialEco)
 
@@ -36,6 +36,7 @@ data_assessmt_all <- left_join(data_assessmt, data_lswe, by = c("lon", "lat")) %
 #  3 = water
 
 
+#### Inspect spectral separability using Jeffries-Matusita distance ####
 
 # create data frame of spectral signatures
 spectral_signatures <- data_assessmt_all %>%
@@ -58,7 +59,9 @@ spectral.separability(spectral_signatures, class_vect, jeffries.matusita = TRUE)
 # water                    1.349336 1.409361 1.251939 0.000000
 
 
-# add false positive, false negative flag for ice_plant
+
+
+#### Add false positive, false negative flag for ice_plant ####
 data_assessmt_flag <- data_assessmt_all %>%
   mutate(category_flag_lidar = case_when(
     ref_class == 1 & map_class == 1 ~ "iceplant_true_pos", # TRUE positive
@@ -93,14 +96,51 @@ data_assessmt_flag <- data_assessmt_all %>%
 data_assessmt_flag <- data_assessmt_flag %>%
   relocate(plotid, .before = everything())
 
-#### COMPUTE MEAN FOR ICEPLANT SIGNATURES ####
 
-# Subset the iceplant related spectral signatures
-iceplant_signatures <- data_assessmt_flag %>% 
+#### Quick stats between the two model versions ####
+
+# Subset the iceplant related spectral signatures using old classification
+iceplant_signatures_lidar <- data_assessmt_flag %>% 
+  filter(str_detect(category_flag_lidar, "iceplant"))
+
+iceplant_signatures_lidar %>% group_by(category_flag_lidar, .drop = FALSE) %>%
+  summarize(count = n(),
+            percent = n()/nrow(iceplant_signatures_lidar) *100) %>%
+  st_drop_geometry()
+
+# category_flag_lidar     count percent
+# 1 iceplant_falseneg_low      14   11.0 
+# 2 iceplant_falseneg_other     2    1.57
+# 3 iceplant_falseneg_water     5    3.94
+# 4 iceplant_falsepos_low      20   15.7 
+# 5 iceplant_falsepos_other    37   29.1 
+# 6 iceplant_true_pos          49   38.6 
+
+# Subset the iceplant related spectral signatures using lwse
+iceplant_signatures_lwse <- data_assessmt_flag %>% 
   filter(str_detect(category_flag_lwse, "iceplant"))
 
+iceplant_signatures_lwse %>% group_by(category_flag_lwse, .drop = FALSE) %>%
+  summarize(count = n(),
+            percent = n()/nrow(iceplant_signatures_lwse) *100) %>%
+  st_drop_geometry()
+
+# category_flag_lwse      count percent
+# 1 iceplant_falseneg_low      18   16.1 
+# 2 iceplant_falseneg_other     6    5.36
+# 3 iceplant_falseneg_water     9    8.04
+# 4 iceplant_falsepos_low      20   17.9 
+# 5 iceplant_falsepos_other    14   12.5 
+# 6 iceplant_true_pos          45   40.2 
+
+
+
+
+#### COMPUTE MEAN FOR ICEPLANT SIGNATURES ####
+
+
 # Compute the average "pure" spectral signatures
-iceplant_signatures_mean <- iceplant_signatures %>%
+iceplant_signatures_mean <- iceplant_signatures_lwse %>%
   group_by(category_flag_lwse, .drop = FALSE) %>%  # Create groups
   summarise(across(where(is.numeric),   # compute the mean
                    list(mean = mean),
@@ -125,7 +165,7 @@ iceplant_signatures_mean_long <- iceplant_signatures_mean %>%
 #### COMPUTE SD FOR ICEPLANT SIGNATURES ####
 
 # Compute the average "pure" spectral signatures
-iceplant_signatures_sd <- iceplant_signatures %>%
+iceplant_signatures_sd <- iceplant_signatures_lwse %>%
   group_by(category_flag_lwse, .drop = FALSE) %>%  # Create groups
   summarise(across(where(is.numeric),   # compute the mean
                    list(sd = sd),
@@ -176,7 +216,6 @@ iceplant_signatures_true <-
   iceplant_signatures_long %>% filter(category_flag_lwse == "iceplant_true_pos")
 
 
-
 # other vegetation false positive #
 iceplant_false_otherveg_long <- data_assessmt_flag %>% 
   filter(category_flag_lwse == "iceplant_falsepos_other") %>%
@@ -189,8 +228,6 @@ iceplant_false_otherveg_long <- data_assessmt_flag %>%
                                         "lidar", "min_lidar", "avg_lidar", "max_lidar")),
          dn = ifelse(dn < 0, 0, dn)
          )
-
-
 
 
 # plot the spectral signatures
