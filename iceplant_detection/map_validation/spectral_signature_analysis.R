@@ -203,7 +203,7 @@ ggplot(iceplant_false_otherveg_long) +
 
 
 
-#### Compute the euclidean distance between iceplant mean and false positive ####
+#### Compute the euclidean distance between iceplant mean and false positive other veg and low NDVI####
 
 # Get the mean in another df
 iceplant_signatures_mean_true <- iceplant_signatures_mean %>% 
@@ -211,7 +211,19 @@ iceplant_signatures_mean_true <- iceplant_signatures_mean %>%
   select(r:nir)
 
 # focus on the false positive other vegetation
-iceplant_false_otherveg <- iceplant_signatures %>%
-  filter(category_flag_lidar == "iceplant_falsepos_other") 
+iceplant_false_otherveg_dist <- iceplant_signatures %>%
+  filter(category_flag_lwse == "iceplant_falsepos_other") %>% 
+  mutate(eu_dist = sqrt((r-iceplant_signatures_mean_true$r)^2 + 
+                          (g-iceplant_signatures_mean_true$g)^2 + 
+                          (b-iceplant_signatures_mean_true$b)^2 + 
+                          (nir-iceplant_signatures_mean_true$nir)^2)) %>%
+  arrange(desc(eu_dist))
 
-
+# focus on the false positive low NDVI
+iceplant_false_low_dist <- iceplant_signatures %>%
+  filter(category_flag_lwse == "iceplant_falsepos_low") %>% 
+  mutate(eu_dist = sqrt((r-iceplant_signatures_mean_true$r)^2 + 
+                          (g-iceplant_signatures_mean_true$g)^2 + 
+                          (b-iceplant_signatures_mean_true$b)^2 + 
+                          (nir-iceplant_signatures_mean_true$nir)^2)) %>%
+  arrange(desc(eu_dist))
