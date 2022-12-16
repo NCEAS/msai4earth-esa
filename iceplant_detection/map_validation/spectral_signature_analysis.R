@@ -67,26 +67,26 @@ data_assessmt_flag <- data_assessmt_all %>%
     ref_class == 1 & map_class == 1 ~ "iceplant_true_pos", # TRUE positive
     ref_class == 1 & map_class == 0 ~ "iceplant_falseneg_other", # FALSE negative others
     ref_class == 0 & map_class == 1 ~ "iceplant_falsepos_other", # FALSE positive others
-    ref_class == 2 & map_class == 0 ~ "iceplant_falseneg_low", # FALSE negative low
-    ref_class == 0 & map_class == 2 ~ "iceplant_falsepos_low", # FALSE positive low
-    ref_class == 3 & map_class == 0 ~ "iceplant_falseneg_water", # FALSE negative water
-    ref_class == 0 & map_class == 3 ~ "iceplant_falsepos_water", # FALSE positive water
+    ref_class == 1 & map_class == 2 ~ "iceplant_falseneg_low", # FALSE negative low
+    ref_class == 2 & map_class == 1 ~ "iceplant_falsepos_low", # FALSE positive low
+    ref_class == 1 & map_class == 3 ~ "iceplant_falseneg_water", # FALSE negative water
+    ref_class == 3 & map_class == 1 ~ "iceplant_falsepos_water", # FALSE positive water
     ref_class == 0 & map_class == 0 ~ "other_true_pos", # TRUE positive
     ref_class == 2 & map_class == 2 ~ "low_true_pos", # TRUE positive
     ref_class == 3 & map_class == 3 ~ "water_true_pos", # TRUE positive
     TRUE                      ~ "not_flagged"
   ),
   category_flag_lwse = case_when(
-    ref_class == 1 & lswe_result == 1 ~ "iceplant_true_pos", # TRUE positive
-    ref_class == 1 & lswe_result == 0 ~ "iceplant_falseneg_other", # FALSE negative others
-    ref_class == 0 & lswe_result == 1 ~ "iceplant_falsepos_other", # FALSE positive others
-    ref_class == 2 & lswe_result == 0 ~ "iceplant_falseneg_low", # FALSE negative low
-    ref_class == 0 & lswe_result == 2 ~ "iceplant_falsepos_low", # FALSE positive low
-    ref_class == 3 & lswe_result == 0 ~ "iceplant_falseneg_water", # FALSE negative water
-    ref_class == 0 & lswe_result == 3 ~ "iceplant_falsepos_water", # FALSE positive water
-    ref_class == 0 & lswe_result == 0 ~ "other_true_pos", # TRUE positive
-    ref_class == 2 & lswe_result == 2 ~ "low_true_pos", # TRUE positive
-    ref_class == 3 & lswe_result == 3 ~ "water_true_pos", # TRUE positive
+    ref_class == 1 & map_class == 1 ~ "iceplant_true_pos", # TRUE positive
+    ref_class == 1 & map_class == 0 ~ "iceplant_falseneg_other", # FALSE negative others
+    ref_class == 0 & map_class == 1 ~ "iceplant_falsepos_other", # FALSE positive others
+    ref_class == 1 & map_class == 2 ~ "iceplant_falseneg_low", # FALSE negative low
+    ref_class == 2 & map_class == 1 ~ "iceplant_falsepos_low", # FALSE positive low
+    ref_class == 1 & map_class == 3 ~ "iceplant_falseneg_water", # FALSE negative water
+    ref_class == 3 & map_class == 1 ~ "iceplant_falsepos_water", # FALSE positive water
+    ref_class == 0 & map_class == 0 ~ "other_true_pos", # TRUE positive
+    ref_class == 2 & map_class == 2 ~ "low_true_pos", # TRUE positive
+    ref_class == 3 & map_class == 3 ~ "water_true_pos", # TRUE positive
     TRUE                      ~ "not_flagged"
   )) %>%
   select(-c(year, month, day_in_yea, pl_which_r, low_confid, map_class, ref_class, analysis_d)) # remove unused columns
