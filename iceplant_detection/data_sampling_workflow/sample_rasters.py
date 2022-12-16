@@ -1,21 +1,11 @@
+import os
+import pandas as pd
+import numpy as np
+
 import pystac_client 
 import planetary_computer as pc
-import rasterio
 
 import calendar
-import numpy as np
-import pandas as pd
-
-import os
-
-# *********************************************************************
-# *********************************************************************
-# *********************************************************************
-
-import os
-import pandas as pd
-import numpy as np
-
 
 from shapely.geometry import shape
 from shapely.geometry import Point
@@ -27,6 +17,7 @@ import warnings
 
 import rioxarray as rioxr
 import geopandas as gpd
+
 import rasterio
 from rasterio.crs import CRS
 
@@ -34,9 +25,8 @@ from scipy.ndimage import maximum_filter as maxf2D
 from scipy.ndimage import minimum_filter as minf2D
 from scipy.ndimage import convolve as conf2D
 
-from skimage.filters.rank import entropy
 from skimage.morphology import disk
-
+from skimage.filters.rank import entropy
 
 # *********************************************************************
 
@@ -53,13 +43,10 @@ def get_item_from_id(itemid):
     URL = "https://planetarycomputer.microsoft.com/api/stac/v1"
     catalog = pystac_client.Client.open(URL)
 
-    search = catalog.search(
-        collections=["naip"],
-        ids = itemid)
+    search = catalog.search(collections=["naip"], ids = itemid)
     
     # return 1st item in search (assumes itemid IS associaed to some item)
-    item = list(search.get_items())[0]   # ** TO DO: catch exception
-    return item
+    return list(search.get_items())[0]   # ** TO DO: catch exception
 
 # ---------------------------------------------
 
@@ -103,63 +90,13 @@ def day_in_year(day,month,year):
     """
     days_in_month = [31,28,31,30,31,30,31,31,30,31,30,31]
     n = 0
-    for i in range(0,month-1):
+    for i in range(month-1):
         n = n+days_in_month[i]
     n = n+day
     if calendar.isleap(year) and month>2:
         n = n+1
     return n
 
-
-# **********************************************************************************
-
-def save_raster(raster, fp, shape, bands_n, crs, transform, dtype):
-    """
-        Saves an array as a 'GTiff' raster with specified parameters.
-        Parameters:
-                    raster (numpy.ndarray): array of raster values
-                    fp (str): file path where raster will be saved
-                    shape (tuple):shape of raster (height, width) TO DO: SHOULD THIS BE READ DIRECTLY FROM raster??
-                    bands_n (integer): number of bands in the raster
-                    crs (str): CRS of raster
-                    transform (affine.Affine): affine transformation of raster
-        Return: None
-    """
-    bands_array = 1
-    if bands_n > 1:
-        bands_array = np.arange(1,bands_n+1)
-        
-    with rasterio.open(
-        fp,  # file path
-        'w',           # w = write
-        driver = 'GTiff', # format
-        height = shape[0], 
-        width = shape[1],
-        count = bands_n,  # number of raster bands in the dataset
-        dtype = dtype,
-        crs = crs,
-        transform = transform,
-    ) as dst:
-        dst.write(raster.astype(dtype), bands_array)
-    return 
-
-# **********************************************************************************
-
-def make_directory(dir_name): 
-    """ 
-        Checks if the directory with name dir_name (str) exists in the current working directory. 
-        If it doesn't, it creates the directory and returns the filepath to it.
-    """    
-    fp = os.path.join(os.getcwd(),dir_name)  
-    if not os.path.exists(fp):
-        os.mkdir(fp)
-    return fp
-
-
-
-
-# *********************************************************************
-# *********************************************************************
 # *********************************************************************
 # *********************************************************************
 # TO DO: maybe all these path_to functions should be in a different .py
@@ -210,6 +147,11 @@ def path_to_spectral_pts(aoi, year):
                             aoi + '_points_'+str(year)+'.csv')
     # TO DO: maybe change to _spectral_points
     return fp
+
+# ----------------------------------
+def path_to_aoi_itemids_csv():
+
+    return '/home/jovyan/msai4earth-esa/iceplant_detection/areas_of_interest/aoi_naip_itemids.csv'
 
 
 # *********************************************************************
@@ -339,30 +281,35 @@ def sample_raster_from_poly(N, poly, poly_id, class_name, poly_class, rast_reade
 
     """
     # TO DO: add catch when polygon and raster do not intersect
-    points = random_pts_poly(N,poly)  # select random points inside poly
-    sample = pd.DataFrame({           # make data frame with sampled points
+    
+    # select random points inside poly
+    points = random_pts_poly(N, poly)  
+    
+    # make data frame with sampled points
+    sample = pd.DataFrame({           
         'geometry': pd.Series(points), 
-        class_name : pd.Series(np.full(N,poly_class)),  # add class identification for all pts
-        'polygon_id': pd.Series(np.full(N,poly_id))
+        class_name : pd.Series(np.full(N, poly_class)), 
+        'polygon_id': pd.Series(np.full(N, poly_id))
                  })
-    
-    # TO DO: substitute four lines by sample_raster_from_pts: input= sample.geometry
-    # pts_naip = pts.to_crs(rast_reader_NAIP.crs).geometry
-    # sample_raster_from_pts(pts_naip, rast_reader_NAIP, ['r','g','b','nir'])
-    sample_coords = sample.geometry.apply(lambda p: (p.x, p.y))  # separate coords (needed for reasterio.io.DatasetReader.sample() )
-    data_generator = rast_reader.sample(sample_coords)   # extract band values from raster
-    data = np.vstack(list(data_generator))               # make band values into dataframe
+    # separate coords (needed for rasterio.io.DatasetReader.sample() )
+    sample_coords = sample.geometry.apply(lambda p: (p.x, p.y))  
+    data_generator = rast_reader.sample(sample_coords)
+
+    # make band values into dataframe
+    data = np.vstack(list(data_generator))               
     data = pd.DataFrame(data, columns=rast_band_names) 
-
-    sample = pd.concat([sample,data],axis=1)  # add band data to sampled points
-
-    sample['x']= sample.geometry.apply(lambda p : p.x)   # coordinate cleaning
-    sample['y']= sample.geometry.apply(lambda p : p.y)
-    sample.drop('geometry',axis=1,inplace=True)
     
-    sample['pts_crs'] =  rast_crs  # add CRS of points
+    # add band data to sampled points
+    sample = pd.concat([sample,data],axis=1)  
     
-    sample = sample[['x','y','pts_crs','polygon_id', class_name] + rast_band_names] # organize columns
+    kwargs = {'x' : sample.geometry.apply(lambda p : p.x),
+             'y' : sample.geometry.apply(lambda p : p.y),
+             'pts_crs' : rast_crs}
+    sample = sample.assign(**kwargs)    
+    sample = sample.drop('geometry', axis=1)
+
+    # organize columns
+    sample = sample[['x','y','pts_crs','polygon_id', class_name] + rast_band_names] 
 
     return sample
 
@@ -406,18 +353,24 @@ def sample_naip_from_polys(polys, class_name, itemid, param, sample_fraction=0, 
     n_pts = sample_size_in_polygons(n_pixels, param, sample_fraction, max_sample, const_sample)
     
     samples = []
-    for i in range(0,polys.shape[0]):   # for each polygon in list
+    for i in range(polys.shape[0]):
         sample = sample_raster_from_poly(n_pts[i], 
-                                         polys_match.geometry[i], polys.id[i], 
-                                         class_name, polys[class_name][i], 
-                                         rast_reader, rast_band_names, rast_crs)                                   
+                                         polys_match.geometry[i], 
+                                         polys.id[i], 
+                                         class_name, 
+                                         polys[class_name][i], 
+                                         rast_reader, 
+                                         rast_band_names, 
+                                         rast_crs)                                   
         samples.append(sample)   
-    df = pd.concat(samples) # create dataframe from samples list
+    # create dataframe from samples list        
+    df = pd.concat(samples) 
     
-    df['year'] = item.datetime.year   # add date to samples  TO DO: get from polys? raster?
-    df['month'] = item.datetime.month
-    df['day_in_year'] = day_in_year(item.datetime.day, item.datetime.month, item.datetime.year )
-    df['naip_id'] = itemid           # add naip item id to samples
+    kwargs = {'year' : item.datetime.year,
+             'month' : item.datetime.month,
+             'day_in_year' : day_in_year(item.datetime.day, item.datetime.month, item.datetime.year),
+             'naip_id' : itemid}
+    df = df.assign(**kwargs)        
     
     return df
 
@@ -466,16 +419,11 @@ def geodataframe_from_csv(df=None, fp=None, lon_label=None, lat_label=None, crs=
             df = pd.read_csv(fp)
         else:
             return False
-    if 'geometry' in df.columns:           # rename geometry column if it exists
+    # rename geometry column if it exists        
+    if 'geometry' in df.columns:          
         df = df.rename(columns = {'geometry': 'geometry_0'})
-    
-    # recreate geometry column as shapely Points
-    xy = []
-    for x,y in zip(df[lon_label],df[lat_label]):
-        xy.append(Point(x,y))
-    df['geometry'] = xy
 
-    return gpd.GeoDataFrame(df, crs=crs)
+    return gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df[lon_label],df[lat_label]), crs=crs)
 
 # *********************************************************************
 
@@ -497,9 +445,11 @@ def sample_raster_from_pts(pts, rast_reader, rast_band_names):
     if rast_reader.count != len(rast_band_names):
         print('# band names != # bands in raster')
         return
+    
+    pts_match = pts.to_crs(rast_reader.crs)
 
     # sample
-    sample_coords = pts.apply(lambda p :(p.x, p.y))  
+    sample_coords = pts_match.apply(lambda p :(p.x, p.y))  
     samples_generator = rast_reader.sample(sample_coords)    
     
     # make band values into dataframe
@@ -509,6 +459,13 @@ def sample_raster_from_pts(pts, rast_reader, rast_band_names):
     return samples
 
 # *********************************************************************
+
+def open_and_match(fp, reproject_to):
+    rast = rioxr.open_rasterio(fp)
+    rast_match = rast.rio.reproject_match(reproject_to)
+    return rast_match.squeeze()
+
+# ------------------------------------------------------------------------------
 
 def input_raster(rast_reader=None, raster=None, band=1, rast_data=None, crs=None, transf=None):
     
@@ -535,6 +492,73 @@ def input_raster(rast_reader=None, raster=None, band=1, rast_data=None, crs=None
     return rast, crs, transf
 
 # *********************************************************************
+def make_directory(dir_name): 
+    """ 
+        Checks if the directory with name dir_name (str) exists in the current working directory. 
+        If it doesn't, it creates the directory and returns the filepath to it.
+    """    
+    fp = os.path.join(os.getcwd(),dir_name)  
+    if not os.path.exists(fp):
+        os.mkdir(fp)
+    return fp
+
+# ------------------------------------------------------------------------------
+def save_raster(raster, fp, shape, bands_n, crs, transform, dtype):
+    """
+        Saves an array as a 'GTiff' raster with specified parameters.
+        Parameters:
+                    raster (numpy.ndarray): array of raster values
+                    fp (str): file path where raster will be saved, including file name
+                    shape (tuple):shape of raster (height, width) TO DO: SHOULD THIS BE READ DIRECTLY FROM raster??
+                    bands_n (integer): number of bands in the raster
+                    crs (str): CRS of raster
+                    transform (affine.Affine): affine transformation of raster
+        Return: None
+    """
+    bands_array = 1
+    if bands_n > 1:
+        bands_array = np.arange(1,bands_n+1)
+        
+    with rasterio.open(
+        fp,  # file path
+        'w',           # w = write
+        driver = 'GTiff', # format
+        height = shape[0], 
+        width = shape[1],
+        count = bands_n,  # number of raster bands in the dataset
+        dtype = dtype,
+        crs = crs,
+        transform = transform,
+    ) as dst:
+        dst.write(raster.astype(dtype), bands_array)
+    return 
+
+# ------------------------------------------------------------------------------
+def save_raster_checkpoints(rast, crs, transf, rast_name=None, suffix= None, folder_path=None):  
+
+    if rast_name is None:
+        rast_name = 'raster'        
+
+    if (folder_path is None) or (os.path.exists(folder_path) == False):  
+        folder_path = make_directory('temp')  
+
+    if suffix is None:
+        suffix = ''
+        
+    fp = os.path.join(folder_path, rast_name + '_' + suffix + '.tif')      
+
+    dtype = rasterio.dtypes.get_minimum_dtype(rast)      
+
+    save_raster(rast, 
+                fp, 
+                rast.shape,
+                1,
+                crs, 
+                transf, 
+                dtype) 
+    return 
+
+# *********************************************************************
 
 def min_raster(rast_reader=None, raster=None,  rast_data=None, crs=None, transf=None, band=1, rast_name=None, n=3, folder_path=None):  
     """
@@ -553,22 +577,15 @@ def min_raster(rast_reader=None, raster=None,  rast_data=None, crs=None, transf=
     """
     
     rast, crs, transf = input_raster(rast_reader, raster, band, rast_data, crs, transf)
+
+    if rasterio.dtypes.get_minimum_dtype(rast)  == 'uint8':
+        cval = 255
+    else:
+        cval = 0
         
-    mins = minf2D(rast, size=(n,n))    # calculate min in window        
+    mins = minf2D(rast, size=(n,n), cval=cval)     
     
-    if (folder_path is None) or (os.path.exists(folder_path) == False):       
-        folder_path = make_directory('temp')
-    
-    dtype = rasterio.dtypes.get_minimum_dtype(mins)  # parameters for saving
-    
-    fp = os.path.join(folder_path, rast_name +'_mins.tif')      # save raster
-    save_raster(mins, 
-                fp, 
-                rast.shape,
-                1,
-                crs, 
-                transf, 
-                dtype)  
+    save_raster_checkpoints(mins, crs, transf, rast_name, 'mins', folder_path)
     return
 
 # ------------------------------------------------------------------------------
@@ -591,23 +608,9 @@ def max_raster(rast_reader=None, raster=None,  rast_data=None, crs=None, transf=
     
     rast, crs, transf = input_raster(rast_reader, raster, band, rast_data, crs, transf)
         
-    # calculate max in window
-    maxs = maxf2D(rast, size=(n,n))    
+    maxs = maxf2D(rast, size=(n,n))
     
-    # if needed, create temp directory to save files 
-    if (folder_path is None) or (os.path.exists(folder_path) == False):  
-        folder_path = make_directory('temp')
-    
-    dtype = rasterio.dtypes.get_minimum_dtype(maxs)  # parameters for saving
-    
-    fp = os.path.join(folder_path, rast_name +'_maxs.tif')      # save raster
-    save_raster(maxs, 
-                fp, 
-                rast.shape,
-                1,
-                crs, 
-                transf, 
-                dtype)  
+    save_raster_checkpoints(maxs, crs, transf, rast_name, 'maxs', folder_path)
     return
 
 # ------------------------------------------------------------------------------
@@ -630,28 +633,14 @@ def avg_raster(rast_reader=None, raster=None, rast_data=None, crs=None, transf=N
     
     rast, crs, transf = input_raster(rast_reader, raster, band, rast_data, crs, transf)
 
-    # calculate averages in window
     w = np.ones(n*n).reshape(n,n)      
     avgs = conf2D(rast, 
              weights=w,
-             mode='constant')
-    avgs = avgs/(n*n)
-    
-    # if needed, create temp directory to save files 
-    if (folder_path is None) or (os.path.exists(folder_path) == False):  
-        folder_path = make_directory('temp')
-            
-    # parameters for saving   
-    fp = os.path.join(folder_path, rast_name +'_avgs.tif')                
-    dtype = rasterio.dtypes.get_minimum_dtype(avgs)
-            
-    save_raster(avgs,    # save rasters
-                fp, 
-                rast.shape, 
-                1,
-                crs, 
-                transf, 
-                dtype)  
+             mode='constant',
+             output='int64')
+    avgs = avgs/(n**2)
+
+    save_raster_checkpoints(avgs, crs, transf, rast_name, 'avgs', folder_path)            
     return
                       
 # ------------------------------------------------------------------------------
@@ -673,35 +662,18 @@ def entropy_raster(rast_reader=None, raster=None, rast_data=None, crs=None, tran
     """
     
     rast, crs, transf = input_raster(rast_reader, raster, band, rast_data, crs, transf)
-
-    # calculate entropy in window
+    
     entropies = entropy(rast, disk(n))    
     
-    # if needed, create temp directory to save files 
-    if (folder_path is None) or (os.path.exists(folder_path) == False):  
-        folder_path = make_directory('temp')
-    
-    dtype = rasterio.dtypes.get_minimum_dtype(entropies)  # parameters for saving
-    
-    if rast_name is None:
-        rast_name = 'raster'
-        
-    fp = os.path.join(folder_path, rast_name +'_entrs.tif')      # save raster
-    save_raster(entropies, 
-                fp, 
-                rast.shape,
-                1,
-                crs, 
-                transf, 
-                dtype)  
+    save_raster_checkpoints(entropies, crs, transf, rast_name, 'entrs', folder_path)            
     return
+# ------------------------------------------------------------------------------
 
-# *********************************************************************
-
-def open_and_match(fp, reproject_to):
-    rast = rioxr.open_rasterio(fp)
-    rast_match = rast.rio.reproject_match(reproject_to)
-    return rast_match.squeeze()
+def max_min_avg_rasters(rast_reader=None, raster=None, rast_data=None, crs=None, transf=None, band=1, rast_name=None, n=3, folder_path=None):
+    max_raster(rast_reader, raster, rast_data, crs, transf, band, rast_name, n, folder_path)
+    min_raster(rast_reader, raster, rast_data, crs, transf, band, rast_name, n, folder_path)
+    avg_raster(rast_reader, raster, rast_data, crs, transf, band, rast_name, n, folder_path)
+    return
 
 # *********************************************************************
 # *********************************************************************
@@ -720,3 +692,9 @@ def iceplant_proportions(labels):
     print()
     
 
+# ---------------------------------------------
+# rast is 4 band xarray
+def ndvi_xarray(rast):
+    red_band = rast.sel(band=1).astype('int16') 
+    nir_band = rast.sel(band=4).astype('int16')
+    return (nir_band - red_band) / (nir_band + red_band)

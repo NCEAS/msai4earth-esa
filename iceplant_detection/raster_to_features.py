@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+import os
+
 import rasterio
 import rioxarray as rioxr
 import geopandas as gpd
@@ -59,7 +61,7 @@ def raster_as_df(raster, band_names):
 
 # **********************************************************************************************************
 def normalized_difference_index(df, *args):
-    """
+    """f
         Calculates the normalized difference index of two columns in the given data frame.
         In doing so it converts the column types to int16 (spectral bands are usually uint8).
             Parameters:
@@ -199,3 +201,67 @@ def indices_to_image(nrows, ncols, indices_list, values, back_value):
     
     return reconstruct
 
+# **********************************************************************************************************
+
+def create_aux_canopyheight_rasters(year):
+    # open canopy height raster for given year
+    lidar_rast_reader = rasterio.open(sr.path_to_lidar(year))   
+    # name of output canopy height raster
+    rast_name = 'SB_canopy_height_' + str(year) 
+
+    # if there is no temp folder, create one
+    temp_fp = os.path.join(os.getcwd(), 'temp') 
+    if not os.path.exists(temp_fp):
+        os.mkdir(temp_fp)
+    temp_fp = os.path.join(temp_fp, 'aux_canopy_height')
+    if not os.path.exists(temp_fp):
+        os.mkdir(temp_fp)
+
+    # list of file paths to aux canopy height rasters
+    # order of filepaths is: lidar, max, min, avg
+    lidar_fps = [sr.path_to_lidar(year)]  
+    for tag in ['_maxs', '_mins', '_avgs']:
+        lidar_fps.append(os.path.join(temp_fp, rast_name + tag + '.tif'))
+
+    # create any missing aux canopy height rasters
+    if not all([os.path.exists(fp) for fp in lidar_fps]):
+        # save aux rasters in temp folder
+        if not os.path.exists(lidar_fps[1]):  # starts at 1 bc 0 is canopy height raster
+            sr.max_raster(rast_reader = lidar_rast_reader, rast_name = rast_name, n=3, folder_path=temp_fp)
+
+        if not os.path.exists(lidar_fps[2]):
+            sr.min_raster(rast_reader = lidar_rast_reader, rast_name = rast_name, n=3, folder_path=temp_fp)  
+
+        if not os.path.exists(lidar_fps[3]):
+            sr.avg_raster(rast_reader = lidar_rast_reader, rast_name = rast_name, n=3, folder_path=temp_fp)
+    return lidar_fps
+
+# **********************************************************************************************************
+def finish_processing(status, processed, reason, times_pre, times_class, times_post, veg_pixels, itemid):
+    
+    processed.append('N')
+    times_pre.append(0)
+    times_class.append(0)        
+    times_post.append(0)
+    veg_pixels.append(0)
+    
+    if status == 'no_data':
+        reason.append('no data in intersection')
+    elif status == 'no_veg':
+        reason.append('no vegeatation in intersection')
+    else: 
+        reason.append('invalid status') 
+    
+    return
+    
+def finish_processing_message(status, itemid):
+    if status == 'no_data':
+        print('no data at intersection of scene with coastal buffer')  
+    elif status == 'no_veg':
+        print('no vegetation pixels at intersection of scene data with coastal buffer')
+    else: 
+        print('invalid status')
+        return 
+    
+    print('FINISHED: ', itemid , '\n', end="\r")
+    return
