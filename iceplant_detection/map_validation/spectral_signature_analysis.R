@@ -4,7 +4,7 @@
 librarian::shelf(tidyverse, janitor, naniar, sf, spatialEco)
 
 # file path
-data_dir <- "/Users/brun/Data/msai4earth/naip_iceplant_2020/validation_results_spectral_2020"
+data_dir <- "~/Data/msai4earth/naip_iceplant_2020/validation_results_spectral_2020"
 
 # import the data
 
@@ -219,6 +219,8 @@ iceplant_false_otherveg_dist <- iceplant_signatures %>%
                           (nir-iceplant_signatures_mean_true$nir)^2)) %>%
   arrange(desc(eu_dist))
 
+st_write(iceplant_false_otherveg_dist, file.path(data_dir,"iceplant_false_otherveg_dist.geojson"))
+
 # focus on the false positive low NDVI
 iceplant_false_low_dist <- iceplant_signatures %>%
   filter(category_flag_lwse == "iceplant_falsepos_low") %>% 
@@ -227,3 +229,5 @@ iceplant_false_low_dist <- iceplant_signatures %>%
                           (b-iceplant_signatures_mean_true$b)^2 + 
                           (nir-iceplant_signatures_mean_true$nir)^2)) %>%
   arrange(desc(eu_dist))
+
+st_write(iceplant_false_low_dist, file.path(data_dir,"iceplant_false_low_dist.geojson"))
