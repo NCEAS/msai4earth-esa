@@ -262,7 +262,7 @@ iceplant_false_otherveg_dist <- iceplant_signatures_lwse %>%
   arrange(desc(eu_dist))
 
 st_write(iceplant_false_otherveg_dist, 
-         file.path(data_dir,"iceplant_false_otherveg_dist.geojson"),
+         file.path(data_dir,"iceplant_falsepos_otherveg_dist.geojson"),
          delete_dsn = TRUE)
 
 
