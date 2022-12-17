@@ -30,6 +30,7 @@ data_assessmt_all <- left_join(data_assessmt, data_lswe, by = c("lon", "lat")) %
 
 
 # classification categories
+#
 #  0 = other_vegetation
 #  1 = iceplant
 #  2 = low_ndvi
@@ -77,16 +78,16 @@ data_assessmt_flag <- data_assessmt_all %>%
     TRUE                      ~ "not_flagged"
   ),
   category_flag_lwse = case_when(
-    ref_class == 1 & map_class == 1 ~ "iceplant_true_pos", # TRUE positive
-    ref_class == 1 & map_class == 0 ~ "iceplant_falseneg_other", # FALSE negative others
-    ref_class == 0 & map_class == 1 ~ "iceplant_falsepos_other", # FALSE positive others
-    ref_class == 1 & map_class == 2 ~ "iceplant_falseneg_low", # FALSE negative low
-    ref_class == 2 & map_class == 1 ~ "iceplant_falsepos_low", # FALSE positive low
-    ref_class == 1 & map_class == 3 ~ "iceplant_falseneg_water", # FALSE negative water
-    ref_class == 3 & map_class == 1 ~ "iceplant_falsepos_water", # FALSE positive water
-    ref_class == 0 & map_class == 0 ~ "other_true_pos", # TRUE positive
-    ref_class == 2 & map_class == 2 ~ "low_true_pos", # TRUE positive
-    ref_class == 3 & map_class == 3 ~ "water_true_pos", # TRUE positive
+    ref_class == 1 & lswe_result == 1 ~ "iceplant_true_pos", # TRUE positive
+    ref_class == 1 & lswe_result == 0 ~ "iceplant_falseneg_other", # FALSE negative others
+    ref_class == 0 & lswe_result == 1 ~ "iceplant_falsepos_other", # FALSE positive others
+    ref_class == 1 & lswe_result == 2 ~ "iceplant_falseneg_low", # FALSE negative low
+    ref_class == 2 & lswe_result == 1 ~ "iceplant_falsepos_low", # FALSE positive low
+    ref_class == 1 & lswe_result == 3 ~ "iceplant_falseneg_water", # FALSE negative water
+    ref_class == 3 & lswe_result == 1 ~ "iceplant_falsepos_water", # FALSE positive water
+    ref_class == 0 & lswe_result == 0 ~ "other_true_pos", # TRUE positive
+    ref_class == 2 & lswe_result == 2 ~ "low_true_pos", # TRUE positive
+    ref_class == 3 & lswe_result == 3 ~ "water_true_pos", # TRUE positive
     TRUE                      ~ "not_flagged"
   )) %>%
   select(-c(year, month, day_in_yea, pl_which_r, low_confid, map_class, ref_class, analysis_d)) # remove unused columns
@@ -109,12 +110,12 @@ iceplant_signatures_lidar %>% group_by(category_flag_lidar, .drop = FALSE) %>%
   st_drop_geometry()
 
 # category_flag_lidar     count percent
-# 1 iceplant_falseneg_low      14   11.0 
-# 2 iceplant_falseneg_other     2    1.57
-# 3 iceplant_falseneg_water     5    3.94
-# 4 iceplant_falsepos_low      20   15.7 
-# 5 iceplant_falsepos_other    37   29.1 
-# 6 iceplant_true_pos          49   38.6 
+# 1 iceplant_falseneg_low       2    1.92
+# 2 iceplant_falseneg_other     2    1.92
+# 3 iceplant_falsepos_low       9    8.65
+# 4 iceplant_falsepos_other    37   35.6 
+# 5 iceplant_falsepos_water     5    4.81
+# 6 iceplant_true_pos          49   47.1 
 
 # Subset the iceplant related spectral signatures using lwse
 iceplant_signatures_lwse <- data_assessmt_flag %>% 
@@ -126,13 +127,12 @@ iceplant_signatures_lwse %>% group_by(category_flag_lwse, .drop = FALSE) %>%
   st_drop_geometry()
 
 # category_flag_lwse      count percent
-# 1 iceplant_falseneg_low      18   16.1 
-# 2 iceplant_falseneg_other     6    5.36
-# 3 iceplant_falseneg_water     9    8.04
-# 4 iceplant_falsepos_low      20   17.9 
-# 5 iceplant_falsepos_other    14   12.5 
-# 6 iceplant_true_pos          45   40.2 
-
+# 1 iceplant_falseneg_low       2    2.74
+# 2 iceplant_falseneg_other     6    8.22
+# 3 iceplant_falsepos_low       5    6.85
+# 4 iceplant_falsepos_other    14   19.2 
+# 5 iceplant_falsepos_water     1    1.37
+# 6 iceplant_true_pos          45   61.6 
 
 
 
@@ -219,7 +219,7 @@ iceplant_signatures_true <-
 # other vegetation false positive #
 iceplant_false_otherveg_long <- data_assessmt_flag %>% 
   filter(category_flag_lwse == "iceplant_falsepos_other") %>%
-  pivot_longer(cols = -c(id,naip_id, email, category_flag_lwse ,geometry),
+  pivot_longer(cols = -c(plotid, naip_id, email, category_flag_lwse ,geometry),
                names_to = "channel",
                values_to = "dn") %>%
   filter(!str_detect(channel, "lidar")) %>%
@@ -232,15 +232,15 @@ iceplant_false_otherveg_long <- data_assessmt_flag %>%
 
 # plot the spectral signatures
 ggplot(iceplant_false_otherveg_long) + 
-  geom_line(aes(x = channel, y = dn, group = id, color = id)) +
+  geom_line(aes(x = channel, y = dn, group = plotid, color = plotid)) +
   # geom_point(aes(x = channel, y = dn, group = id, color = id)) +
-  geom_line(data = iceplant_signatures_true, aes(x = channel, y = mean, group = id.x, color = "red", linewidth = 1.5)) +
+  geom_line(data = iceplant_signatures_true, aes(x = channel, y = mean, group = plotid.x, color = "red", linewidth = 1.5)) +
   ggtitle("Iceplant spectral signatures") +
   theme_bw()
 
 
 
-#### Compute the euclidean distance between iceplant mean and false positive other veg and low NDVI####
+#### Compute the euclidean distance between iceplant mean and false positive other veg and low NDVI ####
 
 # Get the mean in another df
 iceplant_signatures_mean_true <- iceplant_signatures_mean %>% 
@@ -248,23 +248,31 @@ iceplant_signatures_mean_true <- iceplant_signatures_mean %>%
   select(r:nir)
 
 # focus on the false positive other vegetation
-iceplant_false_otherveg_dist <- iceplant_signatures %>%
+iceplant_false_otherveg_dist <- iceplant_signatures_lwse %>%
   filter(category_flag_lwse == "iceplant_falsepos_other") %>% 
   mutate(eu_dist = sqrt((r-iceplant_signatures_mean_true$r)^2 + 
                           (g-iceplant_signatures_mean_true$g)^2 + 
                           (b-iceplant_signatures_mean_true$b)^2 + 
-                          (nir-iceplant_signatures_mean_true$nir)^2)) %>%
+                          (nir-iceplant_signatures_mean_true$nir)^2),
+         r_diff = r-iceplant_signatures_mean_true$r,
+         g_diff = g-iceplant_signatures_mean_true$g,
+         b_diff = b-iceplant_signatures_mean_true$b,
+         nir_diff = nir-iceplant_signatures_mean_true$nir
+         ) %>%
   arrange(desc(eu_dist))
 
-st_write(iceplant_false_otherveg_dist, file.path(data_dir,"iceplant_false_otherveg_dist.geojson"))
+st_write(iceplant_false_otherveg_dist, 
+         file.path(data_dir,"iceplant_false_otherveg_dist.geojson"),
+         delete_dsn = TRUE)
 
-# focus on the false positive low NDVI
-iceplant_false_low_dist <- iceplant_signatures %>%
-  filter(category_flag_lwse == "iceplant_falsepos_low") %>% 
-  mutate(eu_dist = sqrt((r-iceplant_signatures_mean_true$r)^2 + 
-                          (g-iceplant_signatures_mean_true$g)^2 + 
-                          (b-iceplant_signatures_mean_true$b)^2 + 
-                          (nir-iceplant_signatures_mean_true$nir)^2)) %>%
-  arrange(desc(eu_dist))
 
-st_write(iceplant_false_low_dist, file.path(data_dir,"iceplant_false_low_dist.geojson"))
+# # focus on the false positive low NDVI
+# iceplant_false_low_dist <- iceplant_signatures %>%
+#   filter(category_flag_lwse == "iceplant_falsepos_low") %>% 
+#   mutate(eu_dist = sqrt((r-iceplant_signatures_mean_true$r)^2 + 
+#                           (g-iceplant_signatures_mean_true$g)^2 + 
+#                           (b-iceplant_signatures_mean_true$b)^2 + 
+#                           (nir-iceplant_signatures_mean_true$nir)^2)) %>%
+#   arrange(desc(eu_dist))
+# 
+# st_write(iceplant_false_low_dist, file.path(data_dir,"iceplant_false_low_dist.geojson"))
