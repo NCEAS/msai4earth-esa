@@ -224,7 +224,7 @@ def sample_size_in_polygons(n_pixels, param, sample_fraction=0, max_sample=0, co
     
     elif param == 'constant':
         # TO DO: add warning not to sample more points than possible
-        n_pts = np.full(n_pixels.shape[0],const_sample)
+        n_pts = np.full(n_pixels.shape[0], const_sample)
     
     n_pts = n_pts.astype('int')
     return n_pts
