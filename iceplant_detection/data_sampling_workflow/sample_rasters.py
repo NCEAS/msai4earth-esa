@@ -430,7 +430,6 @@ def geodataframe_from_csv(df=None, fp=None, lon_label=None, lat_label=None, crs=
 def sample_raster_from_pts(pts, rast_reader, rast_band_names):
     """
         Creates a dataframe of raster bands values at the given points.
-        Points and raster MUST HAVE SAME CRS for results to be correct. 
             Parameters: 
                 pts (geopandas.geoseries.GeoSeries): 
                     GeoSeries of the points  (type shapely.geometry.point.Point) where the samples from the rasters will be taken
