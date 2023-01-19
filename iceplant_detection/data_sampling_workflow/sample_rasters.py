@@ -354,15 +354,16 @@ def sample_naip_from_polys(polys, class_name, itemid, param, sample_fraction=0, 
     
     samples = []
     for i in range(polys.shape[0]):
-        sample = sample_raster_from_poly(n_pts[i], 
-                                         polys_match.geometry[i], 
-                                         polys.id[i], 
-                                         class_name, 
-                                         polys[class_name][i], 
-                                         rast_reader, 
-                                         rast_band_names, 
-                                         rast_crs)                                   
-        samples.append(sample)   
+        if n_pts[i]>0:
+            sample = sample_raster_from_poly(n_pts[i], 
+                                             polys_match.geometry[i], 
+                                             polys.id[i], 
+                                             class_name, 
+                                             polys[class_name][i], 
+                                             rast_reader, 
+                                             rast_band_names, 
+                                             rast_crs)                                   
+            samples.append(sample)   
     # create dataframe from samples list        
     df = pd.concat(samples) 
     
