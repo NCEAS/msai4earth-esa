@@ -1,10 +1,16 @@
-### Inspecting spectral signature of different classification confusions
-###
+############################################################################
+### Inspecting spectral signature of different classification confusions ###
+############################################################################
 
-librarian::shelf(tidyverse, janitor, naniar, sf, spatialEco)
+### brun@nceas.ucsb.edu 
+
+
+# Loading the libraries
+librarian::shelf(tidyverse, janitor, naniar, sf, spatialEco, patchwork)
 
 # file path
 data_dir <- "~/Data/msai4earth/naip_iceplant_2020/validation_results_spectral_2020"
+data_dir_3070 <- file.path(data_dir, "model_3070")
 
 # import the data
 
@@ -15,11 +21,12 @@ data_assessmt <- st_read(file.path(data_dir, "validation_results_spectral_2020.s
 
 # Extract the coordinates explicitly
 data_assessmt_coord <- st_coordinates(data_assessmt) %>% 
-  as_tibble() %>% setNames(c("lon","lat"))
+  as_tibble() %>% 
+  setNames(c("lon","lat"))
 
-data_assessmt <- cbind(data_assessmt,data_assessmt_coord)
+data_assessmt <- cbind(data_assessmt, data_assessmt_coord)
 
-# Read new data LSWE
+# Read LSWE model output 
 data_lswe <- read.csv(file.path(data_dir, "LSWE_validation_points_results.csv")) %>%
   select(-c(X,class, which_raster, geometry)) %>%
   clean_names()
@@ -27,6 +34,17 @@ data_lswe <- read.csv(file.path(data_dir, "LSWE_validation_points_results.csv"))
 # join the two
 data_assessmt_all <- left_join(data_assessmt, data_lswe, by = c("lon", "lat")) %>%
   mutate(class_change_flag = ifelse(lswe_result == map_class, 0, 1))
+
+
+# Read 3070 model output (2023-01-20)
+data_3070 <- read.csv(file.path(data_dir_3070, "ice_veg_validation_pts_model3070.csv")) %>%
+  clean_names() %>%
+  tibble::rowid_to_column("plotid")  # add the plotid
+
+# Read training data for 3070
+training_3070 <- read.csv(file.path(data_dir_3070, "model3070_train_2020.csv")) %>%
+  clean_names() %>%
+  tibble::rowid_to_column("plotid")  # add the plotid
 
 
 # classification categories
@@ -37,8 +55,11 @@ data_assessmt_all <- left_join(data_assessmt, data_lswe, by = c("lon", "lat")) %
 #  3 = water
 
 
+########################################################################
 #### Inspect spectral separability using Jeffries-Matusita distance ####
+########################################################################
 
+### LWSE
 # create data frame of spectral signatures
 spectral_signatures <- data_assessmt_all %>%
   select(r:nir) %>%
@@ -60,9 +81,29 @@ spectral.separability(spectral_signatures, class_vect, jeffries.matusita = TRUE)
 # water                    1.349336 1.409361 1.251939 0.000000
 
 
+### 3070
+# # create data frame of spectral signatures
+# spectral_signatures_3070_spec <- data_3070 %>%
+#   select(starts_with(c("r", "g", "b", "nir"))) %>%
+#   select(-ref_class)
+# 
+# # create the vector with classes (should be the same, but to be safe)
+# class_vect_3070 <- data_3070$ref_class %>% 
+#   factor(., labels=c("other_vegetation", "iceplant",
+#                      "low_ndvi", "water"))
+
+# Sanity check, should be TRUE
+# identical(class_vect, class_vect_3070)
+
+# compute the spectral separability 
+# spectral.separability(spectral_signatures_3070_spec, class_vect_3070, jeffries.matusita = TRUE)
 
 
+
+###############################################################
 #### Add false positive, false negative flag for ice_plant ####
+###############################################################
+
 data_assessmt_flag <- data_assessmt_all %>%
   mutate(category_flag_lidar = case_when(
     ref_class == 1 & map_class == 1 ~ "iceplant_true_pos", # TRUE positive
@@ -98,7 +139,28 @@ data_assessmt_flag <- data_assessmt_flag %>%
   relocate(plotid, .before = everything())
 
 
-#### Quick stats between the two model versions ####
+data_assessmt_flag_3070 <- data_3070 %>%
+  mutate(category_flag_3070 = case_when(
+  ref_class == 1 & mdl3070_class == 1 ~ "iceplant_true_pos", # TRUE positive
+  ref_class == 1 & mdl3070_class == 0 ~ "iceplant_falseneg_other", # FALSE negative others
+  ref_class == 0 & mdl3070_class == 1 ~ "iceplant_falsepos_other", # FALSE positive others
+  ref_class == 1 & mdl3070_class == 2 ~ "iceplant_falseneg_low", # FALSE negative low
+  ref_class == 2 & mdl3070_class == 1 ~ "iceplant_falsepos_low", # FALSE positive low
+  ref_class == 1 & mdl3070_class == 3 ~ "iceplant_falseneg_water", # FALSE negative water
+  ref_class == 3 & mdl3070_class == 1 ~ "iceplant_falsepos_water", # FALSE positive water
+  ref_class == 0 & mdl3070_class == 0 ~ "other_true_pos", # TRUE positive
+  ref_class == 2 & mdl3070_class == 2 ~ "low_true_pos", # TRUE positive
+  ref_class == 3 & mdl3070_class == 3 ~ "water_true_pos", # TRUE positive
+  TRUE ~ "not_flagged")
+  )
+
+
+
+
+
+####################################################
+#### Quick stats between the model versions ####
+####################################################
 
 # Subset the iceplant related spectral signatures using old classification
 iceplant_signatures_lidar <- data_assessmt_flag %>% 
@@ -109,13 +171,6 @@ iceplant_signatures_lidar %>% group_by(category_flag_lidar, .drop = FALSE) %>%
             percent = n()/nrow(iceplant_signatures_lidar) *100) %>%
   st_drop_geometry()
 
-# category_flag_lidar     count percent
-# 1 iceplant_falseneg_low       2    1.92
-# 2 iceplant_falseneg_other     2    1.92
-# 3 iceplant_falsepos_low       9    8.65
-# 4 iceplant_falsepos_other    37   35.6 
-# 5 iceplant_falsepos_water     5    4.81
-# 6 iceplant_true_pos          49   47.1 
 
 # Subset the iceplant related spectral signatures using lwse
 iceplant_signatures_lwse <- data_assessmt_flag %>% 
@@ -127,16 +182,33 @@ iceplant_signatures_lwse %>% group_by(category_flag_lwse, .drop = FALSE) %>%
   st_drop_geometry()
 
 # category_flag_lwse      count percent
-# 1 iceplant_falseneg_low       2    2.74
 # 2 iceplant_falseneg_other     6    8.22
 # 3 iceplant_falsepos_low       5    6.85
 # 4 iceplant_falsepos_other    14   19.2 
-# 5 iceplant_falsepos_water     1    1.37
 # 6 iceplant_true_pos          45   61.6 
 
+# Subset the iceplant related spectral signatures using lwse
+iceplant_signatures_3070 <- data_assessmt_flag_3070 %>% 
+  filter(str_detect(category_flag_3070, "iceplant")) 
+
+# Compute the stats
+iceplant_signatures_3070 %>% 
+  group_by(category_flag_3070, .drop = FALSE) %>%
+  summarize(count = n(),
+            percent = n()/nrow(iceplant_signatures_3070)*100) 
+
+# # A tibble: 6 × 3
+# category_flag_3070      count percent
+# 1 iceplant_falseneg_other    14   23.0 
+# 2 iceplant_falsepos_low       2    3.28
+# 3 iceplant_falsepos_other     6    9.84
+# 4 iceplant_true_pos          39   63.9 
 
 
+
+##############################################
 #### COMPUTE MEAN FOR ICEPLANT SIGNATURES ####
+##############################################
 
 
 # Compute the average "pure" spectral signatures
@@ -148,23 +220,48 @@ iceplant_signatures_mean <- iceplant_signatures_lwse %>%
                    .names = "{.col}"),
             count = n()) %>%  # add the count of the groups
   as.data.frame() %>%
-  select(-geometry)  # remove geometry
+  select(-geometry) %>% # remove geometry
+  select(-plotid) # does not mean anything
 
+iceplant_signatures_mean_3070 <- iceplant_signatures_3070 %>%
+  group_by(category_flag_3070, .drop = FALSE) %>%  # Create groups
+  summarise(across(where(is.numeric),   # compute the mean
+                   list(mean = mean),
+                   na.rm = TRUE,
+                   .names = "{.col}"),
+            count = n()) %>%
+  select(-plotid) # does not mean anything
 
 # make it a long format so ggplot is happy
 iceplant_signatures_mean_long <- iceplant_signatures_mean %>%
-  pivot_longer(cols = -c(category_flag_lwse, count, plotid),
+  select(r, g, b, nir, category_flag_lwse, count) %>% # select the raw channels for now
+  pivot_longer(cols = -c(category_flag_lwse, count),
                names_to = "channel_mean",
                values_to = "mean") %>%
   filter(!str_detect(channel_mean, "lidar")) %>% # Something is funky with the lidar data
   mutate(channel_mean = factor(channel_mean, 
-                                levels = c("b", "g", "r", "nir", 
-                                           "lidar", "min_lidar", "avg_lidar", "max_lidar")))
+                                levels = c("b", "g", "r", "nir")
+                               )
+         )
+
+iceplant_signatures_mean_long_3070 <- iceplant_signatures_mean_3070 %>%
+  select(r, g, b, nir, category_flag_3070, count) %>% # select the raw channels for now
+  pivot_longer(cols = -c(category_flag_3070, count),
+               names_to = "channel_mean",
+               values_to = "mean") %>%
+  mutate(channel_mean = factor(channel_mean, 
+                               levels = c("b", "g", "r", "nir")
+                               )
+         )
 
 
+
+############################################
 #### COMPUTE SD FOR ICEPLANT SIGNATURES ####
+############################################
 
-# Compute the average "pure" spectral signatures
+
+# Compute the sd "pure" spectral signatures
 iceplant_signatures_sd <- iceplant_signatures_lwse %>%
   group_by(category_flag_lwse, .drop = FALSE) %>%  # Create groups
   summarise(across(where(is.numeric),   # compute the mean
@@ -173,74 +270,146 @@ iceplant_signatures_sd <- iceplant_signatures_lwse %>%
                    .names = "{.col}"),
             count = n()) %>%  # add the count of the groups
   as.data.frame() %>%
-  select(-geometry)  # remove geometry
+  select(-geometry) %>%  # remove geometry
+  select(-plotid)
+  
+# Compute the sd "pure" spectral signatures for 3070
+iceplant_signatures_sd_3070 <- iceplant_signatures_3070 %>%
+  group_by(category_flag_3070, .drop = FALSE) %>%  # Create groups
+  summarise(across(where(is.numeric),   # compute the mean
+                   list(sd = sd),
+                   na.rm = TRUE,
+                   .names = "{.col}"),
+            count = n()) %>%  # add the count of the groups
+  select(-plotid) # does not mean anything 
 
 
 # make it a long format so ggplot is happy
 iceplant_signatures_sd_long <- iceplant_signatures_sd %>%
-  pivot_longer(cols = -c(category_flag_lwse, count, plotid),
+  select(r, g, b, nir, category_flag_lwse, count) %>% # select the raw channels for now
+  pivot_longer(cols = -c(category_flag_lwse, count),
                names_to = "channel_sd",
                values_to = "sd") %>%
   filter(!str_detect(channel_sd, "lidar")) %>%
   mutate(channel_sd = factor(channel_sd, 
-                          levels = c("b", "g", "r", "nir", 
-                                     "lidar", "min_lidar", "avg_lidar", "max_lidar")))
+                          levels = c("b", "g", "r", "nir")
+                          )
+         )
+
+# make it a long format so ggplot is happy for 3070
+iceplant_signatures_sd_long_3070 <- iceplant_signatures_sd_3070 %>%
+  select(r, g, b, nir, category_flag_3070, count) %>% # select the raw channels for now
+  pivot_longer(cols = -c(category_flag_3070, count),
+               names_to = "channel_sd",
+               values_to = "sd") %>%
+  filter(!str_detect(channel_sd, "lidar")) %>%
+  mutate(channel_sd = factor(channel_sd, 
+                             levels = c("b", "g", "r", "nir")
+                             )
+         )
+
 
 
 #### Join mean and sd ####
 iceplant_signatures_long <- iceplant_signatures_mean_long %>%
-  left_join( iceplant_signatures_sd_long, by=c("category_flag_lwse", "channel_mean" = "channel_sd")) %>%
+  left_join(iceplant_signatures_sd_long, by=c("category_flag_lwse", "channel_mean" = "channel_sd")) %>%
   select(-count.y) %>%
   rename(count = count.x,
          channel = channel_mean)
 
+iceplant_signatures_long_3070 <- iceplant_signatures_mean_long_3070 %>%
+  left_join(iceplant_signatures_sd_long_3070, by=c("category_flag_3070", "channel_mean" = "channel_sd")) %>%
+  select(-count.y) %>%
+  rename(count = count.x,
+         channel = channel_mean)
+
+
+
+
+##############
+#### PLOT ####
+##############
+
+
 # plot the spectral signatures
-ggplot(iceplant_signatures_long) + 
+g_mean <- ggplot(iceplant_signatures_long) + 
   geom_line(aes(x = channel, y = mean, color = category_flag_lwse, group = category_flag_lwse)) + 
   geom_point(aes(x = channel, y = mean, color = category_flag_lwse, group = category_flag_lwse)) +
+  ylim(70, 170) +
   labs(color = "Category") +
-  ggtitle("Iceplant spectral signatures") +
+  ggtitle("Iceplant spectral mean signatures") +
+  theme_bw() + theme(legend.position="none")
+
+# plot the spectral signatures
+g_mean_3070 <- ggplot(iceplant_signatures_long_3070) + 
+  geom_line(aes(x = channel, y = mean, color = category_flag_3070, group = category_flag_3070)) + 
+  geom_point(aes(x = channel, y = mean, color = category_flag_3070, group = category_flag_3070)) +
+  ylim(70, 170) +
+  labs(color = "Category") +
+  ggtitle("Iceplant spectral mean signatures 3070") +
   theme_bw()
+
+g_mean + g_mean_3070 
 
 
 # plot the spectral signatures
-ggplot(iceplant_signatures_long) + 
+g_all <- ggplot(iceplant_signatures_long) + 
   geom_ribbon(aes(x = channel, ymin = mean - 1.96 * sd / sqrt(count), ymax = mean + 1.96 * sd / sqrt(count), group = category_flag_lwse, fill = category_flag_lwse, alpha=0.1)) +  # confidence interval
   geom_line(aes(x = channel, y = mean, color = category_flag_lwse, group = category_flag_lwse)) + 
   geom_point(aes(x = channel, y = mean, color = category_flag_lwse, group = category_flag_lwse)) +
+  ylim(70, 170) +
   labs(color = "Category") +
-  ggtitle("Iceplant spectral signatures") +
-  theme_bw()
+  ggtitle("Iceplant Mean spectral signatures") +
+  theme_bw() + theme(legend.position="none")
+
+g_all_3070 <-ggplot(iceplant_signatures_long_3070) + 
+  geom_ribbon(aes(x = channel, ymin = mean - 1.96 * sd / sqrt(count), ymax = mean + 1.96 * sd / sqrt(count), group = category_flag_3070, fill = category_flag_3070, alpha=0.1)) +  # confidence interval
+  geom_line(aes(x = channel, y = mean, color = category_flag_3070, group = category_flag_3070)) + 
+  geom_point(aes(x = channel, y = mean, color = category_flag_3070, group = category_flag_3070)) +
+  ylim(70, 170) +
+  labs(color = "Category") +
+  ggtitle("Iceplant Mean spectral signatures") +
+  theme_bw() 
+
+g_all + g_all_3070
 
 iceplant_signatures_true <- 
-  iceplant_signatures_long %>% filter(category_flag_lwse == "iceplant_true_pos")
+  iceplant_signatures_long %>% 
+  filter(category_flag_lwse == "iceplant_true_pos")
+
+iceplant_signatures_true_3070 <- 
+  iceplant_signatures_long_3070 %>% 
+  filter(category_flag_3070 == "iceplant_true_pos")
 
 
 # other vegetation false positive #
 iceplant_false_otherveg_long <- data_assessmt_flag %>% 
+  select(plotid, r, g, b, nir, category_flag_lwse) %>%
   filter(category_flag_lwse == "iceplant_falsepos_other") %>%
-  pivot_longer(cols = -c(plotid, naip_id, email, category_flag_lwse ,geometry),
+  pivot_longer(cols = -c(plotid, category_flag_lwse ,geometry),
                names_to = "channel",
                values_to = "dn") %>%
-  filter(!str_detect(channel, "lidar")) %>%
   mutate(channel = factor(channel, 
-                             levels = c("b", "g", "r", "nir", 
-                                        "lidar", "min_lidar", "avg_lidar", "max_lidar")),
+                             levels = c("b", "g", "r", "nir")),
          dn = ifelse(dn < 0, 0, dn)
-         )
+         ) %>%
+  st_drop_geometry()
+  
 
 
 # plot the spectral signatures
 ggplot(iceplant_false_otherveg_long) + 
   geom_line(aes(x = channel, y = dn, group = plotid, color = plotid)) +
   # geom_point(aes(x = channel, y = dn, group = id, color = id)) +
-  geom_line(data = iceplant_signatures_true, aes(x = channel, y = mean, group = plotid.x, color = "red", linewidth = 1.5)) +
+  geom_line(data = iceplant_signatures_true, aes(x = channel, y = mean, color = "red", linewidth = 1.5)) +
   ggtitle("Iceplant spectral signatures") +
   theme_bw()
 
 
 
+########################################################################################################
 #### Compute the euclidean distance between iceplant mean and false positive other veg and low NDVI ####
+########################################################################################################
 
 # Get the mean in another df
 iceplant_signatures_mean_true <- iceplant_signatures_mean %>% 
