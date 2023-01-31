@@ -449,10 +449,10 @@ iceplant_dist_3070 <- iceplant_signatures_3070 %>%
                                    (g_entr-iceplant_signatures_mean_true_3070$g_entr)^2 + 
                                    (b_entr-iceplant_signatures_mean_true_3070$b_entr)^2 + 
                                    (nir_entr-iceplant_signatures_mean_true_3070$nir_entr)^2),
-         r_diff = r-iceplant_signatures_mean_true_3070$r,
-         g_diff = g-iceplant_signatures_mean_true_3070$g,
-         b_diff = b-iceplant_signatures_mean_true_3070$b,
-         nir_diff = nir-iceplant_signatures_mean_true_3070$nir_entr,
+         r_diff_spect = r-iceplant_signatures_mean_true_3070$r,
+         g_diff_spect = g-iceplant_signatures_mean_true_3070$g,
+         b_diff_spect = b-iceplant_signatures_mean_true_3070$b,
+         nir_diff_spect = nir-iceplant_signatures_mean_true_3070$nir_entr,
          r_diff_entr = r_entr-iceplant_signatures_mean_true_3070$r_entr,
          g_diff_entr = g_entr-iceplant_signatures_mean_true_3070$g_entr,
          b_diff_entr = b_entr-iceplant_signatures_mean_true_3070$b_entr,
@@ -475,7 +475,12 @@ iceplant_falseneg_otherveg_dist_3070 <- iceplant_dist_3070 %>%
   rename(x= x_2) %>%
   arrange((eu_dist_spectral)) # closest is the best
 
+# write file
+write_csv(iceplant_falsepos_otherveg_dist_3070, 
+         file.path(data_dir_3070,"iceplant_falsepos_otherveg_dist_3070.csv"))
 
+write_csv(iceplant_falseneg_otherveg_dist_3070, 
+          file.path(data_dir_3070,"iceplant_falseneg_otherveg_dist_3070.csv"))
 
 # write file
 st_write(iceplant_false_otherveg_dist, 
