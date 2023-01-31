@@ -230,7 +230,7 @@ iceplant_signatures_mean_3070 <- iceplant_signatures_3070 %>%
                    na.rm = TRUE,
                    .names = "{.col}"),
             count = n()) %>%
-  select(-plotid) # does not mean anything
+  select(-c(plotid, x, x_2, y, year, month, day_in_year, lswe_class, ref_class, mdl3070_class)) # does not mean anything
 
 # make it a long format so ggplot is happy
 iceplant_signatures_mean_long <- iceplant_signatures_mean %>%
@@ -401,7 +401,7 @@ iceplant_false_otherveg_long <- data_assessmt_flag %>%
 ggplot(iceplant_false_otherveg_long) + 
   geom_line(aes(x = channel, y = dn, group = plotid, color = plotid)) +
   # geom_point(aes(x = channel, y = dn, group = id, color = id)) +
-  geom_line(data = iceplant_signatures_true, aes(x = channel, y = mean, color = "red", linewidth = 1.5)) +
+  # geom_line(data = iceplant_signatures_true, aes(x = channel, y = mean, color = "red", linewidth = 1.5)) +
   ggtitle("Iceplant spectral signatures") +
   theme_bw()
 
@@ -416,6 +416,12 @@ iceplant_signatures_mean_true <- iceplant_signatures_mean %>%
   filter(category_flag_lwse == "iceplant_true_pos") %>%
   select(r:nir)
 
+
+iceplant_signatures_mean_true_3070 <- iceplant_signatures_mean_3070 %>%
+  filter(category_flag_3070 == "iceplant_true_pos")
+
+
+
 # focus on the false positive other vegetation
 iceplant_false_otherveg_dist <- iceplant_signatures_lwse %>%
   filter(category_flag_lwse == "iceplant_falsepos_other") %>% 
@@ -429,6 +435,47 @@ iceplant_false_otherveg_dist <- iceplant_signatures_lwse %>%
          nir_diff = nir-iceplant_signatures_mean_true$nir
          ) %>%
   arrange(desc(eu_dist))
+
+
+# focus on the false positive other vegetation
+iceplant_dist_3070 <- iceplant_signatures_3070 %>%
+  # select(-c(plotid, x, x_2, y, year, month, day_in_year, lswe_class, ref_class, mdl3070_class, pts_crs)) %>%
+  # filter(category_flag_3070 == "iceplant_falsepos_other") %>% 
+  mutate(eu_dist_spectral = sqrt((r-iceplant_signatures_mean_true_3070$r)^2 + 
+                          (g-iceplant_signatures_mean_true_3070$g)^2 + 
+                          (b-iceplant_signatures_mean_true_3070$b)^2 + 
+                          (nir-iceplant_signatures_mean_true_3070$nir)^2),
+         eu_dist_entr = sqrt((r_entr-iceplant_signatures_mean_true_3070$r_entr)^2 + 
+                                   (g_entr-iceplant_signatures_mean_true_3070$g_entr)^2 + 
+                                   (b_entr-iceplant_signatures_mean_true_3070$b_entr)^2 + 
+                                   (nir_entr-iceplant_signatures_mean_true_3070$nir_entr)^2),
+         r_diff = r-iceplant_signatures_mean_true_3070$r,
+         g_diff = g-iceplant_signatures_mean_true_3070$g,
+         b_diff = b-iceplant_signatures_mean_true_3070$b,
+         nir_diff = nir-iceplant_signatures_mean_true_3070$nir_entr,
+         r_diff_entr = r_entr-iceplant_signatures_mean_true_3070$r_entr,
+         g_diff_entr = g_entr-iceplant_signatures_mean_true_3070$g_entr,
+         b_diff_entr = b_entr-iceplant_signatures_mean_true_3070$b_entr,
+         nir_diff_entr = nir_entr-iceplant_signatures_mean_true_3070$nir_entr
+  ) 
+
+
+
+# Compute stat for the false positive other vegetation
+iceplant_falsepos_otherveg_dist_3070 <- iceplant_dist_3070 %>%
+  filter(category_flag_3070 == "iceplant_falsepos_other") %>%
+  select(-x) %>%
+  rename(x= x_2) %>%
+  arrange(desc(eu_dist_spectral)) #farthest is the best
+
+# Compute stat for the false negative other vegetation
+iceplant_falseneg_otherveg_dist_3070 <- iceplant_dist_3070 %>%
+  filter(category_flag_3070 == "iceplant_falseneg_other") %>%
+  select(-x) %>%
+  rename(x= x_2) %>%
+  arrange((eu_dist_spectral)) # closest is the best
+
+
 
 # write file
 st_write(iceplant_false_otherveg_dist, 
