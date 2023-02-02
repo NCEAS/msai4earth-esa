@@ -544,8 +544,10 @@ def save_raster_checkpoints(rast, crs, transf, rast_name=None, suffix= None, fol
 
     if suffix is None:
         suffix = ''
+    else:
+        suffix = '_'+suffix
         
-    fp = os.path.join(folder_path, rast_name + '_' + suffix + '.tif')      
+    fp = os.path.join(folder_path, rast_name + suffix + '.tif')      
 
     dtype = rasterio.dtypes.get_minimum_dtype(rast)      
 
@@ -655,7 +657,7 @@ def entropy_raster(rast_reader=None, raster=None, rast_data=None, crs=None, tran
                         rast_name (str):
                             name of raster. The resulting raster will be saved as rast_name_avgs.tif.
                         n (int):
-                            Side length (in pixels) of the square window over which to compute average values for each pixel.
+                            radius of disk over which to calculate entropy.
                         folder_path (str):
                             directory where to save raster. If none is given, then it saves the raster in a temp folder in the cwd.
             Return: None    
