@@ -1,0 +1,72 @@
+THIS IS A DESCRIPTION OF THE RESULTS OBTAINED WITH AND TRAINING OF glcm_model_2020
+
+These results were generated using glcm_model3070_test_2020.csv and glcm_model3070_train_2020.csv produced on January 25, 2023.
+These datasets were created by aggregating GLCM features to the training and test sets of model3070.
+The added features include:
+    - entr5 for each spectral band: calculated entropy in a window with radius 5 (instad of 3)
+    - correlation distance 1, angles 0 and pi/2 for each spectral band
+    - contrast distance 1, angles 0 and pi/2 for each spectral band
+Not all features were used in the training of the model (after experimentation with different feature combinations. most features for the green band only added noise)
+All points in the dataset are collected from the 2020 NAIP scenes.
+This dataset was assembled as follows:
+    vegetation: 238 (from polys) + 390 (old randomly sampled) + 847 (new random sample)  = 1475
+    iceplant: 288 (from polys) + 162 (new randomly sampled) = 450
+
+The new randomly sampled vegetation pts classified on CEO were added to the training set of ptpoly2_model_2020
+
+Then 70% of iceplant points and 70% of other vegetation were sampled for training set, stratifying by aoi.
+
+Aois: conception, gaviota, capitan, campus, carpinteria
+
+-------------------------------------------------------------
+TRAIN SET COUNTS:
+no-iceplant:iceplant ratio     2.0 :1
+          counts  percentage
+iceplant                    
+0.0         1077       66.85
+1.0          534       33.15
+
+TEST SET COUNTS:
+no-iceplant:iceplant ratio     2.0 :1
+          counts  percentage
+iceplant                    
+0.0          463       66.81
+1.0          230       33.19
+
+WHOLE DATASET:
+iceplant %     :  33.3%  (1540)
+non-iceplant % :  66.7%  (764)
+
+-------------------------------------------------------------
+The random forest model was fitted with 100 estimators and random seed 42.
+
+-------------------------------------------------------------
+Predicting features - IN THIS ORDER:
+
+    'r', 'r_avg', 'r_entr5', 'r_contN', 'r_corrN', 
+    'g', 'g_avg', 'g_entr5',
+    'b', 'b_avg', 'b_entr5', 'b_contN', 'b_corrN', 
+    'nir', 'nir_avg', 'nir_entr5', 'nir_contN', 'nir_corrN', 
+    'month', 'day_in_year'
+
+-------------------------------------------------------------
+true negatives: 439     false positives: 24
+false negatives: 36     true positives: 194
+
+sensitivity (TP/P): 84.35 %
+specificity (TN/N): 94.82 %
+G-mean:  0.89
+
+precision (TP/(TP+FP)): 88.99 %
+
+MCC:  0.8028019392815868
+
+F1-measure:  0.86607
+F0.5-measure (min false positives):  0.88022
+F2-measure (min false negatives)  :  0.85237
+
+accuracy: 91.34 %
+
+-------------------------------------------------------------
+NOTES after examining results on NAIP ois:
+ 

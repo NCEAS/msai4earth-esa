@@ -1,0 +1,60 @@
+THIS IS A DESCRIPTION OF THE RESULTS OBTAINED WITH modelAE_FP_2020
+
+These results were generated using modelAE_FP_2020_test.csv and model2k_train_2020.csv produced on January 30. 
+These only have points collected from 2020 NAIP scenes covering the aois.
+This dataset was assembled as follows:
+    intital dataset is the train/test set for modelAE5_2020,
+    to this I added 70% of the points collected as false positives from model2k stratified by aoi
+    the false positives are in the file false_positives_glcm.csv or false_positives_AE5.csv
+
+Total points:
+    vegetation: 238 (from polys) + 390 (old randomly sampled) + 847 (new random sample)  = 1475
+    iceplant: 288 (from polys) + 162 (new randomly sampled) = 450
+
+Then 70% of iceplant points and 70% of other vegetation were sampled for training set, stratifying by aoi.
+
+Aois: conception, gaviota, capitan, campus, carpinteria
+
+-------------------------------------------------------------
+NOTES after examining results on NAIP ois:
+ 
+
+-------------------------------------------------------------
+
+         ice      |  non-ice  | total
+train |   534     |    1307   |  1841 
+test  |   230     |     558   |   788
+total |   764     |    1865   |  2629
+
+iceplant %     :  29%
+non-iceplant % :  71%
+
+no-iceplant:iceplant ratio     2.4 :1
+
+-------------------------------------------------------------
+The random forest model was fitted with 100 estimators and random seed 42.
+
+-------------------------------------------------------------
+Predicting features:['r', 'r_avg5', 'r_entr5', 
+'g', 'g_avg5', 'g_entr5', 
+'b', 'b_avg5', 'b_entr5',
+ 'nir', 'nir_avg5', 'nir_entr5',
+'month', 'day_in_year']
+
+-------------------------------------------------------------
+true negatives: 539     false positives: 19
+false negatives: 78     true positives: 152
+
+sensitivity (TP/P): 66.09 %
+specificity (TN/N): 96.59 %
+G-mean:  0.8
+
+precision (TP/(TP+FP)): 88.89 %
+
+MCC:  0.6913258558196261
+
+F1-measure:  0.7581
+F0.5-measure (min false positives):  0.83151
+F2-measure (min false negatives)  :  0.69661
+
+accuracy: 87.69 %
