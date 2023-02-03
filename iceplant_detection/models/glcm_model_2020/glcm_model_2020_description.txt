@@ -1,4 +1,4 @@
-THIS IS A DESCRIPTION OF THE RESULTS OBTAINED WITH AND TRAINING OF glcm_model_2020
+THIS IS A DESCRIPTION OF THE glcm_model_2020, ITS TRAINING, AND THE RESULTS OBTAINED WITH IT
 
 These results were generated using glcm_model3070_test_2020.csv and glcm_model3070_train_2020.csv produced on January 25, 2023.
 These datasets were created by aggregating GLCM features to the training and test sets of model3070.
@@ -68,5 +68,5 @@ F2-measure (min false negatives)  :  0.85237
 accuracy: 91.34 %
 
 -------------------------------------------------------------
-NOTES after examining results on NAIP ois:
+NOTES after examining results on NAIP aois:
  
