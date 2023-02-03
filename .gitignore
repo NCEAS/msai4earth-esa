@@ -136,16 +136,20 @@ ecosystem_change_detection/top_layer/aridity_layer/arid_rasters/*
 ecosystem_change_detection/top_layer/climate_layer/clim_rasters/*
 ecosystem_change_detection/top_layer/outlining_regions/*
 ecosystem_change_detection/top_layer/layers_polygons/*
-iceplant_detection/training_set/aux_data/*
+
+shapefiles_n_rasters/jldp_boundary/*
+
 examples/naip_example/data/*
 examples/naip_example/requirements.txt
 
 iceplant_detection/data_sampling_workflow/temp/*
-/iceplant_detection/data_sampling_workflow/SantaBarbaraCounty_lidar/*
 iceplant_detection/data_sampling_workflow/SantaBarbaraCounty_CanopyHeight/*
 
+iceplant_detection/aois_information/aoi_vegetation_rasters/*
 iceplant_detection/temp/*
-
+iceplant_detection/training_set/aux_data/*
 iceplant_detection/*.joblib # ignore models
 
-shapefiles_n_rasters/jldp_boundary/*
+iceplant_detection/models/*/*.joblib
+iceplant_detection/models/*/*.tif
+iceplant_detection/models/*/*/*.tif
