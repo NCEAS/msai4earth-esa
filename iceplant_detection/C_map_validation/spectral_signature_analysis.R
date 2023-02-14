@@ -10,41 +10,50 @@ librarian::shelf(tidyverse, janitor, naniar, sf, spatialEco, patchwork)
 
 # file path
 data_dir <- "~/Data/msai4earth/naip_iceplant_2020/validation_results_spectral_2020"
-data_dir_3070 <- file.path(data_dir, "model_3070")
+# data_dir_3070 <- file.path(data_dir, "model_3070")
+data_dir_ae5fp <- file.path(data_dir, "modelAE5_FP")
+filename_validation <- "ceo-AE5FP_2020_model_map_validation-sample-data-2023-02-09.csv" 
 
 # import the data
 
-# Previous data with visual check of classes
-data_assessmt <- st_read(file.path(data_dir, "validation_results_spectral_2020.shp")) %>%
-  replace_with_na_if(.predicate = is.numeric,
-                     condition = ~.x == -9999)
+# # Previous data with visual check of classes
+# data_assessmt <- st_read(file.path(data_dir, "validation_results_spectral_2020.shp")) %>%
+#   replace_with_na_if(.predicate = is.numeric,
+#                      condition = ~.x == -9999)
 
-# Extract the coordinates explicitly
-data_assessmt_coord <- st_coordinates(data_assessmt) %>% 
-  as_tibble() %>% 
-  setNames(c("lon","lat"))
+# # Extract the coordinates explicitly
+# data_assessmt_coord <- st_coordinates(data_assessmt) %>% 
+#   as_tibble() %>% 
+#   setNames(c("lon","lat"))
 
-data_assessmt <- cbind(data_assessmt, data_assessmt_coord)
+# data_assessmt <- cbind(data_assessmt, data_assessmt_coord)
 
 # Read LSWE model output 
-data_lswe <- read.csv(file.path(data_dir, "LSWE_validation_points_results.csv")) %>%
-  select(-c(X,class, which_raster, geometry)) %>%
-  clean_names()
+# data_lswe <- read.csv(file.path(data_dir, "LSWE_validation_points_results.csv")) %>%
+#   select(-c(X,class, which_raster, geometry)) %>%
+#   clean_names()
 
 # join the two
-data_assessmt_all <- left_join(data_assessmt, data_lswe, by = c("lon", "lat")) %>%
-  mutate(class_change_flag = ifelse(lswe_result == map_class, 0, 1))
+# data_assessmt_all <- left_join(data_assessmt, data_lswe, by = c("lon", "lat")) %>%
+#   mutate(class_change_flag = ifelse(lswe_result == map_class, 0, 1))
 
 
 # Read 3070 model output (2023-01-20)
-data_3070 <- read.csv(file.path(data_dir_3070, "ice_veg_validation_pts_model3070.csv")) %>%
-  clean_names() %>%
-  tibble::rowid_to_column("plotid")  # add the plotid
+# data_3070 <- read.csv(file.path(data_dir_3070, "ice_veg_validation_pts_model3070.csv")) %>%
+#   clean_names() %>%
+#   tibble::rowid_to_column("plotid")  # add the plotid
 
 # Read training data for 3070
-training_3070 <- read.csv(file.path(data_dir_3070, "model3070_train_2020.csv")) %>%
-  clean_names() %>%
-  tibble::rowid_to_column("plotid")  # add the plotid
+# training_3070 <- read.csv(file.path(data_dir_3070, "model3070_train_2020.csv")) %>%
+#   clean_names() %>%
+#   tibble::rowid_to_column("plotid")  # add the plotid
+
+
+# Read AE5_FP model output (2023-01-31)
+data_ae5fp <- read.csv(file.path(data_dir_ae5fp, filename_validation)) %>%
+  clean_names() 
+
+
 
 
 # classification categories
