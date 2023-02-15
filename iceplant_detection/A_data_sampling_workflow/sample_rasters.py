@@ -151,7 +151,7 @@ def path_to_spectral_pts(aoi, year):
 # ----------------------------------
 def path_to_aoi_itemids_csv():
 
-    return '/home/jovyan/msai4earth-esa/iceplant_detection/areas_of_interest/aoi_naip_itemids.csv'
+    return '/home/jovyan/msai4earth-esa/iceplant_detection/info_about_aois/aoi_naip_itemids.csv'
 
 
 # *********************************************************************
@@ -649,8 +649,8 @@ def avg_raster(rast_reader=None, raster=None, rast_data=None, crs=None, transf=N
 
 def entropy_raster(rast_reader=None, raster=None, rast_data=None, crs=None, transf=None, band=1, rast_name=None, n=2, folder_path=None): 
     """
-        Creates a new raster by replacing each pixel p in given raster R by the avg value in a nxn window centered at p.
-        The raster with averege values is saved in a temp folder in the current working directory if no folder_path is given.
+        Creates a new raster by replacing each pixel p in given raster R by the entropy value in a disk of radius n centered at p.
+        The raster with entropies values is saved in a temp folder in the current working directory if no folder_path is given.
             Parameters: 
                         rast_reader (rasterio.io.DatasetReader):
                             reader to the raster from which to compute the average values in a window
