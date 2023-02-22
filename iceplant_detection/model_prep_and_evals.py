@@ -109,24 +109,24 @@ def print_accuracy_info(y_true,y_pred):
     sens =  confmtx[1,1]/counts[1]
     spec =  confmtx[0,0]/counts[0]
     print('sensitivity (TP/P):', np.round(sens*100,2), '%')  
-    print('specificity (TN/N):', np.round(spec*100,2), '%')      
     prec = confmtx[1,1]/(confmtx[1,1]+confmtx[0,1])
-    print('precision P (TP/(TP+FP)):', np.round(prec*100,2),'%' )
+    print('precision P (TP/(TP+FP)):', np.round(prec*100,2),'%' )    
+    print('specificity (TN/N):', np.round(spec*100,2), '%')      
     prec = confmtx[0,0]/(confmtx[0,0]+confmtx[1,0])
     print('precision N (TN/(TN+FN)):', np.round(prec*100,2),'%' )
     print()    
     print('accuracy:', np.round( (confmtx[1,1] + confmtx[0,0])/y_true.shape[0]*100,2),'%') # (TP + TN)/(P + N)
     
-    print()
-    print('G-mean: ', round(np.sqrt(sens*spec),2))
-    print()
+#     print()
+#     print('G-mean: ', round(np.sqrt(sens*spec),2))
+#     print()
 
-    print('MCC: ', matthews_corrcoef(y_true,y_pred))
-    print()
+#     print('MCC: ', matthews_corrcoef(y_true,y_pred))
+#     print()
     
-    print('F1-measure: ',  round(fbeta_score(y_true, y_pred, beta=1.0),5))
-    print('F0.5-measure (min false positives): ',  round(fbeta_score(y_true, y_pred, beta=0.5),5))
-    print('F2-measure (min false negatives)  : ',  round(fbeta_score(y_true, y_pred, beta=2.0),5))
+#     print('F1-measure: ',  round(fbeta_score(y_true, y_pred, beta=1.0),5))
+#     print('F0.5-measure (min false positives): ',  round(fbeta_score(y_true, y_pred, beta=0.5),5))
+#     print('F2-measure (min false negatives)  : ',  round(fbeta_score(y_true, y_pred, beta=2.0),5))
     print()
         
     return

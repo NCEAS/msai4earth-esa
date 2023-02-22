@@ -11,7 +11,7 @@ from shapely.geometry import shape
 from shapely.geometry import Point
 
 import random
-random.seed(10)
+#random.seed(10)
 
 import warnings
 
@@ -185,7 +185,7 @@ def count_pixels_in_polygons(polys, rast_reader):
 
 # *********************************************************************
 
-def sample_size_in_polygons(n_pixels, param, sample_fraction=0, max_sample=0, const_sample=0):
+def sample_size_in_polygons(n_pixels, param, sample_fraction=0, max_sample=0, const_sample=0, total_pts = 0):
     """
         Calculates the number of points to sample from each polygon in a list 
         according to the number of pixels covered by a polygon (given) and 
@@ -193,6 +193,7 @@ def sample_size_in_polygons(n_pixels, param, sample_fraction=0, max_sample=0, co
             - 'fraction': constant fraction of the number of pixels in each polygon
             - 'sliding': constant fraction of the number of pixels in each polygon, up to a maximum number
             - 'constant': constant number of points in each polygon
+            - 'proportional': distribute total_pts proportionally across polygons according to polygon area
             
             Parameters:
                        n_pixels (numpy.ndarray):
@@ -210,7 +211,7 @@ def sample_size_in_polygons(n_pixels, param, sample_fraction=0, max_sample=0, co
                     n_pts (numpy.ndarray): 
                         array with number of pts to sample from each polygon
     """
-    if param not in ['fraction', 'sliding', 'constant']:
+    if param not in ['fraction', 'sliding', 'constant', 'proportional']:
         print('not valid parameter: param must be `fraction`, `sliding` or `constant`')
         return 
     # TO DO: add warning for other parameters
@@ -225,6 +226,11 @@ def sample_size_in_polygons(n_pixels, param, sample_fraction=0, max_sample=0, co
     elif param == 'constant':
         # TO DO: add warning not to sample more points than possible
         n_pts = np.full(n_pixels.shape[0], const_sample)
+
+    elif param == 'proportional':
+        total_pixels = np.sum(n_pixels)
+        #n_pts = [ total_pts * x/total_pixels for x in n_pixels]
+        n_pts = n_pixels / total_pixels * total_pts
     
     n_pts = n_pts.astype('int')
     return n_pts
@@ -314,7 +320,7 @@ def sample_raster_from_poly(N, poly, poly_id, class_name, poly_class, rast_reade
     return sample
 
 # *********************************************************************
-def sample_naip_from_polys(polys, class_name, itemid, param, sample_fraction=0, max_sample=0, const_sample=0):
+def sample_naip_from_polys(polys, class_name, itemid, param, sample_fraction=0, max_sample=0, const_sample=0, total_pts=0):
     """
         Creates a dataframe of given NAIP scene's bands values at points sampled randomly from polygons in given list.
         Resulting dataframe includes metadata about the sampled polygons and NAIP raster.
@@ -350,7 +356,7 @@ def sample_naip_from_polys(polys, class_name, itemid, param, sample_fraction=0, 
     polys_match = polys.to_crs(rast_reader.crs)
     
     n_pixels = count_pixels_in_polygons(polys_match, rast_reader)
-    n_pts = sample_size_in_polygons(n_pixels, param, sample_fraction, max_sample, const_sample)
+    n_pts = sample_size_in_polygons(n_pixels, param, sample_fraction, max_sample, const_sample, total_pts)
     
     samples = []
     for i in range(polys.shape[0]):
@@ -379,7 +385,7 @@ def sample_naip_from_polys(polys, class_name, itemid, param, sample_fraction=0, 
 # *********************************************************************
 
 
-def sample_naip_from_polys_no_warnings(polys, class_name, itemid, param, sample_fraction=0, max_sample=0, const_sample=0):
+def sample_naip_from_polys_no_warnings(polys, class_name, itemid, param, sample_fraction=0, max_sample=0, const_sample=0, total_pts=0):
     """
        Runs sample_naip_from_polys function catching the following warning:
                    /srv/conda/envs/notebook/lib/python3.8/site-packages/pandas/core/dtypes/cast.py:122: ShapelyDeprecationWarning: 
@@ -392,7 +398,7 @@ def sample_naip_from_polys_no_warnings(polys, class_name, itemid, param, sample_
     """
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        df = sample_naip_from_polys(polys, class_name, itemid, param, sample_fraction, max_sample, const_sample)
+        df = sample_naip_from_polys(polys, class_name, itemid, param, sample_fraction, max_sample, const_sample, total_pts)
     return df
 
 
