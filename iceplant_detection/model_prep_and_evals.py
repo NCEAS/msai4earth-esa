@@ -91,6 +91,40 @@ def test_train_proportions(train_labels, test_labels):
 # **********************************************************************************************************
 # **********************************************************************************************************
 
+def accuracy_info_df(y_true, y_pred):
+    N = y_true.shape[0]
+    unique, counts = np.unique(y_true,return_counts=True)    
+    
+    confmtx = confusion_matrix(y_true, y_pred)
+    TN = confmtx[0,0]
+    FP = confmtx[0,1]
+    FN = confmtx[1,0]
+    TP = confmtx[1,1]
+
+    # sensitivity : TP/P
+    sens =  np.round( confmtx[1,1] / counts[1] * 100, 2) 
+
+    # specificity : TN/N
+    spec =  np.round( confmtx[0,0] / counts[0] * 100, 2) 
+
+    # precision P : TP/(TP+FP)
+    prec_P = np.round( confmtx[1,1] / (confmtx[1,1]+confmtx[0,1]) * 100, 2) 
+    
+    # precision N : TN/(TN+FN)
+    prec_N = np.round( confmtx[0,0] / (confmtx[0,0]+confmtx[1,0]) * 100, 2)
+    
+    # overal accuracy: (TP + TN)/(P + N)
+    acc = np.round( (confmtx[1,1] + confmtx[0,0])/y_true.shape[0]*100,2) 
+    
+    D = {'TN':TN, 'TP':TP, 'FN':FN, 'FP':FP, 
+         'acc':acc, 
+         'sens':sens, 'prec_P':prec_P,
+         'spec':spec, 'prec_N':prec_N}
+    df = pd.DataFrame([D])
+    return df
+
+# ---------------------------------
+
 # https://stackoverflow.com/questions/61466961/what-do-the-normalize-parameters-mean-in-sklearns-confusion-matrix
 # *** change to y_true / y_pred
 
