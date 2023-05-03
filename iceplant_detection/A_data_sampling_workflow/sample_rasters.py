@@ -172,7 +172,7 @@ def sample_size_in_polygons(n_pixels, param, sample_fraction=0, max_sample=0, co
             - 'fraction': constant fraction of the number of pixels in each polygon
             - 'sliding': constant fraction of the number of pixels in each polygon, up to a maximum number
             - 'constant': constant number of points in each polygon
-            - 'proportional': distribute total_pts proportionally across polygons according to polygon area
+            - 'staggered': distribute total_pts proportionally across polygons according to polygon area
             
             Parameters:
                        n_pixels (numpy.ndarray):
@@ -206,10 +206,6 @@ def sample_size_in_polygons(n_pixels, param, sample_fraction=0, max_sample=0, co
         # TO DO: add warning not to sample more points than possible
         n_pts = np.full(n_pixels.shape[0], const_sample)
 
-    elif param == 'proportional':
-        total_pixels = np.sum(n_pixels)
-        #n_pts = [ total_pts * x/total_pixels for x in n_pixels]
-        n_pts = n_pixels / total_pixels * total_pts
     elif 'staggered':
         X = staggered_n_samples(len(n_pixels), total_pts)
         X.sort()
