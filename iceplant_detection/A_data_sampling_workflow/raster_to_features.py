@@ -10,7 +10,7 @@ import geopandas as gpd
 
 import planetary_computer as pc
 
-import A_data_sampling_workflow.sample_rasters as sr
+import sample_rasters as sr
 
 
 # **********************************************************************************************************
