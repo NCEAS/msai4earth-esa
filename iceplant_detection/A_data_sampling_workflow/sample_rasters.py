@@ -97,62 +97,6 @@ def day_in_year(day,month,year):
         n = n+1
     return n
 
-# *********************************************************************
-# *********************************************************************
-# TO DO: maybe all these path_to functions should be in a different .py
-
-def path_to_lidar(year):
-    """
-        Creates a path to the Santa Barbara County canopy hieght raster from given year
-        The path to the folder containing the polygons is hardcoded inside the function.
-            Parameters:
-                        year (int): year of canopy height data
-            Return: fp (str): returns the file path to the canopy height raster
-    """
-    # root for all Santa Barbara County canopy height rasters
-    root = '/home/jovyan/msai4earth-esa/iceplant_detection/data_sampling_workflow/SantaBarbaraCounty_CanopyHeight/'
-    fp = os.path.join(root, 
-                      'SantaBarbaraCounty_CanopyHeight_'+str(year)+'.tif')
-    return fp
-
-# ----------------------------------
-
-def path_to_polygons(aoi, year):
-    """
-        Creates a path to the shapefile with polygons collected at specified aoi and year. 
-        The path to the folder containing the polygons is hardcoded inside the function.
-            Parameters:
-                        aoi (str): name of aoi in polygon's file name
-                        year (int): year of collection in polygon's file name
-            Return: fp (str): if the file exists it returns the constructed file path
-    """
-    # root for all polygons collected on naip scenes
-    root = '/home/jovyan/msai4earth-esa/iceplant_detection/data_sampling_workflow/polygons_from_naip_images'
-    fp = os.path.join(root, 
-                      aoi+'_polygons', 
-                      aoi+'_polygons_'+str(year), 
-                      aoi+'_polygons_'+str(year)+'.shp')
-
-    # check there is a file at filepath
-    if not os.path.exists(fp):
-        print('invalid filepath: no file')
-        return
-    
-    return fp
-
-# ----------------------------------
-def path_to_spectral_pts(aoi, year):
-    fp = os.path.join(os.getcwd(), 
-                             'temp', 
-                            aoi + '_points_'+str(year)+'.csv')
-    # TO DO: maybe change to _spectral_points
-    return fp
-
-# ----------------------------------
-def path_to_aoi_itemids_csv():
-
-    return '/home/jovyan/msai4earth-esa/iceplant_detection/info_about_aois/aoi_naip_itemids.csv'
-
 
 # *********************************************************************
 
@@ -185,6 +129,41 @@ def count_pixels_in_polygons(polys, rast_reader):
 
 # *********************************************************************
 
+# N = number of polygons
+# S = total number of pts to sample
+def staggered_n_samples(N,S):
+    if N>S:
+        X = np.zeros(N)
+        X[:S]+=1
+        return X
+    
+    n = 0     # width of steps
+    P_n = S+1 # number of pts needed to assemble the "ladder" with smallest steps
+    while P_n>S:
+        n +=1
+        q = int(N/n)
+        r = int(N%n)
+        P_n = n*(q*(q+1)/2) + r
+        
+    X = []
+    for i in range(q,0,-1):
+        X.append(np.full(n,i))
+    X.append(np.full(r,1))
+    X = np.concatenate(X)
+    
+    # distribute remaining points by filling each level from biggest poly to smallest
+    R = S - P_n
+    qR = int(R/N)
+    rR = int(R%N)
+    
+    X +=qR
+    X[:rR]+=1
+    return X
+
+# --------------------------------------------------------------
+
+# *********************************************************************
+
 def sample_size_in_polygons(n_pixels, param, sample_fraction=0, max_sample=0, const_sample=0, total_pts = 0):
     """
         Calculates the number of points to sample from each polygon in a list 
@@ -211,7 +190,7 @@ def sample_size_in_polygons(n_pixels, param, sample_fraction=0, max_sample=0, co
                     n_pts (numpy.ndarray): 
                         array with number of pts to sample from each polygon
     """
-    if param not in ['fraction', 'sliding', 'constant', 'proportional']:
+    if param not in ['fraction', 'sliding', 'constant', 'staggered']:
         print('not valid parameter: param must be `fraction`, `sliding` or `constant`')
         return 
     # TO DO: add warning for other parameters
@@ -231,6 +210,13 @@ def sample_size_in_polygons(n_pixels, param, sample_fraction=0, max_sample=0, co
         total_pixels = np.sum(n_pixels)
         #n_pts = [ total_pts * x/total_pixels for x in n_pixels]
         n_pts = n_pixels / total_pixels * total_pts
+    elif 'staggered':
+        X = staggered_n_samples(len(n_pixels), total_pts)
+        X.sort()
+        df = pd.DataFrame({'n_pixels' : n_pixels}).sort_values(by = ['n_pixels'])
+        df['n_sample']= X
+        df = df.sort_index()
+        n_pts = df.n_sample.to_numpy()
     
     n_pts = n_pts.astype('int')
     return n_pts
@@ -377,7 +363,8 @@ def sample_naip_from_polys(polys, class_name, itemid, param, sample_fraction=0, 
              'month' : item.datetime.month,
              'day_in_year' : day_in_year(item.datetime.day, item.datetime.month, item.datetime.year),
              'naip_id' : itemid}
-    df = df.assign(**kwargs)        
+    df = df.assign(**kwargs)     
+    df = df.reset_index(drop=True)
     
     return df
 
