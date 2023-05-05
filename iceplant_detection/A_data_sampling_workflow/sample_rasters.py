@@ -30,7 +30,11 @@ from skimage.filters.rank import entropy
 
 # *********************************************************************
 
+def path_to_aoi_itemids_csv():
 
+    return '/home/jovyan/msai4earth-esa/iceplant_detection/info_about_aois/aoi_naip_itemids.csv'
+
+# *********************************************************************
 def get_item_from_id(itemid):
     """
         Searches the Planetary Computer's NAIP collection for the item associated with the given itemid.
