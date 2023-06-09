@@ -92,8 +92,11 @@ def test_train_proportions(train_labels, test_labels):
 # **********************************************************************************************************
 
 def accuracy_info_df(y_true, y_pred):
-    N = y_true.shape[0]
+    #N = y_true.shape[0]
+
     unique, counts = np.unique(y_true,return_counts=True)    
+    N = counts[0]    
+    P = counts[1]
     
     confmtx = confusion_matrix(y_true, y_pred)
     TN = confmtx[0,0]
@@ -101,25 +104,29 @@ def accuracy_info_df(y_true, y_pred):
     FN = confmtx[1,0]
     TP = confmtx[1,1]
 
-    # sensitivity : TP/P
-    sens =  np.round( confmtx[1,1] / counts[1] * 100, 2) 
+    # P's  producer's accuracy (sensitivity) : TP/P
+    PA_P =  np.round( TP/P  * 100, 2) 
 
-    # specificity : TN/N
-    spec =  np.round( confmtx[0,0] / counts[0] * 100, 2) 
+    # N's producer's accuracy (specificity) : TN/N
+    PA_N =  np.round( TN/N * 100, 2) 
 
-    # precision P : TP/(TP+FP)
-    prec_P = np.round( confmtx[1,1] / (confmtx[1,1]+confmtx[0,1]) * 100, 2) 
+    # P's user's accuracy (precision P) : TP/(TP+FP)
+    UA_P = np.round( TP / (TP+FP) * 100, 2) 
     
-    # precision N : TN/(TN+FN)
-    prec_N = np.round( confmtx[0,0] / (confmtx[0,0]+confmtx[1,0]) * 100, 2)
+    # N's user's accuracy (precision N) : TN/(TN+FN)
+    UA_N = np.round( TN / (TN+FN) * 100, 2)
     
     # overal accuracy: (TP + TN)/(P + N)
-    acc = np.round( (confmtx[1,1] + confmtx[0,0])/y_true.shape[0]*100,2) 
+    OA = np.round( (TP+TN)/y_true.shape[0]*100, 2) 
     
-    D = {'TN':TN, 'TP':TP, 'FN':FN, 'FP':FP, 
-         'acc':acc, 
-         'sens':sens, 'prec_P':prec_P,
-         'spec':spec, 'prec_N':prec_N}
+    D = {'acc':OA,
+         'prod_acc_P':PA_P, 
+         'prod_acc_N':PA_N,          
+         'user_acc_P':UA_P,
+         'user_acc_N':UA_N,         
+         'TP':TP, 'TN':TN, 
+         'FP':FP, 'FN':FN 
+        }
     df = pd.DataFrame([D])
     return df
 
@@ -142,14 +149,14 @@ def print_accuracy_info(y_true,y_pred):
     
     sens =  confmtx[1,1]/counts[1]
     spec =  confmtx[0,0]/counts[0]
-    print('sensitivity (TP/P):', np.round(sens*100,2), '%')  
+    print("P producer's accuracy (TP/P):", np.round(sens*100,2), '%')  
     prec = confmtx[1,1]/(confmtx[1,1]+confmtx[0,1])
-    print('precision P (TP/(TP+FP)):', np.round(prec*100,2),'%' )    
-    print('specificity (TN/N):', np.round(spec*100,2), '%')      
+    print("P user's accuracy (TP/(TP+FP)):", np.round(prec*100,2),'%' )    
+    print("N producer's accuracy (TN/N):", np.round(spec*100,2), '%')      
     prec = confmtx[0,0]/(confmtx[0,0]+confmtx[1,0])
-    print('precision N (TN/(TN+FN)):', np.round(prec*100,2),'%' )
+    print("N user's accuracy (TN/(TN+FN)):", np.round(prec*100,2),'%' )
     print()    
-    print('accuracy:', np.round( (confmtx[1,1] + confmtx[0,0])/y_true.shape[0]*100,2),'%') # (TP + TN)/(P + N)
+    print('overall accuracy:', np.round( (confmtx[1,1] + confmtx[0,0])/y_true.shape[0]*100,2),'%') # (TP + TN)/(P + N)
     
 #     print()
 #     print('G-mean: ', round(np.sqrt(sens*spec),2))
