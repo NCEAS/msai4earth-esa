@@ -50,7 +50,7 @@ def get_item_from_id(itemid):
     search = catalog.search(collections=["naip"], ids = itemid)
     
     # return 1st item in search (assumes itemid IS associaed to some item)
-    return list(search.get_items())[0]   # ** TO DO: catch exception
+    return list(search.items())[0]   # ** TO DO: catch exception
 
 # ---------------------------------------------
 
@@ -76,7 +76,7 @@ def get_crs_from_itemid(itemid):
         collections=["naip"],
         ids = itemid
     )
-    item = list(search.get_items())[0]
+    item = list(search.items())[0]
     epsg_code = item.properties['proj:epsg']
     return  CRS.from_epsg(epsg_code)
 
@@ -921,10 +921,10 @@ def create_aux_canopyheight_rasters(year):
     return lidar_fps
 
 # **********************************************************************************************************
-def finish_processing(status, processed, reason, times_pre, times_class, times_post, veg_pixels, itemid):
+def finish_processing(status, processed, reason, times_features, times_class, times_post, veg_pixels, itemid):
     
     processed.append('N')
-    times_pre.append(0)
+    times_features.append(0)
     times_class.append(0)        
     times_post.append(0)
     veg_pixels.append(0)
